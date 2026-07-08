@@ -1,0 +1,50 @@
+role_key: tempo_controller
+display_name: Tempo Controller
+position_group: MID
+eligible_positions: [CM, DM]
+description: >
+  Controls rhythm and possession, balancing recycling with progression. Judged on
+  pass volume/completion, progressive passing, press resistance, and coverage.
+
+metric_groups:
+  pass_control:
+    weight: 0.25
+    metrics:
+      - { name: passes_per90, direction: higher_better, weight: 0.5 }
+      - { name: pass_completion_pct, direction: higher_better, weight: 0.5 }
+  progression:
+    weight: 0.20
+    metrics:
+      - { name: progressive_passes_per90, direction: higher_better }
+  press_resistance:
+    weight: 0.15
+    metrics:
+      - { name: passes_under_pressure_per90, direction: higher_better, weight: 0.5 }
+      - { name: dispossessed_per90, direction: lower_better, weight: 0.5 }
+  final_third_entries:
+    weight: 0.15
+    metrics:
+      - { name: passes_into_final_third_per90, direction: higher_better }
+  possession_security:
+    weight: 0.10
+    metrics:
+      - { name: miscontrols_per90, direction: lower_better }
+  defensive_coverage:
+    weight: 0.10
+    metrics:
+      - { name: defensive_actions_per90, direction: higher_better }
+  availability:
+    weight: 0.05
+    metrics:
+      - { name: availability_index, direction: higher_better }
+
+required_metrics: [passes_per90, pass_completion_pct, progressive_passes_per90]
+optional_metrics: [passes_under_pressure_per90, passes_into_final_third_per90]
+
+confidence_rules:
+  min_minutes: 450
+  full_confidence_minutes: 1800
+  required_coverage: 0.6
+
+concern_rules:
+  - { key: turnover_risk, metric: dispossessed_per90, direction: higher_worse, percentile_threshold: 0.80, penalty: 1.0 }

@@ -1,0 +1,11 @@
+{
+  "_note": "Regression snapshot for 5 benchmark synthetic players. Update deliberately if the formula or fixtures change (US-3.11).",
+  "rating_version": "rolefit-v1",
+  "players": {
+    "sample-002": { "archetype": "touchline_winger",        "best_role": "touchline_winger",        "final_score": 85.5 },
+    "sample-005": { "archetype": "inside_forward",           "best_role": "inside_forward",          "final_score": 85.4 },
+    "sample-007": { "archetype": "shadow_striker",           "best_role": "shadow_striker",          "final_score": 85.1 },
+    "sample-014": { "archetype": "deep_lying_playmaker",     "best_role": "deep_lying_playmaker",    "final_score": 81.2 },
+    "sample-020": { "archetype": "ball_winning_midfielder",  "best_role": "ball_winning_midfielder", "final_score": 74.4 }
+  }
+}

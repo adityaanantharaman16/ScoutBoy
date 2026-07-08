@@ -1,0 +1,29 @@
+version: v1
+# Team strength is an environment-quality signal: producing while carrying the
+# expectations of a strong side earns slightly more trust. Kept mild; opposition
+# quality is handled separately so this does not double-count dominance.
+band: { min: 0.93, max: 1.05 }
+# Fallback used when a team slug is not listed. tier drives the multiplier via `tiers`.
+default_tier: mid
+
+tiers:
+  elite:      { multiplier: 1.04, confidence_penalty: 0.00 }
+  strong:     { multiplier: 1.02, confidence_penalty: 0.00 }
+  mid:        { multiplier: 1.00, confidence_penalty: 0.00 }
+  developing: { multiplier: 0.98, confidence_penalty: 0.03 }
+  weak:       { multiplier: 0.96, confidence_penalty: 0.05 }
+
+# Optional per-team overrides (slug -> tier). Anything unlisted falls back to default_tier.
+teams:
+  man_city: elite
+  real_madrid: elite
+  bayern_munich: elite
+  paris_sg: elite
+  arsenal: strong
+  chelsea: strong
+  ac_milan: strong
+  benfica: strong
+  psv: strong
+  feyenoord: strong
+  rb_salzburg: developing
+  lens: strong

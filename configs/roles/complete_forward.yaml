@@ -1,0 +1,56 @@
+role_key: complete_forward
+display_name: Complete Forward
+position_group: ATT
+eligible_positions: [CF, ST]
+description: >
+  Well-rounded centre-forward who scores, links play, holds the ball up, and
+  contributes off the ball. Rewards balance across scoring, creation, and physical duels.
+
+metric_groups:
+  shot_threat:
+    weight: 0.20
+    metrics:
+      - { name: non_penalty_xg_per90, direction: higher_better }
+  creation:
+    weight: 0.15
+    metrics:
+      - { name: xa_per90, direction: higher_better, weight: 0.5 }
+      - { name: shot_creating_actions_per90, direction: higher_better, weight: 0.5 }
+  box_presence:
+    weight: 0.15
+    metrics:
+      - { name: touches_in_box_per90, direction: higher_better }
+  progression:
+    weight: 0.15
+    metrics:
+      - { name: progressive_carries_per90, direction: higher_better, weight: 0.5 }
+      - { name: progressive_passes_per90, direction: higher_better, weight: 0.5 }
+  aerial_hold_up:
+    weight: 0.10
+    metrics:
+      - { name: aerial_duels_won_pct, direction: higher_better, weight: 0.5 }
+      - { name: ground_duels_won_pct, direction: higher_better, weight: 0.5 }
+  possession_security:
+    weight: 0.10
+    metrics:
+      - { name: pass_completion_pct, direction: higher_better, weight: 0.5 }
+      - { name: dispossessed_per90, direction: lower_better, weight: 0.5 }
+  pressing:
+    weight: 0.10
+    metrics:
+      - { name: pressures_per90, direction: higher_better }
+  finishing_confidence:
+    weight: 0.05
+    metrics:
+      - { name: goals_minus_xg_per90, direction: higher_better }
+
+required_metrics: [non_penalty_xg_per90, touches_in_box_per90, progressive_passes_per90]
+optional_metrics: [xa_per90, aerial_duels_won_pct, goals_minus_xg_per90]
+
+confidence_rules:
+  min_minutes: 450
+  full_confidence_minutes: 1800
+  required_coverage: 0.6
+
+concern_rules:
+  - { key: raw_finishing, metric: goals_minus_xg_per90, direction: lower_worse, percentile_threshold: 0.20, penalty: 1.0 }

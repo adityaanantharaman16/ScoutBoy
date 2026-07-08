@@ -1,0 +1,49 @@
+role_key: shadow_striker
+display_name: Shadow Striker
+position_group: ATT
+eligible_positions: [CF, AM, CAM, ST]
+description: >
+  Arrives from midfield / the second line to attack the box. Judged on box presence,
+  late-arriving shot threat, and connecting carries rather than hold-up play.
+
+metric_groups:
+  box_presence:
+    weight: 0.25
+    metrics:
+      - { name: touches_in_box_per90, direction: higher_better }
+  shot_threat:
+    weight: 0.20
+    metrics:
+      - { name: non_penalty_xg_per90, direction: higher_better }
+  shot_volume:
+    weight: 0.15
+    metrics:
+      - { name: shots_per90, direction: higher_better }
+  arrival_carrying:
+    weight: 0.15
+    metrics:
+      - { name: carries_into_final_third_per90, direction: higher_better, weight: 0.5 }
+      - { name: carries_into_penalty_area_per90, direction: higher_better, weight: 0.5 }
+  shot_creation:
+    weight: 0.10
+    metrics:
+      - { name: shot_creating_actions_per90, direction: higher_better }
+  finishing_confidence:
+    weight: 0.10
+    metrics:
+      - { name: goals_minus_xg_per90, direction: higher_better }
+  possession_security:
+    weight: 0.05
+    metrics:
+      - { name: dispossessed_per90, direction: lower_better }
+
+required_metrics: [touches_in_box_per90, non_penalty_xg_per90, shots_per90]
+optional_metrics: [goals_minus_xg_per90, shot_creating_actions_per90]
+
+confidence_rules:
+  min_minutes: 450
+  full_confidence_minutes: 1800
+  required_coverage: 0.6
+
+concern_rules:
+  - { key: raw_finishing, metric: goals_minus_xg_per90, direction: lower_worse, percentile_threshold: 0.25, penalty: 1.5 }

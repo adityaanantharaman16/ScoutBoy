@@ -1,0 +1,8 @@
+source_name,source_player_id,season,competition_name,team_name,metric_name,metric_value,unit,minutes,position_group,source_snapshot_id,source_url,provider_player_name,provider_team_id,provider_competition_id,match_scope,notes
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,non_penalty_goals_per90,0.52,per90,1850,ATT,snapshot_2025_01,,,,,,league
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,non_penalty_xg_per90,0.44,per90,1850,ATT,snapshot_2025_01,,,,,,league
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,progressive_carries_per90,2.10,per90,1850,ATT,snapshot_2025_01,,,,,,league
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,touches_in_box_per90,6.80,per90,1850,ATT,snapshot_2025_01,,,,,,league
+transfermarkt,1004,2024-2025,Premier League,Arsenal,progressive_passes_per90,7.30,per90,1750,MID,snapshot_2025_01,,,,,,league
+transfermarkt,1004,2024-2025,Premier League,Arsenal,pass_completion_pct,88.4,pct,1750,MID,snapshot_2025_01,,,,,,league
+transfermarkt,1004,2024-2025,Premier League,Arsenal,shots_per90,1.10,per90,1750,MID,snapshot_2025_01,,,,,,league

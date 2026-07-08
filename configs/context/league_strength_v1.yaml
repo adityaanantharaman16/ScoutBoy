@@ -1,0 +1,18 @@
+version: v1
+# League strength ADJUSTS RELIABILITY, it does not erase production.
+# Multipliers stay in a mild band so lower-league dominance still scores well but
+# carries translation risk (lower confidence). Keys match competition.slug values.
+band: { min: 0.85, max: 1.05 }
+default: { multiplier: 0.90, tier: 4, translation_risk: high, confidence_penalty: 0.15 }
+
+leagues:
+  eng_premier_league: { multiplier: 1.05, tier: 1, translation_risk: low,      confidence_penalty: 0.00 }
+  esp_la_liga:        { multiplier: 1.03, tier: 1, translation_risk: low,      confidence_penalty: 0.00 }
+  ita_serie_a:        { multiplier: 1.02, tier: 1, translation_risk: low,      confidence_penalty: 0.00 }
+  ger_bundesliga:     { multiplier: 1.02, tier: 1, translation_risk: low,      confidence_penalty: 0.00 }
+  fra_ligue_1:        { multiplier: 1.00, tier: 2, translation_risk: low,      confidence_penalty: 0.02 }
+  por_primeira_liga:  { multiplier: 0.97, tier: 2, translation_risk: medium,   confidence_penalty: 0.05 }
+  ned_eredivisie:     { multiplier: 0.96, tier: 2, translation_risk: medium,   confidence_penalty: 0.06 }
+  bel_pro_league:     { multiplier: 0.95, tier: 3, translation_risk: medium,   confidence_penalty: 0.08 }
+  eng_championship:   { multiplier: 0.94, tier: 3, translation_risk: medium,   confidence_penalty: 0.08 }
+  fra_ligue_2:        { multiplier: 0.90, tier: 4, translation_risk: high,     confidence_penalty: 0.12 }

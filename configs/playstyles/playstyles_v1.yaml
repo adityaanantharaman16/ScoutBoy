@@ -1,0 +1,169 @@
+version: v1
+# Positive playstyle badges. Each badge computes a composite percentile from its
+# metrics WITHIN the player's peer group (position_group), which is what makes them
+# role-aware: the same raw carry number percentiles differently for ATT vs MID.
+#
+# tiers are percentile thresholds on the composite score:
+#   base  = clearly above peers   (top 25%)
+#   plus  = near-elite            (top 10%)
+#   elite = top of the peer group (top ~5%)
+# A badge is only applied when >= base and required_metrics are present and minutes
+# meet min_minutes. Otherwise no badge (never a zero/false badge).
+defaults:
+  tiers: { base: 0.75, plus: 0.90, elite: 0.95 }
+  min_minutes: 450
+
+playstyles:
+  - key: technical_carrier
+    display_name: Technical Carrier
+    category: progression
+    description: Carrier-first player who moves the team upfield with the ball.
+    position_groups: [ATT, MID]
+    metrics:
+      - { name: progressive_carries_per90, direction: higher_better, weight: 0.5 }
+      - { name: carries_into_final_third_per90, direction: higher_better, weight: 0.3 }
+      - { name: take_on_success_pct, direction: higher_better, weight: 0.2 }
+    required_metrics: [progressive_carries_per90]
+
+  - key: touchline_isolator
+    display_name: Touchline Isolator
+    category: dribbling
+    description: Thrives isolated 1v1 against a fullback in wide areas.
+    position_groups: [ATT]
+    metrics:
+      - { name: successful_take_ons_per90, direction: higher_better, weight: 0.4 }
+      - { name: take_on_success_pct, direction: higher_better, weight: 0.4 }
+      - { name: crosses_per90, direction: higher_better, weight: 0.2 }
+    required_metrics: [successful_take_ons_per90, take_on_success_pct]
+
+  - key: inverted_threat
+    display_name: Inverted Threat
+    category: attacking
+    description: Wide player who attacks central spaces and the goal.
+    position_groups: [ATT]
+    metrics:
+      - { name: non_penalty_xg_per90, direction: higher_better, weight: 0.5 }
+      - { name: touches_in_box_per90, direction: higher_better, weight: 0.3 }
+      - { name: carries_into_penalty_area_per90, direction: higher_better, weight: 0.2 }
+    required_metrics: [non_penalty_xg_per90, touches_in_box_per90]
+
+  - key: box_crasher
+    display_name: Box Crasher
+    category: attacking
+    description: Attacks the penalty area from deeper or wider zones.
+    position_groups: [ATT, MID]
+    metrics:
+      - { name: touches_in_box_per90, direction: higher_better, weight: 0.5 }
+      - { name: non_penalty_xg_per90, direction: higher_better, weight: 0.3 }
+      - { name: carries_into_penalty_area_per90, direction: higher_better, weight: 0.2 }
+    required_metrics: [touches_in_box_per90]
+
+  - key: finesse_finisher
+    display_name: Finesse Finisher
+    category: attacking
+    description: Consistently outperforms his expected goals.
+    position_groups: [ATT]
+    metrics:
+      - { name: goals_minus_xg_per90, direction: higher_better, weight: 0.7 }
+      - { name: shots_per90, direction: higher_better, weight: 0.3 }
+    required_metrics: [goals_minus_xg_per90]
+    tiers: { base: 0.75, plus: 0.90, elite: 0.95 }
+
+  - key: volume_shooter
+    display_name: Volume Shooter
+    category: attacking
+    description: Generates a high volume of shots.
+    position_groups: [ATT, MID]
+    metrics:
+      - { name: shots_per90, direction: higher_better }
+    required_metrics: [shots_per90]
+
+  - key: line_breaker
+    display_name: Line Breaker
+    category: creation
+    description: Breaks defensive lines with progressive and vertical passing.
+    position_groups: [MID, ATT]
+    metrics:
+      - { name: progressive_passes_per90, direction: higher_better, weight: 0.5 }
+      - { name: passes_into_final_third_per90, direction: higher_better, weight: 0.3 }
+      - { name: through_balls_per90, direction: higher_better, weight: 0.2 }
+    required_metrics: [progressive_passes_per90, passes_into_final_third_per90]
+
+  - key: tempo_setter
+    display_name: Tempo Setter
+    category: progression
+    description: Controls rhythm through pass volume and completion.
+    position_groups: [MID]
+    metrics:
+      - { name: passes_per90, direction: higher_better, weight: 0.5 }
+      - { name: pass_completion_pct, direction: higher_better, weight: 0.5 }
+    required_metrics: [passes_per90, pass_completion_pct]
+
+  - key: press_resistant
+    display_name: Press Resistant
+    category: possession
+    description: Receives and retains the ball under pressure.
+    position_groups: [MID, ATT]
+    metrics:
+      - { name: passes_under_pressure_per90, direction: higher_better, weight: 0.5 }
+      - { name: dispossessed_per90, direction: lower_better, weight: 0.25 }
+      - { name: miscontrols_per90, direction: lower_better, weight: 0.25 }
+    required_metrics: [passes_under_pressure_per90]
+
+  - key: relentless_presser
+    display_name: Relentless Presser
+    category: defensive
+    description: High pressing and counterpressing work rate.
+    position_groups: [ATT, MID]
+    metrics:
+      - { name: pressures_per90, direction: higher_better, weight: 0.6 }
+      - { name: counterpressures_per90, direction: higher_better, weight: 0.4 }
+    required_metrics: [pressures_per90]
+
+  - key: duel_winner
+    display_name: Duel Winner
+    category: physical
+    description: Wins a high share of ground duels.
+    position_groups: [MID, ATT]
+    metrics:
+      - { name: ground_duels_won_pct, direction: higher_better }
+    required_metrics: [ground_duels_won_pct]
+
+  - key: interceptor
+    display_name: Interceptor
+    category: defensive
+    description: Reads the game to intercept and break up play.
+    position_groups: [MID]
+    metrics:
+      - { name: interceptions_per90, direction: higher_better, weight: 0.6 }
+      - { name: tackles_per90, direction: higher_better, weight: 0.4 }
+    required_metrics: [interceptions_per90]
+
+  - key: aerial_threat
+    display_name: Aerial Threat
+    category: physical
+    description: Strong contributor in the air.
+    position_groups: [ATT, MID]
+    metrics:
+      - { name: aerial_duels_won_pct, direction: higher_better }
+    required_metrics: [aerial_duels_won_pct]
+
+  - key: ball_magnet
+    display_name: Ball Magnet
+    category: possession
+    description: Constantly involved; a focal point for team possession.
+    position_groups: [MID]
+    metrics:
+      - { name: passes_per90, direction: higher_better, weight: 0.7 }
+      - { name: progressive_passes_per90, direction: higher_better, weight: 0.3 }
+    required_metrics: [passes_per90]
+
+  - key: transition_outlet
+    display_name: Transition Outlet
+    category: progression
+    description: A strong ball-carrying option in transition-heavy systems.
+    position_groups: [ATT, MID]
+    metrics:
+      - { name: progressive_carries_per90, direction: higher_better, weight: 0.6 }
+      - { name: carries_into_final_third_per90, direction: higher_better, weight: 0.4 }
+    required_metrics: [progressive_carries_per90]

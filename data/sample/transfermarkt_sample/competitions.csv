@@ -1,0 +1,9 @@
+competition_id,slug,name,country_name,type,confederation
+GB1,eng_premier_league,Premier League,England,domestic_top_tier,europa
+ES1,esp_la_liga,LaLiga,Spain,domestic_top_tier,europa
+IT1,ita_serie_a,Serie A,Italy,domestic_top_tier,europa
+L1,ger_bundesliga,Bundesliga,Germany,domestic_top_tier,europa
+FR1,fra_ligue_1,Ligue 1,France,domestic_top_tier,europa
+NL1,ned_eredivisie,Eredivisie,Netherlands,domestic_top_tier,europa
+PO1,por_primeira_liga,Liga Portugal,Portugal,domestic_top_tier,europa
+GB2,eng_championship,Championship,England,domestic_second_tier,europa

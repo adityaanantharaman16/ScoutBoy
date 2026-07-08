@@ -1,0 +1,78 @@
+version: v1
+# Canonical metric registry — the single source of truth for metric identity.
+# `scoutboy_shared.metrics` loads this; role/playstyle configs and the performance-CSV
+# contract must use these canonical names. `aliases` keep older internal names resolvable.
+#
+# kind:  performance (percentiled within a peer group) | context (not percentiled) | identity
+# unit:  per90 | pct | index | count | years
+# face_group: card grouping for performance metrics
+metrics:
+  # ---- Attacking ----
+  non_penalty_goals_per90: { display: Non-penalty goals, unit: per90, higher_better: true, kind: performance, face_group: attack, aliases: [npg_per90] }
+  non_penalty_xg_per90:    { display: Non-penalty xG, unit: per90, higher_better: true, kind: performance, face_group: attack, aliases: [npxg_per90] }
+  goals_per90:             { display: Goals, unit: per90, higher_better: true, kind: performance, face_group: attack }
+  shots_per90:             { display: Shots, unit: per90, higher_better: true, kind: performance, face_group: attack }
+  shots_on_target_pct:     { display: Shots on target %, unit: pct, higher_better: true, kind: performance, face_group: attack }
+  touches_in_box_per90:    { display: Touches in box, unit: per90, higher_better: true, kind: performance, face_group: attack }
+  xg_per_shot:             { display: xG per shot, unit: index, higher_better: true, kind: performance, face_group: attack }
+  goals_minus_xg_per90:    { display: Finishing vs xG, unit: per90, higher_better: true, kind: performance, face_group: attack, aliases: [finishing_over_xg] }
+
+  # ---- Creation ----
+  assists_per90:                 { display: Assists, unit: per90, higher_better: true, kind: performance, face_group: creation }
+  xa_per90:                      { display: Expected assists, unit: per90, higher_better: true, kind: performance, face_group: creation }
+  key_passes_per90:              { display: Key passes, unit: per90, higher_better: true, kind: performance, face_group: creation }
+  shot_creating_actions_per90:   { display: Shot-creating actions, unit: per90, higher_better: true, kind: performance, face_group: creation }
+  passes_into_penalty_area_per90: { display: Passes into penalty area, unit: per90, higher_better: true, kind: performance, face_group: creation }
+  through_balls_per90:           { display: Through balls, unit: per90, higher_better: true, kind: performance, face_group: creation }
+  crosses_per90:                 { display: Crosses, unit: per90, higher_better: true, kind: performance, face_group: creation }
+
+  # ---- Progression ----
+  progressive_passes_per90:        { display: Progressive passes, unit: per90, higher_better: true, kind: performance, face_group: progression }
+  progressive_carries_per90:       { display: Progressive carries, unit: per90, higher_better: true, kind: performance, face_group: progression }
+  carries_into_final_third_per90:  { display: Carries into final third, unit: per90, higher_better: true, kind: performance, face_group: progression }
+  carries_into_penalty_area_per90: { display: Carries into penalty area, unit: per90, higher_better: true, kind: performance, face_group: progression, aliases: [carries_into_box_per90] }
+  passes_into_final_third_per90:   { display: Passes into final third, unit: per90, higher_better: true, kind: performance, face_group: progression }
+  progressive_receptions_per90:    { display: Progressive receptions, unit: per90, higher_better: true, kind: performance, face_group: progression }
+  long_passes_completed_per90:     { display: Long passes completed, unit: per90, higher_better: true, kind: performance, face_group: progression }
+
+  # ---- Dribbling ----
+  successful_take_ons_per90: { display: Successful take-ons, unit: per90, higher_better: true, kind: performance, face_group: dribbling, aliases: [take_ons_attempted_per90] }
+  take_on_success_pct:       { display: Take-on success %, unit: pct, higher_better: true, kind: performance, face_group: dribbling }
+
+  # ---- Possession / security ----
+  pass_completion_pct:             { display: Pass completion %, unit: pct, higher_better: true, kind: performance, face_group: possession }
+  progressive_pass_completion_pct: { display: Progressive pass completion %, unit: pct, higher_better: true, kind: performance, face_group: possession }
+  passes_per90:                    { display: Passes, unit: per90, higher_better: true, kind: performance, face_group: possession }
+  passes_under_pressure_per90:     { display: Passes under pressure, unit: per90, higher_better: true, kind: performance, face_group: possession }
+  miscontrols_per90:               { display: Miscontrols, unit: per90, higher_better: false, kind: performance, face_group: possession }
+  dispossessed_per90:              { display: Dispossessed, unit: per90, higher_better: false, kind: performance, face_group: possession }
+  turnovers_per90:                 { display: Turnovers, unit: per90, higher_better: false, kind: performance, face_group: possession }
+
+  # ---- Defending / pressing ----
+  tackles_per90:            { display: Tackles, unit: per90, higher_better: true, kind: performance, face_group: defending }
+  interceptions_per90:      { display: Interceptions, unit: per90, higher_better: true, kind: performance, face_group: defending }
+  blocks_per90:             { display: Blocks, unit: per90, higher_better: true, kind: performance, face_group: defending }
+  pressures_per90:          { display: Pressures, unit: per90, higher_better: true, kind: performance, face_group: defending }
+  successful_pressures_per90: { display: Successful pressures, unit: per90, higher_better: true, kind: performance, face_group: defending }
+  counterpressures_per90:   { display: Counterpressures, unit: per90, higher_better: true, kind: performance, face_group: defending }
+  ball_recoveries_per90:    { display: Ball recoveries, unit: per90, higher_better: true, kind: performance, face_group: defending }
+  defensive_actions_per90:  { display: Defensive actions, unit: per90, higher_better: true, kind: performance, face_group: defending }
+  ground_duels_won_pct:     { display: Ground duels won %, unit: pct, higher_better: true, kind: performance, face_group: defending, aliases: [duels_won_pct] }
+  fouls_per90:              { display: Fouls committed, unit: per90, higher_better: false, kind: performance, face_group: defending }
+
+  # ---- Physical ----
+  aerial_duels_won_pct: { display: Aerial duels won %, unit: pct, higher_better: true, kind: performance, face_group: physical, aliases: [aerials_won_per90] }
+  availability_index:   { display: Availability, unit: index, higher_better: true, kind: performance, face_group: physical }
+
+  # ---- Form ----
+  recent_form_index: { display: Recent form, unit: index, higher_better: true, kind: performance, face_group: form }
+
+  # ---- Context / sample (not percentiled) ----
+  minutes:             { display: Minutes, unit: count, higher_better: true, kind: context }
+  appearances:         { display: Appearances, unit: count, higher_better: true, kind: context }
+  starts:              { display: Starts, unit: count, higher_better: true, kind: context }
+  age:                 { display: Age, unit: count, higher_better: false, kind: context }
+  league_strength:     { display: League strength, unit: index, higher_better: true, kind: context }
+  team_strength:       { display: Team strength, unit: index, higher_better: true, kind: context }
+  competition_stakes:  { display: Competition stakes, unit: index, higher_better: true, kind: context }
+  sample_reliability:  { display: Sample reliability, unit: index, higher_better: true, kind: context }

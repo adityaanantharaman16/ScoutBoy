@@ -1,0 +1,15 @@
+version: v1
+# Stakes reflect the pressure of the environment the actions were produced in.
+# Multipliers are small nudges layered on top of league strength.
+band: { min: 0.97, max: 1.06 }
+default: { multiplier: 1.00, label: standard }
+
+by_competition_type:
+  uefa_elite_knockout: { multiplier: 1.06, label: "Champions League knockout" }
+  uefa_group:          { multiplier: 1.03, label: "European group stage" }
+  domestic_title_race: { multiplier: 1.03, label: "domestic title race" }
+  domestic_top_tier:   { multiplier: 1.00, label: "top-flight league" }
+  domestic_cup:        { multiplier: 1.00, label: "domestic cup" }
+  relegation_fight:    { multiplier: 1.01, label: "relegation battle" }
+  domestic_second_tier: { multiplier: 0.98, label: "second-tier league" }
+  friendly:            { multiplier: 0.97, label: "low-stakes / friendly" }

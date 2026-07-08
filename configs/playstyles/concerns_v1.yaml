@@ -1,0 +1,84 @@
+version: v1
+# Concern badges. Unlike positive badges these come from several trigger types:
+#   low_percentile     -> player is in the BOTTOM tail for a good metric
+#   small_sample       -> minutes below a reliability threshold
+#   context_translation-> player's league carries translation risk
+#   market_label       -> the market model flagged the price (applied post-market)
+# Concerns still require a reliable-enough sample except where the concern IS the
+# sample. No concern is applied on missing data alone.
+defaults:
+  min_minutes: 450
+
+concerns:
+  - key: raw_finishing
+    display_name: Raw Finishing
+    category: risk
+    description: Finishing lags behind the quality of chances taken.
+    position_groups: [ATT]
+    trigger: low_percentile
+    metrics: [{ name: goals_minus_xg_per90, direction: higher_better }]
+    percentile_threshold: 0.25
+
+  - key: low_defensive_output
+    display_name: Low Defensive Output
+    category: risk
+    description: Contributes little pressing or defensive work for the role.
+    position_groups: [ATT, MID]
+    trigger: low_percentile
+    metrics:
+      - { name: pressures_per90, direction: higher_better, weight: 0.6 }
+      - { name: tackles_per90, direction: higher_better, weight: 0.4 }
+    percentile_threshold: 0.20
+
+  - key: turnover_risk
+    display_name: Turnover Risk
+    category: risk
+    description: Loses possession at a high rate.
+    position_groups: [ATT, MID]
+    trigger: low_percentile
+    # dispossessed is lower_better, so "low_percentile of the good direction" = concern
+    metrics:
+      - { name: dispossessed_per90, direction: lower_better, weight: 0.5 }
+      - { name: miscontrols_per90, direction: lower_better, weight: 0.5 }
+    percentile_threshold: 0.20
+
+  - key: limited_creation
+    display_name: Limited Creation
+    category: risk
+    description: Creates few chances for teammates.
+    position_groups: [ATT, MID]
+    trigger: low_percentile
+    metrics:
+      - { name: xa_per90, direction: higher_better, weight: 0.5 }
+      - { name: key_passes_per90, direction: higher_better, weight: 0.5 }
+    percentile_threshold: 0.20
+
+  - key: limited_carrying_threat
+    display_name: Limited Carrying Threat
+    category: risk
+    description: Offers little ball progression by carrying.
+    position_groups: [ATT, MID]
+    trigger: low_percentile
+    metrics: [{ name: progressive_carries_per90, direction: higher_better }]
+    percentile_threshold: 0.20
+
+  - key: small_sample
+    display_name: Small Sample
+    category: risk
+    description: Minutes are too limited to be confident in the profile.
+    trigger: small_sample
+    minutes_below: 900
+
+  - key: role_translation_risk
+    display_name: Role Translation Risk
+    category: risk
+    description: Production comes in a league where translation to a stronger level is uncertain.
+    trigger: context_translation
+    translation_risk_levels: [medium, high]
+
+  - key: inflated_market
+    display_name: Inflated Market
+    category: risk
+    description: Expected asking price runs ahead of the model's valuation.
+    trigger: market_label
+    labels: [inflated, high-risk]

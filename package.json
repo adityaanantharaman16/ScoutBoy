@@ -1,0 +1,18 @@
+{
+  "name": "scoutboy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ScoutBoy — FUT.gg-style real-life football player discovery (MVP: U23 attackers & midfielders in Europe)",
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+    "dev:web": "pnpm --filter @scoutboy/web dev",
+    "build:web": "pnpm --filter @scoutboy/web build",
+    "lint:web": "pnpm --filter @scoutboy/web lint",
+    "test:web": "pnpm --filter @scoutboy/web test",
+    "e2e": "playwright test",
+    "e2e:install": "playwright install --with-deps chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
+  }
+}

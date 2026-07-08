@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm --version)",
+      "Bash(corepack enable *)",
+      "Bash(corepack prepare *)",
+      "Bash(python3 -m venv /tmp/veptest)",
+      "Bash(/tmp/veptest/bin/python -m pip install --quiet --upgrade pip)",
+      "Bash(/tmp/veptest/bin/python -m pip install --quiet \"pydantic>=2\")",
+      "Bash(/tmp/veptest/bin/python -c \"import pydantic; print\\('pydantic', pydantic.VERSION\\)\")",
+      "Bash(cd /Users/adityagirish/Desktop/ScoutBoy *)",
+      "Bash(python3 db/seeds/generate_sample.py)",
+      "Bash(python3 -c \"import json; d=json.load\\(open\\('data/sample/players.json'\\)\\); print\\('players:', len\\(d['players']\\)\\); print\\('sample:', d['players'][0]['canonical_name'], d['players'][0]['primary_position']\\)\")",
+      "Bash(python3 -m venv .venv)",
+      "Bash(.venv/bin/pip install *)",
+      "Bash(.venv/bin/python -c \"import fastapi, sqlalchemy, pydantic, yaml, alembic; print\\('deps ok', sqlalchemy.__version__\\)\")",
+      "Bash(.venv/bin/python -m pytest packages/rating_engine/tests -q)",
+      "Bash(.venv/bin/python -m pytest packages/market_model/tests -q)",
+      "Bash(.venv/bin/python -m pytest -q)",
+      "Bash(pnpm install *)",
+      "Bash(pnpm --filter @scoutboy/web test run)",
+      "Bash(pnpm --filter @scoutboy/web typecheck)",
+      "Bash(pnpm --filter @scoutboy/web build)",
+      "Bash(pnpm exec *)",
+      "Bash(.venv/bin/ruff check *)",
+      "Bash(.venv/bin/black .)",
+      "Bash(.venv/bin/black --check .)",
+      "Bash(pnpm --filter @scoutboy/web lint)",
+      "Bash(make seed *)",
+      "Bash(make recompute-ratings *)",
+      "Bash(make quality-report *)",
+      "Bash(make lint *)",
+      "Bash(make test *)",
+      "Bash(.venv/bin/black packages/data_pipeline/quality/report.py)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(grep -E \"^\\(README.md|Makefile|apps/api/app/main.py|apps/web/src/app/page.tsx|configs/roles/touchline_winger.yaml\\)$\")"
+    ]
+  }
+}

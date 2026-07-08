@@ -1,0 +1,51 @@
+role_key: ball_winning_midfielder
+display_name: Ball-Winning Midfielder
+position_group: MID
+eligible_positions: [DM, CM]
+description: >
+  Breaks up opposition possession and protects transition zones. Judged on tackling,
+  interceptions, pressing, duels, and coverage, with discipline as a risk factor.
+
+metric_groups:
+  tackles_interceptions:
+    weight: 0.25
+    metrics:
+      - { name: tackles_per90, direction: higher_better, weight: 0.5 }
+      - { name: interceptions_per90, direction: higher_better, weight: 0.5 }
+  pressing:
+    weight: 0.20
+    metrics:
+      - { name: pressures_per90, direction: higher_better, weight: 0.5 }
+      - { name: counterpressures_per90, direction: higher_better, weight: 0.5 }
+  duels:
+    weight: 0.15
+    metrics:
+      - { name: ground_duels_won_pct, direction: higher_better }
+  defensive_coverage:
+    weight: 0.15
+    metrics:
+      - { name: defensive_actions_per90, direction: higher_better }
+  possession_security:
+    weight: 0.10
+    metrics:
+      - { name: pass_completion_pct, direction: higher_better, weight: 0.5 }
+      - { name: dispossessed_per90, direction: lower_better, weight: 0.5 }
+  availability:
+    weight: 0.10
+    metrics:
+      - { name: availability_index, direction: higher_better }
+  discipline:
+    weight: 0.05
+    metrics:
+      - { name: fouls_per90, direction: lower_better }
+
+required_metrics: [tackles_per90, interceptions_per90, ground_duels_won_pct]
+optional_metrics: [counterpressures_per90, defensive_actions_per90, fouls_per90]
+
+confidence_rules:
+  min_minutes: 450
+  full_confidence_minutes: 1800
+  required_coverage: 0.6
+
+concern_rules:
+  - { key: turnover_risk, metric: dispossessed_per90, direction: higher_worse, percentile_threshold: 0.80, penalty: 1.0 }

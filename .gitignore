@@ -1,0 +1,34 @@
+# --- Node / Next.js ---
+node_modules/
+.next/
+apps/web/out/
+apps/web/next-env.d.ts
+*.tsbuildinfo
+
+# --- Python ---
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+.coverage
+htmlcov/
+
+# --- Database / data artifacts (local, regenerated) ---
+db/scoutboy.db
+data/raw/*
+data/normalized/*
+!data/raw/.gitkeep
+!data/normalized/.gitkeep
+
+# --- Test / E2E output ---
+test-results/
+playwright-report/
+playwright/.cache/
+
+# --- Env / OS ---
+.env
+.env.local
+.DS_Store
+__MACOSX/

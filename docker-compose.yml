@@ -1,0 +1,27 @@
+# Optional PostgreSQL for local dev. The MVP defaults to SQLite so this is NOT
+# required, but running Postgres is a one-liner:
+#
+#   docker compose up -d db
+#   export DATABASE_URL=postgresql+psycopg://scoutboy:scoutboy@localhost:5432/scoutboy
+#   make db-migrate seed recompute-ratings
+#
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: scoutboy-postgres
+    environment:
+      POSTGRES_USER: scoutboy
+      POSTGRES_PASSWORD: scoutboy
+      POSTGRES_DB: scoutboy
+    ports:
+      - "5432:5432"
+    volumes:
+      - scoutboy_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scoutboy"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  scoutboy_pgdata:

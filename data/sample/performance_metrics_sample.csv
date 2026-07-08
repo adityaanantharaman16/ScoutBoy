@@ -1,0 +1,739 @@
+source_name,source_player_id,season,competition_name,team_name,metric_name,metric_value,unit,minutes,position_group,source_snapshot_id,source_url,provider_player_name,notes
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,non_penalty_goals_per90,0.222,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,non_penalty_xg_per90,0.302,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,shots_per90,2.657,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,touches_in_box_per90,5.383,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,xa_per90,0.178,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,key_passes_per90,1.78,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,shot_creating_actions_per90,3.852,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,through_balls_per90,0.285,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,crosses_per90,2.675,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,progressive_carries_per90,9.259,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,progressive_passes_per90,3.652,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,carries_into_final_third_per90,5.019,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,carries_into_penalty_area_per90,3.187,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,passes_into_final_third_per90,3.452,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,passes_per90,32.979,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,pass_completion_pct,94.0,pct,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,passes_under_pressure_per90,4.521,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,dispossessed_per90,2.711,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,miscontrols_per90,2.954,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,successful_take_ons_per90,4.221,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,take_on_success_pct,66.2,pct,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,pressures_per90,18.967,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,counterpressures_per90,5.031,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,tackles_per90,1.332,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,interceptions_per90,0.749,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,ground_duels_won_pct,60.974,pct,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,aerial_duels_won_pct,49.707,pct,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,defensive_actions_per90,3.782,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,fouls_per90,1.516,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,goals_minus_xg_per90,-0.08,per90,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,availability_index,0.691,index,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,recent_form_index,0.796,index,2100,ATT,sample_2025_02,,Théo Marchand,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,non_penalty_goals_per90,0.18,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,non_penalty_xg_per90,0.26,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,shots_per90,2.82,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,touches_in_box_per90,5.176,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,xa_per90,0.199,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,key_passes_per90,1.5,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,shot_creating_actions_per90,3.76,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,through_balls_per90,0.299,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,crosses_per90,2.752,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,progressive_carries_per90,7.646,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,progressive_passes_per90,3.577,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,carries_into_final_third_per90,4.885,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,carries_into_penalty_area_per90,2.992,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,passes_into_final_third_per90,3.375,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,passes_per90,31.471,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,pass_completion_pct,83.14,pct,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,passes_under_pressure_per90,4.522,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,dispossessed_per90,2.621,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,miscontrols_per90,2.857,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,successful_take_ons_per90,3.793,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,take_on_success_pct,63.118,pct,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,pressures_per90,18.34,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,counterpressures_per90,5.159,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,tackles_per90,1.319,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,interceptions_per90,0.724,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,ground_duels_won_pct,59.247,pct,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,aerial_duels_won_pct,51.323,pct,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,defensive_actions_per90,3.464,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,fouls_per90,1.289,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,goals_minus_xg_per90,-0.08,per90,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,availability_index,0.543,index,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1002,2024-2025,Serie A,Atalanta,recent_form_index,0.479,index,1650,ATT,sample_2025_02,,Luca Bianchi,
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,non_penalty_goals_per90,0.722,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,non_penalty_xg_per90,0.671,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,shots_per90,4.75,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,touches_in_box_per90,7.586,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,xa_per90,0.206,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,key_passes_per90,1.7,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,shot_creating_actions_per90,5.689,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,through_balls_per90,0.309,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,crosses_per90,1.636,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,progressive_carries_per90,5.163,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,progressive_passes_per90,3.757,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,carries_into_final_third_per90,2.963,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,carries_into_penalty_area_per90,3.21,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,passes_into_final_third_per90,3.872,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,passes_per90,33.873,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,pass_completion_pct,94.0,pct,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,passes_under_pressure_per90,5.171,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,dispossessed_per90,2.819,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,miscontrols_per90,2.747,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,successful_take_ons_per90,2.398,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,take_on_success_pct,54.142,pct,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,pressures_per90,20.368,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,counterpressures_per90,5.479,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,tackles_per90,1.411,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,interceptions_per90,0.749,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,ground_duels_won_pct,60.024,pct,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,aerial_duels_won_pct,49.448,pct,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,defensive_actions_per90,3.833,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,fouls_per90,1.517,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,goals_minus_xg_per90,0.051,per90,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,availability_index,0.461,index,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1003,2024-2025,LaLiga,Real Madrid,recent_form_index,0.853,index,1400,ATT,sample_2025_02,,Diego Ferrer,inflated
+transfermarkt,1004,2024-2025,Premier League,Arsenal,non_penalty_goals_per90,0.661,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,non_penalty_xg_per90,0.574,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,shots_per90,4.068,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,touches_in_box_per90,7.606,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,xa_per90,0.172,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,key_passes_per90,1.574,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,shot_creating_actions_per90,4.945,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,through_balls_per90,0.27,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,crosses_per90,1.353,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,progressive_carries_per90,4.456,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,progressive_passes_per90,3.488,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,carries_into_final_third_per90,2.557,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,carries_into_penalty_area_per90,3.033,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,passes_into_final_third_per90,3.157,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,passes_per90,29.429,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,pass_completion_pct,80.479,pct,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,passes_under_pressure_per90,4.257,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,dispossessed_per90,2.25,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,miscontrols_per90,2.457,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,successful_take_ons_per90,2.015,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,take_on_success_pct,48.989,pct,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,pressures_per90,17.107,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,counterpressures_per90,4.883,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,tackles_per90,1.077,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,interceptions_per90,0.645,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,ground_duels_won_pct,50.795,pct,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,aerial_duels_won_pct,43.066,pct,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,defensive_actions_per90,3.361,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,fouls_per90,1.249,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,goals_minus_xg_per90,0.087,per90,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,availability_index,0.576,index,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1004,2024-2025,Premier League,Arsenal,recent_form_index,0.465,index,1750,ATT,sample_2025_02,,Marcus Vale,
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,non_penalty_goals_per90,0.669,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,non_penalty_xg_per90,0.567,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,shots_per90,4.307,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,touches_in_box_per90,7.396,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,xa_per90,0.187,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,key_passes_per90,1.427,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,shot_creating_actions_per90,4.943,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,through_balls_per90,0.267,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,crosses_per90,1.439,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,progressive_carries_per90,5.192,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,progressive_passes_per90,3.583,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,carries_into_final_third_per90,2.761,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,carries_into_penalty_area_per90,3.146,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,passes_into_final_third_per90,3.3,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,passes_per90,29.467,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,pass_completion_pct,92.463,pct,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,passes_under_pressure_per90,4.532,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,dispossessed_per90,2.386,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,miscontrols_per90,2.523,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,successful_take_ons_per90,2.032,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,take_on_success_pct,52.251,pct,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,pressures_per90,17.552,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,counterpressures_per90,4.781,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,tackles_per90,1.179,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,interceptions_per90,0.677,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,ground_duels_won_pct,53.83,pct,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,aerial_duels_won_pct,47.232,pct,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,defensive_actions_per90,3.091,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,fouls_per90,1.266,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,goals_minus_xg_per90,0.102,per90,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,availability_index,0.658,index,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1005,2024-2025,Liga Portugal,Benfica,recent_form_index,0.644,index,2000,ATT,sample_2025_02,,Rui Salgado,high_prod_lower
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,non_penalty_goals_per90,0.493,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,non_penalty_xg_per90,0.471,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,shots_per90,3.134,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,touches_in_box_per90,6.915,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,xa_per90,0.142,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,key_passes_per90,1.423,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,shot_creating_actions_per90,3.13,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,through_balls_per90,0.241,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,crosses_per90,1.389,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,progressive_carries_per90,4.119,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,progressive_passes_per90,3.26,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,carries_into_final_third_per90,3.436,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,carries_into_penalty_area_per90,1.855,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,passes_into_final_third_per90,2.916,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,passes_per90,28.604,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,pass_completion_pct,70.012,pct,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,passes_under_pressure_per90,3.963,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,dispossessed_per90,1.944,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,miscontrols_per90,2.153,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,successful_take_ons_per90,1.806,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,take_on_success_pct,45.276,pct,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,pressures_per90,14.836,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,counterpressures_per90,4.466,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,tackles_per90,1.011,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,interceptions_per90,0.603,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,ground_duels_won_pct,46.654,pct,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,aerial_duels_won_pct,36.802,pct,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,defensive_actions_per90,2.667,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,fouls_per90,1.21,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,goals_minus_xg_per90,0.022,per90,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,availability_index,0.51,index,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1006,2024-2025,Bundesliga,VfB Stuttgart,recent_form_index,0.626,index,1550,ATT,sample_2025_02,,Anton Keller,
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,non_penalty_goals_per90,0.525,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,non_penalty_xg_per90,0.446,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,shots_per90,3.426,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,touches_in_box_per90,7.359,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,xa_per90,0.158,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,key_passes_per90,1.416,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,shot_creating_actions_per90,3.266,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,through_balls_per90,0.24,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,crosses_per90,1.428,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,progressive_carries_per90,4.733,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,progressive_passes_per90,3.177,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,carries_into_final_third_per90,3.443,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,carries_into_penalty_area_per90,2.018,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,passes_into_final_third_per90,3.234,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,passes_per90,26.307,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,pass_completion_pct,82.233,pct,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,passes_under_pressure_per90,4.065,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,dispossessed_per90,2.177,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,miscontrols_per90,2.386,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,successful_take_ons_per90,1.867,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,take_on_success_pct,49.369,pct,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,pressures_per90,15.716,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,counterpressures_per90,4.803,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,tackles_per90,1.14,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,interceptions_per90,0.56,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,ground_duels_won_pct,46.422,pct,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,aerial_duels_won_pct,44.577,pct,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,defensive_actions_per90,3.041,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,fouls_per90,1.235,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,goals_minus_xg_per90,0.079,per90,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,availability_index,0.592,index,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1007,2024-2025,Eredivisie,PSV Eindhoven,recent_form_index,0.54,index,1800,ATT,sample_2025_02,,Nikola Petrov,high_prod_lower
+transfermarkt,1008,2024-2025,Premier League,Chelsea,non_penalty_goals_per90,0.433,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,non_penalty_xg_per90,0.41,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,shots_per90,2.205,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,touches_in_box_per90,4.126,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,xa_per90,0.158,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,key_passes_per90,1.331,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,shot_creating_actions_per90,3.309,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,through_balls_per90,0.26,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,crosses_per90,1.468,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,progressive_carries_per90,4.438,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,progressive_passes_per90,3.043,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,carries_into_final_third_per90,2.453,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,carries_into_penalty_area_per90,1.911,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,passes_into_final_third_per90,2.842,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,passes_per90,28.974,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,pass_completion_pct,80.219,pct,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,passes_under_pressure_per90,3.96,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,dispossessed_per90,2.113,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,miscontrols_per90,2.545,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,successful_take_ons_per90,1.987,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,take_on_success_pct,45.089,pct,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,pressures_per90,28.923,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,counterpressures_per90,8.775,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,tackles_per90,1.828,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,interceptions_per90,0.937,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,ground_duels_won_pct,53.903,pct,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,aerial_duels_won_pct,57.048,pct,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,defensive_actions_per90,3.132,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,fouls_per90,1.257,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,goals_minus_xg_per90,0.023,per90,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,availability_index,0.526,index,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1008,2024-2025,Premier League,Chelsea,recent_form_index,0.823,index,1600,ATT,sample_2025_02,,Erik Sandberg,low_prod_elite
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,non_penalty_goals_per90,0.406,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,non_penalty_xg_per90,0.367,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,shots_per90,2.175,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,touches_in_box_per90,3.579,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,xa_per90,0.15,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,key_passes_per90,1.338,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,shot_creating_actions_per90,3.062,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,through_balls_per90,0.216,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,crosses_per90,1.238,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,progressive_carries_per90,3.925,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,progressive_passes_per90,2.982,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,carries_into_final_third_per90,2.406,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,carries_into_penalty_area_per90,1.812,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,passes_into_final_third_per90,2.904,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,passes_per90,25.738,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,pass_completion_pct,70.753,pct,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,passes_under_pressure_per90,3.728,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,dispossessed_per90,2.047,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,miscontrols_per90,2.187,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,successful_take_ons_per90,1.79,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,take_on_success_pct,40.877,pct,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,pressures_per90,25.083,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,counterpressures_per90,8.284,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,tackles_per90,1.655,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,interceptions_per90,0.875,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,ground_duels_won_pct,46.072,pct,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,aerial_duels_won_pct,46.736,pct,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,defensive_actions_per90,2.73,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,fouls_per90,1.147,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,goals_minus_xg_per90,0.039,per90,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,availability_index,0.641,index,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1009,2024-2025,Liga Portugal,Benfica,recent_form_index,0.929,index,1950,ATT,sample_2025_02,,Tomás Reis,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,non_penalty_goals_per90,0.496,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,non_penalty_xg_per90,0.481,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,shots_per90,2.595,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,touches_in_box_per90,5.917,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,xa_per90,0.237,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,key_passes_per90,1.402,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,shot_creating_actions_per90,3.66,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,through_balls_per90,0.255,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,crosses_per90,1.51,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,progressive_carries_per90,4.667,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,progressive_passes_per90,4.887,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,carries_into_final_third_per90,2.883,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,carries_into_penalty_area_per90,2.05,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,passes_into_final_third_per90,3.338,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,passes_per90,30.17,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,pass_completion_pct,91.075,pct,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,passes_under_pressure_per90,4.328,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,dispossessed_per90,2.149,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,miscontrols_per90,2.543,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,successful_take_ons_per90,1.852,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,take_on_success_pct,51.713,pct,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,pressures_per90,19.05,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,counterpressures_per90,4.913,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,tackles_per90,1.107,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,interceptions_per90,0.592,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,ground_duels_won_pct,49.887,pct,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,aerial_duels_won_pct,61.688,pct,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,defensive_actions_per90,3.171,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,fouls_per90,1.185,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,goals_minus_xg_per90,0.015,per90,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,availability_index,0.724,index,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1010,2024-2025,LaLiga,Villarreal,recent_form_index,0.692,index,2200,ATT,sample_2025_02,,Youssef Amrani,
+transfermarkt,1011,2024-2025,Championship,Leeds United,non_penalty_goals_per90,0.495,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,non_penalty_xg_per90,0.397,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,shots_per90,2.344,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,touches_in_box_per90,5.558,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,xa_per90,0.223,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,key_passes_per90,1.316,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,shot_creating_actions_per90,3.436,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,through_balls_per90,0.252,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,crosses_per90,1.427,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,progressive_carries_per90,4.51,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,progressive_passes_per90,4.379,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,carries_into_final_third_per90,2.538,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,carries_into_penalty_area_per90,1.858,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,passes_into_final_third_per90,2.662,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,passes_per90,28.272,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,pass_completion_pct,84.153,pct,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,passes_under_pressure_per90,3.811,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,dispossessed_per90,2.062,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,miscontrols_per90,2.211,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,successful_take_ons_per90,1.788,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,take_on_success_pct,40.686,pct,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,pressures_per90,19.249,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,counterpressures_per90,4.315,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,tackles_per90,0.977,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,interceptions_per90,0.589,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,ground_duels_won_pct,48.665,pct,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,aerial_duels_won_pct,57.19,pct,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,defensive_actions_per90,2.754,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,fouls_per90,1.102,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,goals_minus_xg_per90,0.098,per90,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,availability_index,0.789,index,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1011,2024-2025,Championship,Leeds United,recent_form_index,0.884,index,2400,ATT,sample_2025_02,,Jack Whitmore,high_prod_lower
+transfermarkt,1012,2024-2025,Serie A,AC Milan,non_penalty_goals_per90,0.088,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,non_penalty_xg_per90,0.105,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,shots_per90,1.301,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,touches_in_box_per90,1.433,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,xa_per90,0.143,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,key_passes_per90,1.311,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,shot_creating_actions_per90,2.791,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,through_balls_per90,0.471,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,crosses_per90,0.793,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,progressive_carries_per90,3.034,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,progressive_passes_per90,10.344,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,carries_into_final_third_per90,1.672,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,carries_into_penalty_area_per90,0.816,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,passes_into_final_third_per90,9.177,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,passes_per90,62.96,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,pass_completion_pct,94.0,pct,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,passes_under_pressure_per90,11.254,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,dispossessed_per90,1.636,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,miscontrols_per90,1.753,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,successful_take_ons_per90,1.066,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,take_on_success_pct,45.951,pct,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,pressures_per90,22.104,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,counterpressures_per90,6.63,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,tackles_per90,2.562,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,interceptions_per90,2.283,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,ground_duels_won_pct,54.648,pct,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,aerial_duels_won_pct,52.956,pct,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,defensive_actions_per90,9.518,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,fouls_per90,1.451,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,goals_minus_xg_per90,-0.017,per90,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,availability_index,0.674,index,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1012,2024-2025,Serie A,AC Milan,recent_form_index,0.718,index,2050,MID,sample_2025_02,,Mateo Ricci,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,non_penalty_goals_per90,0.123,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,non_penalty_xg_per90,0.102,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,shots_per90,1.164,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,touches_in_box_per90,1.212,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,xa_per90,0.123,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,key_passes_per90,1.223,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,shot_creating_actions_per90,2.768,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,through_balls_per90,0.434,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,crosses_per90,0.7,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,progressive_carries_per90,2.695,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,progressive_passes_per90,9.419,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,carries_into_final_third_per90,1.582,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,carries_into_penalty_area_per90,0.658,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,passes_into_final_third_per90,9.208,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,passes_per90,54.2,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,pass_completion_pct,87.429,pct,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,passes_under_pressure_per90,9.995,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,dispossessed_per90,1.364,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,miscontrols_per90,1.55,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,successful_take_ons_per90,0.964,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,take_on_success_pct,44.88,pct,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,pressures_per90,18.506,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,counterpressures_per90,6.474,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,tackles_per90,2.161,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,interceptions_per90,2.178,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,ground_duels_won_pct,56.235,pct,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,aerial_duels_won_pct,48.734,pct,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,defensive_actions_per90,8.808,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,fouls_per90,1.306,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,goals_minus_xg_per90,0.021,per90,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,availability_index,0.559,index,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1013,2024-2025,LaLiga,Villarreal,recent_form_index,0.441,index,1700,MID,sample_2025_02,,Pau Vidal,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,non_penalty_goals_per90,0.119,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,non_penalty_xg_per90,0.087,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,shots_per90,1.082,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,touches_in_box_per90,1.192,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,xa_per90,0.125,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,key_passes_per90,1.05,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,shot_creating_actions_per90,2.655,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,through_balls_per90,0.431,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,crosses_per90,0.649,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,progressive_carries_per90,2.416,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,progressive_passes_per90,10.285,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,carries_into_final_third_per90,1.477,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,carries_into_penalty_area_per90,0.664,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,passes_into_final_third_per90,7.723,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,passes_per90,51.206,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,pass_completion_pct,83.983,pct,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,passes_under_pressure_per90,9.727,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,dispossessed_per90,1.332,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,miscontrols_per90,1.616,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,successful_take_ons_per90,0.828,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,take_on_success_pct,44.713,pct,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,pressures_per90,18.339,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,counterpressures_per90,5.516,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,tackles_per90,2.139,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,interceptions_per90,1.928,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,ground_duels_won_pct,46.386,pct,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,aerial_duels_won_pct,45.082,pct,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,defensive_actions_per90,8.623,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,fouls_per90,1.322,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,goals_minus_xg_per90,0.032,per90,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,availability_index,0.625,index,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1014,2024-2025,Eredivisie,Feyenoord,recent_form_index,0.731,index,1900,MID,sample_2025_02,,Lars Eriksen,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,non_penalty_goals_per90,0.09,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,non_penalty_xg_per90,0.12,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,shots_per90,1.18,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,touches_in_box_per90,2.543,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,xa_per90,0.239,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,key_passes_per90,2.05,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,shot_creating_actions_per90,2.915,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,through_balls_per90,0.327,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,crosses_per90,0.795,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,progressive_carries_per90,5.573,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,progressive_passes_per90,6.435,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,carries_into_final_third_per90,1.939,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,carries_into_penalty_area_per90,1.503,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,passes_into_final_third_per90,10.093,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,passes_per90,62.352,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,pass_completion_pct,94.0,pct,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,passes_under_pressure_per90,9.104,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,dispossessed_per90,1.665,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,miscontrols_per90,1.863,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,successful_take_ons_per90,0.987,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,take_on_success_pct,48.37,pct,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,pressures_per90,29.374,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,counterpressures_per90,10.251,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,tackles_per90,2.39,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,interceptions_per90,1.808,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,ground_duels_won_pct,58.002,pct,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,aerial_duels_won_pct,54.633,pct,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,defensive_actions_per90,7.266,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,fouls_per90,1.699,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,goals_minus_xg_per90,-0.03,per90,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,availability_index,0.609,index,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1015,2024-2025,Ligue 1,RC Lens,recent_form_index,0.652,index,1850,MID,sample_2025_02,,Ismael Traoré,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,non_penalty_goals_per90,0.064,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,non_penalty_xg_per90,0.11,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,shots_per90,1.173,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,touches_in_box_per90,2.598,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,xa_per90,0.237,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,key_passes_per90,1.995,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,shot_creating_actions_per90,2.898,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,through_balls_per90,0.313,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,crosses_per90,0.775,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,progressive_carries_per90,5.596,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,progressive_passes_per90,6.195,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,carries_into_final_third_per90,1.722,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,carries_into_penalty_area_per90,1.483,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,passes_into_final_third_per90,9.539,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,passes_per90,57.178,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,pass_completion_pct,90.715,pct,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,passes_under_pressure_per90,8.182,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,dispossessed_per90,1.422,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,miscontrols_per90,1.726,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,successful_take_ons_per90,1.041,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,take_on_success_pct,50.646,pct,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,pressures_per90,29.079,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,counterpressures_per90,9.547,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,tackles_per90,2.242,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,interceptions_per90,1.742,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,ground_duels_won_pct,60.132,pct,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,aerial_duels_won_pct,52.238,pct,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,defensive_actions_per90,7.562,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,fouls_per90,1.472,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,goals_minus_xg_per90,-0.046,per90,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,availability_index,0.493,index,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1016,2024-2025,Premier League,Chelsea,recent_form_index,0.707,index,1500,MID,sample_2025_02,,Ben Hartley,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,non_penalty_goals_per90,0.075,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,non_penalty_xg_per90,0.105,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,shots_per90,1.039,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,touches_in_box_per90,1.325,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,xa_per90,0.13,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,key_passes_per90,1.152,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,shot_creating_actions_per90,2.506,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,through_balls_per90,0.28,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,crosses_per90,0.707,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,progressive_carries_per90,2.558,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,progressive_passes_per90,5.826,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,carries_into_final_third_per90,1.53,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,carries_into_penalty_area_per90,0.727,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,passes_into_final_third_per90,5.518,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,passes_per90,54.261,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,pass_completion_pct,80.157,pct,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,passes_under_pressure_per90,7.785,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,dispossessed_per90,1.355,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,miscontrols_per90,1.474,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,successful_take_ons_per90,0.953,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,take_on_success_pct,45.0,pct,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,pressures_per90,29.746,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,counterpressures_per90,9.612,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,tackles_per90,3.739,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,interceptions_per90,3.268,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,ground_duels_won_pct,64.599,pct,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,aerial_duels_won_pct,53.182,pct,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,defensive_actions_per90,10.098,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,fouls_per90,1.803,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,goals_minus_xg_per90,-0.03,per90,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,availability_index,0.707,index,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1017,2024-2025,Ligue 1,RC Lens,recent_form_index,0.768,index,2150,MID,sample_2025_02,,Karim Nasser,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,non_penalty_goals_per90,0.085,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,non_penalty_xg_per90,0.11,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,shots_per90,1.127,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,touches_in_box_per90,1.394,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,xa_per90,0.145,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,key_passes_per90,1.354,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,shot_creating_actions_per90,2.645,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,through_balls_per90,0.307,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,crosses_per90,0.769,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,progressive_carries_per90,2.667,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,progressive_passes_per90,5.813,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,carries_into_final_third_per90,1.76,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,carries_into_penalty_area_per90,0.77,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,passes_into_final_third_per90,5.515,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,passes_per90,54.269,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,pass_completion_pct,90.095,pct,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,passes_under_pressure_per90,8.095,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,dispossessed_per90,1.511,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,miscontrols_per90,1.587,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,successful_take_ons_per90,0.881,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,take_on_success_pct,45.585,pct,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,pressures_per90,31.191,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,counterpressures_per90,9.893,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,tackles_per90,4.297,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,interceptions_per90,3.284,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,ground_duels_won_pct,69.469,pct,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,aerial_duels_won_pct,50.5,pct,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,defensive_actions_per90,11.378,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,fouls_per90,1.993,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,goals_minus_xg_per90,-0.025,per90,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,availability_index,0.477,index,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1018,2024-2025,Bundesliga,Bayern Munich,recent_form_index,0.751,index,1450,MID,sample_2025_02,,Felix Braun,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,non_penalty_goals_per90,0.088,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,non_penalty_xg_per90,0.111,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,shots_per90,1.294,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,touches_in_box_per90,1.534,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,xa_per90,0.141,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,key_passes_per90,1.36,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,shot_creating_actions_per90,2.951,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,through_balls_per90,0.317,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,crosses_per90,0.82,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,progressive_carries_per90,2.835,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,progressive_passes_per90,9.583,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,carries_into_final_third_per90,1.696,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,carries_into_penalty_area_per90,0.71,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,passes_into_final_third_per90,8.262,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,passes_per90,82.03,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,pass_completion_pct,94.0,pct,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,passes_under_pressure_per90,12.93,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,dispossessed_per90,1.526,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,miscontrols_per90,1.841,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,successful_take_ons_per90,0.913,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,take_on_success_pct,45.04,pct,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,pressures_per90,19.583,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,counterpressures_per90,6.863,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,tackles_per90,2.491,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,interceptions_per90,1.685,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,ground_duels_won_pct,54.791,pct,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,aerial_duels_won_pct,58.46,pct,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,defensive_actions_per90,8.235,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,fouls_per90,1.508,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,goals_minus_xg_per90,-0.023,per90,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,availability_index,0.526,index,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1019,2024-2025,LaLiga,Real Madrid,recent_form_index,0.505,index,1600,MID,sample_2025_02,,Andrés Molina,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,non_penalty_goals_per90,0.115,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,non_penalty_xg_per90,0.092,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,shots_per90,1.002,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,touches_in_box_per90,1.211,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,xa_per90,0.115,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,key_passes_per90,1.084,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,shot_creating_actions_per90,2.574,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,through_balls_per90,0.283,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,crosses_per90,0.712,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,progressive_carries_per90,2.553,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,progressive_passes_per90,7.469,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,carries_into_final_third_per90,1.553,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,carries_into_penalty_area_per90,0.639,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,passes_into_final_third_per90,6.756,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,passes_per90,77.186,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,pass_completion_pct,86.326,pct,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,passes_under_pressure_per90,10.323,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,dispossessed_per90,1.309,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,miscontrols_per90,1.448,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,successful_take_ons_per90,0.853,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,take_on_success_pct,39.17,pct,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,pressures_per90,17.005,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,counterpressures_per90,5.482,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,tackles_per90,2.217,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,interceptions_per90,1.409,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,ground_duels_won_pct,51.114,pct,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,aerial_duels_won_pct,45.402,pct,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,defensive_actions_per90,6.42,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,fouls_per90,1.278,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,goals_minus_xg_per90,0.023,per90,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,availability_index,0.658,index,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1020,2024-2025,Eredivisie,Feyenoord,recent_form_index,0.411,index,2000,MID,sample_2025_02,,Stefan Vermeulen,
+transfermarkt,1021,2024-2025,Championship,Leeds United,non_penalty_goals_per90,0.067,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,non_penalty_xg_per90,0.092,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,shots_per90,1.027,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,touches_in_box_per90,1.079,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,xa_per90,0.121,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,key_passes_per90,1.102,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,shot_creating_actions_per90,2.356,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,through_balls_per90,0.254,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,crosses_per90,0.617,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,progressive_carries_per90,2.274,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,progressive_passes_per90,5.455,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,carries_into_final_third_per90,1.455,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,carries_into_penalty_area_per90,0.645,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,passes_into_final_third_per90,4.65,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,passes_per90,50.182,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,pass_completion_pct,72.974,pct,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,passes_under_pressure_per90,6.715,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,dispossessed_per90,1.194,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,miscontrols_per90,1.547,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,successful_take_ons_per90,0.766,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,take_on_success_pct,39.393,pct,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,pressures_per90,27.239,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,counterpressures_per90,7.513,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,tackles_per90,3.32,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,interceptions_per90,2.835,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,ground_duels_won_pct,53.267,pct,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,aerial_duels_won_pct,46.18,pct,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,defensive_actions_per90,9.389,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,fouls_per90,1.713,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,goals_minus_xg_per90,-0.025,per90,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,availability_index,0.099,index,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1021,2024-2025,Championship,Leeds United,recent_form_index,0.467,index,300,MID,sample_2025_02,,Owen Clarke,small_sample
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,non_penalty_goals_per90,0.167,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,non_penalty_xg_per90,0.243,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,shots_per90,2.426,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,touches_in_box_per90,4.359,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,xa_per90,0.167,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,key_passes_per90,1.495,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,shot_creating_actions_per90,3.308,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,through_balls_per90,0.236,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,crosses_per90,2.366,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,progressive_carries_per90,7.356,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,progressive_passes_per90,3.397,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,carries_into_final_third_per90,4.018,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,carries_into_penalty_area_per90,2.529,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,passes_into_final_third_per90,2.879,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,passes_per90,26.216,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,pass_completion_pct,75.903,pct,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,passes_under_pressure_per90,4.203,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,dispossessed_per90,2.136,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,miscontrols_per90,2.302,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,successful_take_ons_per90,3.413,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,take_on_success_pct,60.903,pct,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,pressures_per90,16.667,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,counterpressures_per90,4.565,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,tackles_per90,1.09,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,interceptions_per90,0.595,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,ground_duels_won_pct,46.78,pct,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,aerial_duels_won_pct,40.037,pct,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,defensive_actions_per90,2.942,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,fouls_per90,1.14,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,goals_minus_xg_per90,-0.076,per90,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,availability_index,0.724,index,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1022,2024-2025,Eredivisie,PSV Eindhoven,recent_form_index,0.706,index,2200,ATT,sample_2025_02,,Viktor Holm,overage
+transfermarkt,1023,2024-2025,,,non_penalty_goals_per90,0.388,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,non_penalty_xg_per90,0.341,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,shots_per90,1.917,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,touches_in_box_per90,3.651,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,xa_per90,0.132,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,key_passes_per90,1.282,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,shot_creating_actions_per90,2.865,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,through_balls_per90,0.21,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,crosses_per90,1.164,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,progressive_carries_per90,4.041,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,progressive_passes_per90,2.905,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,carries_into_final_third_per90,2.044,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,carries_into_penalty_area_per90,1.642,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,passes_into_final_third_per90,2.482,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,passes_per90,22.867,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,pass_completion_pct,67.458,pct,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,passes_under_pressure_per90,3.167,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,dispossessed_per90,1.92,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,miscontrols_per90,2.096,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,successful_take_ons_per90,1.581,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,take_on_success_pct,36.457,pct,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,pressures_per90,24.51,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,counterpressures_per90,6.798,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,tackles_per90,1.415,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,interceptions_per90,0.768,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,ground_duels_won_pct,49.343,pct,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,aerial_duels_won_pct,45.4,pct,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,defensive_actions_per90,2.444,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,fouls_per90,0.978,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,goals_minus_xg_per90,0.047,per90,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,availability_index,0.428,index,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1023,2024-2025,,,recent_form_index,0.887,index,1300,ATT,sample_2025_02,,Sekou Diallo,missing_fields
+transfermarkt,1001,2024-2025,Ligue 1,Paris Saint-Germain,vertical_leap_cm,71.0,count,2100,ATT,sample_2025_02,,Théo Marchand,unknown_metric
+transfermarkt,999999,2024-2025,Serie A,Unknown FC,shots_per90,1.0,per90,900,ATT,sample_2025_02,,Ghost Player,unmatched_id

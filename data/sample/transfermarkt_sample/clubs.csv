@@ -1,0 +1,16 @@
+club_id,slug,name,domestic_competition_id
+281,man_city,Manchester City,GB1
+11,arsenal,Arsenal,GB1
+631,chelsea,Chelsea,GB1
+418,real_madrid,Real Madrid,ES1
+1049,villarreal,Villarreal,ES1
+5,ac_milan,AC Milan,IT1
+800,atalanta,Atalanta,IT1
+27,bayern_munich,Bayern Munich,L1
+72,stuttgart,VfB Stuttgart,L1
+583,paris_sg,Paris Saint-Germain,FR1
+826,lens,RC Lens,FR1
+383,benfica,Benfica,PO1
+1041,psv,PSV Eindhoven,NL1
+234,feyenoord,Feyenoord,NL1
+399,leeds,Leeds United,GB2

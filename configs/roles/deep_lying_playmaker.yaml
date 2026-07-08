@@ -1,0 +1,52 @@
+role_key: deep_lying_playmaker
+display_name: Deep-Lying Playmaker
+position_group: MID
+eligible_positions: [DM, CM]
+description: >
+  Controls build-up and progresses play from deeper areas. Judged on progressive and
+  line-breaking passing, pass security under difficulty, press resistance, and coverage.
+
+metric_groups:
+  progressive_passing:
+    weight: 0.25
+    metrics:
+      - { name: progressive_passes_per90, direction: higher_better }
+  final_third_entries:
+    weight: 0.20
+    metrics:
+      - { name: passes_into_final_third_per90, direction: higher_better, weight: 0.6 }
+      - { name: through_balls_per90, direction: higher_better, weight: 0.4 }
+  pass_security:
+    weight: 0.15
+    metrics:
+      - { name: pass_completion_pct, direction: higher_better, weight: 0.6 }
+      - { name: miscontrols_per90, direction: lower_better, weight: 0.4 }
+  press_resistance:
+    weight: 0.15
+    metrics:
+      - { name: passes_under_pressure_per90, direction: higher_better, weight: 0.5 }
+      - { name: dispossessed_per90, direction: lower_better, weight: 0.5 }
+  defensive_coverage:
+    weight: 0.10
+    metrics:
+      - { name: defensive_actions_per90, direction: higher_better, weight: 0.5 }
+      - { name: interceptions_per90, direction: higher_better, weight: 0.5 }
+  availability:
+    weight: 0.10
+    metrics:
+      - { name: availability_index, direction: higher_better }
+  switching:
+    weight: 0.05
+    metrics:
+      - { name: long_passes_completed_per90, direction: higher_better }
+
+required_metrics: [progressive_passes_per90, passes_into_final_third_per90, pass_completion_pct]
+optional_metrics: [through_balls_per90, passes_under_pressure_per90, long_passes_completed_per90]
+
+confidence_rules:
+  min_minutes: 450
+  full_confidence_minutes: 1800
+  required_coverage: 0.6
+
+concern_rules:
+  - { key: turnover_risk, metric: dispossessed_per90, direction: higher_worse, percentile_threshold: 0.80, penalty: 1.5 }

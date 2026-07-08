@@ -1,0 +1,19 @@
+version: v1
+# Minutes-based sample reliability. Young players spike over small samples, so we
+# apply a mild multiplier AND a confidence label. This never erases production; it
+# lowers certainty. Thresholds are evaluated top-down (largest matching min wins).
+band: { min: 0.90, max: 1.00 }
+
+# Opposition-quality proxy is derived in the context builder (function of league
+# strength) since the MVP has no per-match opponent data yet. Documented here for
+# transparency; band keeps it neutral-to-mild.
+opposition_proxy: { band: { min: 0.97, max: 1.03 }, default: 1.00 }
+
+# Recent-form / peak bonus is additive (points), gated by sample reliability.
+form_bonus: { max_points: 2.0, requires_confidence: medium }
+
+minutes_thresholds:
+  - { min_minutes: 1800, multiplier: 1.00, confidence: high,   label: "reliable sample" }
+  - { min_minutes: 900,  multiplier: 0.98, confidence: medium, label: "moderate sample" }
+  - { min_minutes: 450,  multiplier: 0.95, confidence: medium, label: "limited sample" }
+  - { min_minutes: 0,    multiplier: 0.90, confidence: low,    label: "very small sample" }

@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ScoutBoy player_season_metrics_v1",
+  "description": "Long-format performance-metrics contract. One row per (player, season, metric). Player identity is joined at ingest time via (source_name, source_player_id) against player_source_ids.",
+  "type": "object",
+  "required": [
+    "source_name",
+    "source_player_id",
+    "season",
+    "competition_name",
+    "team_name",
+    "metric_name",
+    "metric_value",
+    "unit",
+    "minutes",
+    "position_group",
+    "source_snapshot_id"
+  ],
+  "properties": {
+    "source_name": { "type": "string", "description": "Identity source to match (e.g. 'transfermarkt'). Must match player_source_ids.source_name." },
+    "source_player_id": { "type": "string", "description": "Source player id. Must match player_source_ids.source_player_id." },
+    "season": { "type": "string", "examples": ["2024-2025"] },
+    "competition_name": { "type": "string" },
+    "team_name": { "type": "string" },
+    "metric_name": { "type": "string", "description": "Canonical metric key from configs/metrics/canonical_metrics_v1.yaml (aliases accepted). Unknown names are quarantined." },
+    "metric_value": { "type": "number" },
+    "unit": { "type": "string", "enum": ["per90", "pct", "index", "count", "years"] },
+    "minutes": { "type": "integer", "minimum": 0 },
+    "position_group": { "type": "string", "enum": ["ATT", "MID", "DEF", "GK"] },
+    "source_snapshot_id": { "type": "string", "description": "Snapshot label for reproducibility/traceability." },
+    "source_url": { "type": "string" },
+    "provider_player_name": { "type": "string" },
+    "provider_team_id": { "type": "string" },
+    "provider_competition_id": { "type": "string" },
+    "match_scope": { "type": "string", "examples": ["league", "all_competitions"] },
+    "notes": { "type": "string" }
+  }
+}

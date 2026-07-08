@@ -1,0 +1,2932 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ScoutBoy API",
+    "description": "ScoutBoy \u2014 FUT.gg-style real-life player discovery. MVP scope: U23 attackers and midfielders in Europe. Every score/badge/value is explainable.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/players": {
+      "get": {
+        "tags": [
+          "players"
+        ],
+        "summary": "Search Players",
+        "operationId": "search_players_api_players_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "age_min",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Age Min"
+            }
+          },
+          {
+            "name": "age_max",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Age Max"
+            }
+          },
+          {
+            "name": "position_group",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Position Group"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Role"
+            }
+          },
+          {
+            "name": "league",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "League"
+            }
+          },
+          {
+            "name": "club",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Club"
+            }
+          },
+          {
+            "name": "nationality",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Nationality"
+            }
+          },
+          {
+            "name": "min_minutes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Minutes"
+            }
+          },
+          {
+            "name": "rolefit_min",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rolefit Min"
+            }
+          },
+          {
+            "name": "rolefit_max",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rolefit Max"
+            }
+          },
+          {
+            "name": "playstyle",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Playstyle"
+            }
+          },
+          {
+            "name": "value_min",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Value Min"
+            }
+          },
+          {
+            "name": "value_max",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Value Max"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "rolefit_desc",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "universe",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "'mvp' (default) filters to the U23 EU att/mid universe; 'all' includes everyone",
+              "default": "mvp",
+              "title": "Universe"
+            },
+            "description": "'mvp' (default) filters to the U23 EU att/mid universe; 'all' includes everyone"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paginated_PlayerSearchCard_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/players/{player_id}": {
+      "get": {
+        "tags": [
+          "players"
+        ],
+        "summary": "Get Player",
+        "operationId": "get_player_api_players__player_id__get",
+        "parameters": [
+          {
+            "name": "player_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Player Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayerCardResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/players/{player_id}/ratings": {
+      "get": {
+        "tags": [
+          "players"
+        ],
+        "summary": "Get Player Ratings",
+        "operationId": "get_player_ratings_api_players__player_id__ratings_get",
+        "parameters": [
+          {
+            "name": "player_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Player Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleRatingDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/players/{player_id}/playstyles": {
+      "get": {
+        "tags": [
+          "players"
+        ],
+        "summary": "Get Player Playstyles",
+        "operationId": "get_player_playstyles_api_players__player_id__playstyles_get",
+        "parameters": [
+          {
+            "name": "player_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Player Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayerPlaystylesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/players/{player_id}/market": {
+      "get": {
+        "tags": [
+          "players"
+        ],
+        "summary": "Get Player Market",
+        "operationId": "get_player_market_api_players__player_id__market_get",
+        "parameters": [
+          {
+            "name": "player_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Player Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketPanel"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/players/{player_id}/similar": {
+      "get": {
+        "tags": [
+          "players"
+        ],
+        "summary": "Get Similar Players",
+        "operationId": "get_similar_players_api_players__player_id__similar_get",
+        "parameters": [
+          {
+            "name": "player_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Player Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimilarResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/roles/{role_key}/rankings": {
+      "get": {
+        "tags": [
+          "roles"
+        ],
+        "summary": "Role Rankings",
+        "operationId": "role_rankings_api_roles__role_key__rankings_get",
+        "parameters": [
+          {
+            "name": "role_key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Role Key"
+            }
+          },
+          {
+            "name": "age_min",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Age Min"
+            }
+          },
+          {
+            "name": "age_max",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Age Max"
+            }
+          },
+          {
+            "name": "league",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "League"
+            }
+          },
+          {
+            "name": "min_minutes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Minutes"
+            }
+          },
+          {
+            "name": "min_confidence",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Confidence"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleLeaderboard"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/compare": {
+      "get": {
+        "tags": [
+          "compare"
+        ],
+        "summary": "Compare",
+        "operationId": "compare_api_compare_get",
+        "parameters": [
+          {
+            "name": "player_a",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Player A"
+            }
+          },
+          {
+            "name": "player_b",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Player B"
+            }
+          },
+          {
+            "name": "role_key",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Role Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompareResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/methodology": {
+      "get": {
+        "tags": [
+          "methodology"
+        ],
+        "summary": "Methodology",
+        "operationId": "methodology_api_methodology_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MethodologyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/ingest": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Trigger Ingest",
+        "operationId": "trigger_ingest_api_admin_ingest_post",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "sample",
+              "title": "Source"
+            }
+          },
+          {
+            "name": "x-admin-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Admin-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/recompute-ratings": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Trigger Recompute",
+        "operationId": "trigger_recompute_api_admin_recompute_ratings_post",
+        "parameters": [
+          {
+            "name": "x-admin-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Admin-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecomputeResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/rating-runs": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Rating Runs",
+        "operationId": "rating_runs_api_admin_rating_runs_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "x-admin-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Admin-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RatingRunSummary"
+                  },
+                  "title": "Response Rating Runs Api Admin Rating Runs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuditBreakdown": {
+        "properties": {
+          "role_key": {
+            "type": "string",
+            "title": "Role Key"
+          },
+          "metric_breakdown": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metric Breakdown",
+            "default": {}
+          },
+          "context_breakdown": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Context Breakdown",
+            "default": {}
+          },
+          "confidence_breakdown": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Confidence Breakdown",
+            "default": {}
+          },
+          "penalties": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Penalties",
+            "default": {}
+          },
+          "explanation_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explanation Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role_key"
+        ],
+        "title": "AuditBreakdown"
+      },
+      "CompareResponse": {
+        "properties": {
+          "season": {
+            "type": "string",
+            "title": "Season"
+          },
+          "role_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role Key"
+          },
+          "role_display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role Display"
+          },
+          "player_a": {
+            "$ref": "#/components/schemas/CompareSide"
+          },
+          "player_b": {
+            "$ref": "#/components/schemas/CompareSide"
+          },
+          "stat_rows": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Stat Rows",
+            "default": []
+          },
+          "role_comparison": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Role Comparison",
+            "default": {}
+          },
+          "why_higher": {
+            "type": "string",
+            "title": "Why Higher",
+            "default": ""
+          },
+          "confidence_warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Confidence Warnings",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "season",
+          "player_a",
+          "player_b"
+        ],
+        "title": "CompareResponse"
+      },
+      "CompareSide": {
+        "properties": {
+          "identity": {
+            "$ref": "#/components/schemas/PlayerIdentity"
+          },
+          "role_ratings": {
+            "items": {
+              "$ref": "#/components/schemas/RoleRatingSummary"
+            },
+            "type": "array",
+            "title": "Role Ratings",
+            "default": []
+          },
+          "substats": {
+            "items": {
+              "$ref": "#/components/schemas/SubStat"
+            },
+            "type": "array",
+            "title": "Substats",
+            "default": []
+          },
+          "playstyles": {
+            "items": {
+              "$ref": "#/components/schemas/PlaystyleBadge"
+            },
+            "type": "array",
+            "title": "Playstyles",
+            "default": []
+          },
+          "market": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MarketPanel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "context": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContextPanel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "confidence": {
+            "type": "string",
+            "title": "Confidence",
+            "default": "unknown"
+          }
+        },
+        "type": "object",
+        "required": [
+          "identity"
+        ],
+        "title": "CompareSide"
+      },
+      "ConcernMeta": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "display_name"
+        ],
+        "title": "ConcernMeta"
+      },
+      "ContextDimMeta": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "explanation": {
+            "type": "string",
+            "title": "Explanation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "explanation"
+        ],
+        "title": "ContextDimMeta"
+      },
+      "ContextPanel": {
+        "properties": {
+          "league_strength": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "League Strength"
+          },
+          "team_strength": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team Strength"
+          },
+          "opposition_quality": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opposition Quality"
+          },
+          "competition_stakes": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Competition Stakes"
+          },
+          "role_usage": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role Usage"
+          },
+          "sample_reliability": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Reliability"
+          },
+          "translation_risk": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Translation Risk"
+          },
+          "sample_confidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Confidence"
+          },
+          "minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minutes"
+          },
+          "explanation": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Explanation",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "title": "ContextPanel"
+      },
+      "DataSource": {
+        "properties": {
+          "source_name": {
+            "type": "string",
+            "title": "Source Name"
+          },
+          "source_player_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Player Id"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_name"
+        ],
+        "title": "DataSource"
+      },
+      "DataSourceMeta": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "role",
+          "note"
+        ],
+        "title": "DataSourceMeta"
+      },
+      "FaceStat": {
+        "properties": {
+          "group_key": {
+            "type": "string",
+            "title": "Group Key"
+          },
+          "group_label": {
+            "type": "string",
+            "title": "Group Label"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "confidence": {
+            "type": "string",
+            "title": "Confidence"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/SubStat"
+            },
+            "type": "array",
+            "title": "Metrics",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "group_key",
+          "group_label",
+          "confidence"
+        ],
+        "title": "FaceStat"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "IngestResult": {
+        "properties": {
+          "run_id": {
+            "type": "integer",
+            "title": "Run Id"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "players": {
+            "type": "integer",
+            "title": "Players"
+          },
+          "metrics": {
+            "type": "integer",
+            "title": "Metrics"
+          },
+          "quality_errors": {
+            "type": "integer",
+            "title": "Quality Errors"
+          },
+          "quality_warnings": {
+            "type": "integer",
+            "title": "Quality Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "source",
+          "players",
+          "metrics",
+          "quality_errors",
+          "quality_warnings"
+        ],
+        "title": "IngestResult"
+      },
+      "MarketPanel": {
+        "properties": {
+          "public_value_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Public Value Eur"
+          },
+          "model_value_low_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Value Low Eur"
+          },
+          "model_value_high_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Value High Eur"
+          },
+          "expected_asking_low_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Asking Low Eur"
+          },
+          "expected_asking_high_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Asking High Eur"
+          },
+          "confidence": {
+            "type": "string",
+            "title": "Confidence",
+            "default": "unknown"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "default": "unknown"
+          },
+          "manual_review_required": {
+            "type": "boolean",
+            "title": "Manual Review Required",
+            "default": false
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "explanation": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Explanation",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "title": "MarketPanel"
+      },
+      "MethodologyResponse": {
+        "properties": {
+          "scope": {
+            "type": "string",
+            "title": "Scope"
+          },
+          "rating_version": {
+            "type": "string",
+            "title": "Rating Version"
+          },
+          "playstyle_version": {
+            "type": "string",
+            "title": "Playstyle Version"
+          },
+          "market_version": {
+            "type": "string",
+            "title": "Market Version"
+          },
+          "formula": {
+            "type": "string",
+            "title": "Formula"
+          },
+          "roles": {
+            "items": {
+              "$ref": "#/components/schemas/RoleMeta"
+            },
+            "type": "array",
+            "title": "Roles",
+            "default": []
+          },
+          "playstyles": {
+            "items": {
+              "$ref": "#/components/schemas/PlaystyleMeta"
+            },
+            "type": "array",
+            "title": "Playstyles",
+            "default": []
+          },
+          "concerns": {
+            "items": {
+              "$ref": "#/components/schemas/ConcernMeta"
+            },
+            "type": "array",
+            "title": "Concerns",
+            "default": []
+          },
+          "context_dimensions": {
+            "items": {
+              "$ref": "#/components/schemas/ContextDimMeta"
+            },
+            "type": "array",
+            "title": "Context Dimensions",
+            "default": []
+          },
+          "data_sources": {
+            "items": {
+              "$ref": "#/components/schemas/DataSourceMeta"
+            },
+            "type": "array",
+            "title": "Data Sources",
+            "default": []
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations",
+            "default": []
+          },
+          "last_updated": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scope",
+          "rating_version",
+          "playstyle_version",
+          "market_version",
+          "formula"
+        ],
+        "title": "MethodologyResponse"
+      },
+      "Paginated_PlayerSearchCard_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PlayerSearchCard"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total_pages": {
+            "type": "integer",
+            "title": "Total Pages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size",
+          "total_pages"
+        ],
+        "title": "Paginated[PlayerSearchCard]"
+      },
+      "PlayerCardResponse": {
+        "properties": {
+          "identity": {
+            "$ref": "#/components/schemas/PlayerIdentity"
+          },
+          "season": {
+            "type": "string",
+            "title": "Season"
+          },
+          "confidence": {
+            "type": "string",
+            "title": "Confidence"
+          },
+          "best_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Role"
+          },
+          "face_stats": {
+            "items": {
+              "$ref": "#/components/schemas/FaceStat"
+            },
+            "type": "array",
+            "title": "Face Stats",
+            "default": []
+          },
+          "substats": {
+            "items": {
+              "$ref": "#/components/schemas/SubStat"
+            },
+            "type": "array",
+            "title": "Substats",
+            "default": []
+          },
+          "role_ratings": {
+            "items": {
+              "$ref": "#/components/schemas/RoleRatingSummary"
+            },
+            "type": "array",
+            "title": "Role Ratings",
+            "default": []
+          },
+          "playstyles": {
+            "items": {
+              "$ref": "#/components/schemas/PlaystyleBadge"
+            },
+            "type": "array",
+            "title": "Playstyles",
+            "default": []
+          },
+          "concerns": {
+            "items": {
+              "$ref": "#/components/schemas/PlaystyleBadge"
+            },
+            "type": "array",
+            "title": "Concerns",
+            "default": []
+          },
+          "market": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MarketPanel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "strengths": {
+            "items": {
+              "$ref": "#/components/schemas/StrengthConcern"
+            },
+            "type": "array",
+            "title": "Strengths",
+            "default": []
+          },
+          "concerns_text": {
+            "items": {
+              "$ref": "#/components/schemas/StrengthConcern"
+            },
+            "type": "array",
+            "title": "Concerns Text",
+            "default": []
+          },
+          "context": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContextPanel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "data_sources": {
+            "items": {
+              "$ref": "#/components/schemas/DataSource"
+            },
+            "type": "array",
+            "title": "Data Sources",
+            "default": []
+          },
+          "last_updated": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Updated"
+          },
+          "rating_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "identity",
+          "season",
+          "confidence"
+        ],
+        "title": "PlayerCardResponse"
+      },
+      "PlayerIdentity": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "canonical_name": {
+            "type": "string",
+            "title": "Canonical Name"
+          },
+          "age": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "birth_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birth Date"
+          },
+          "nationality": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nationality"
+          },
+          "preferred_foot": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferred Foot"
+          },
+          "height_cm": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height Cm"
+          },
+          "primary_position": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Position"
+          },
+          "secondary_positions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Secondary Positions",
+            "default": []
+          },
+          "position_group": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Group"
+          },
+          "club": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Club"
+          },
+          "league": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "League"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "canonical_name"
+        ],
+        "title": "PlayerIdentity"
+      },
+      "PlayerPlaystylesResponse": {
+        "properties": {
+          "player_id": {
+            "type": "integer",
+            "title": "Player Id"
+          },
+          "season": {
+            "type": "string",
+            "title": "Season"
+          },
+          "playstyles": {
+            "items": {
+              "$ref": "#/components/schemas/PlaystyleBadge"
+            },
+            "type": "array",
+            "title": "Playstyles",
+            "default": []
+          },
+          "concerns": {
+            "items": {
+              "$ref": "#/components/schemas/PlaystyleBadge"
+            },
+            "type": "array",
+            "title": "Concerns",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "player_id",
+          "season"
+        ],
+        "title": "PlayerPlaystylesResponse"
+      },
+      "PlayerSearchCard": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "canonical_name": {
+            "type": "string",
+            "title": "Canonical Name"
+          },
+          "age": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "club": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Club"
+          },
+          "league": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "League"
+          },
+          "primary_position": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Position"
+          },
+          "position_group": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Group"
+          },
+          "best_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Role"
+          },
+          "best_role_display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Role Display"
+          },
+          "best_role_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Role Score"
+          },
+          "confidence": {
+            "type": "string",
+            "title": "Confidence",
+            "default": "unknown"
+          },
+          "top_playstyles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Top Playstyles",
+            "default": []
+          },
+          "minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minutes"
+          },
+          "market_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Label"
+          },
+          "expected_asking_low_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Asking Low Eur"
+          },
+          "expected_asking_high_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Asking High Eur"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "canonical_name"
+        ],
+        "title": "PlayerSearchCard"
+      },
+      "PlaystyleBadge": {
+        "properties": {
+          "playstyle_key": {
+            "type": "string",
+            "title": "Playstyle Key"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "tier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tier"
+          },
+          "confidence": {
+            "type": "string",
+            "title": "Confidence"
+          },
+          "is_concern": {
+            "type": "boolean",
+            "title": "Is Concern",
+            "default": false
+          },
+          "why_applied": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Why Applied",
+            "default": {}
+          },
+          "supporting_metrics": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Supporting Metrics",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "playstyle_key",
+          "display_name",
+          "category",
+          "confidence"
+        ],
+        "title": "PlaystyleBadge"
+      },
+      "PlaystyleMeta": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "display_name"
+        ],
+        "title": "PlaystyleMeta"
+      },
+      "RatingRunSummary": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "run_type": {
+            "type": "string",
+            "title": "Run Type"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "affected_players_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Affected Players Count"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "config_hashes": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Config Hashes",
+            "default": {}
+          },
+          "source_snapshot_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Source Snapshot Ids",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "run_type",
+          "version",
+          "status"
+        ],
+        "title": "RatingRunSummary"
+      },
+      "RecomputeResult": {
+        "properties": {
+          "run_id": {
+            "type": "integer",
+            "title": "Run Id"
+          },
+          "affected": {
+            "type": "integer",
+            "title": "Affected"
+          },
+          "seasons": {
+            "type": "integer",
+            "title": "Seasons"
+          },
+          "outlier_check": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Outlier Check",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "affected",
+          "seasons"
+        ],
+        "title": "RecomputeResult"
+      },
+      "RoleGroupMeta": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "weight": {
+            "type": "number",
+            "title": "Weight"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "weight"
+        ],
+        "title": "RoleGroupMeta"
+      },
+      "RoleLeaderboard": {
+        "properties": {
+          "role_key": {
+            "type": "string",
+            "title": "Role Key"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "position_group": {
+            "type": "string",
+            "title": "Position Group"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "season": {
+            "type": "string",
+            "title": "Season"
+          },
+          "rating_version": {
+            "type": "string",
+            "title": "Rating Version"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/RoleRankingRow"
+            },
+            "type": "array",
+            "title": "Rows",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "role_key",
+          "display_name",
+          "position_group",
+          "season",
+          "rating_version",
+          "total"
+        ],
+        "title": "RoleLeaderboard"
+      },
+      "RoleMeta": {
+        "properties": {
+          "role_key": {
+            "type": "string",
+            "title": "Role Key"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "position_group": {
+            "type": "string",
+            "title": "Position Group"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/RoleGroupMeta"
+            },
+            "type": "array",
+            "title": "Groups",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "role_key",
+          "display_name",
+          "position_group"
+        ],
+        "title": "RoleMeta"
+      },
+      "RoleRankingRow": {
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "title": "Rank"
+          },
+          "player_id": {
+            "type": "integer",
+            "title": "Player Id"
+          },
+          "canonical_name": {
+            "type": "string",
+            "title": "Canonical Name"
+          },
+          "age": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "club": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Club"
+          },
+          "league": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "League"
+          },
+          "final_score": {
+            "type": "number",
+            "title": "Final Score"
+          },
+          "confidence": {
+            "type": "string",
+            "title": "Confidence"
+          },
+          "top_playstyles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Top Playstyles",
+            "default": []
+          },
+          "expected_asking_low_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Asking Low Eur"
+          },
+          "expected_asking_high_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Asking High Eur"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rank",
+          "player_id",
+          "canonical_name",
+          "final_score",
+          "confidence"
+        ],
+        "title": "RoleRankingRow"
+      },
+      "RoleRatingDetail": {
+        "properties": {
+          "player_id": {
+            "type": "integer",
+            "title": "Player Id"
+          },
+          "season": {
+            "type": "string",
+            "title": "Season"
+          },
+          "rating_version": {
+            "type": "string",
+            "title": "Rating Version"
+          },
+          "ratings": {
+            "items": {
+              "$ref": "#/components/schemas/RoleRatingSummary"
+            },
+            "type": "array",
+            "title": "Ratings",
+            "default": []
+          },
+          "audits": {
+            "items": {
+              "$ref": "#/components/schemas/AuditBreakdown"
+            },
+            "type": "array",
+            "title": "Audits",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "player_id",
+          "season",
+          "rating_version"
+        ],
+        "title": "RoleRatingDetail"
+      },
+      "RoleRatingSummary": {
+        "properties": {
+          "role_key": {
+            "type": "string",
+            "title": "Role Key"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "final_score": {
+            "type": "number",
+            "title": "Final Score"
+          },
+          "raw_score": {
+            "type": "number",
+            "title": "Raw Score"
+          },
+          "context_adjusted_score": {
+            "type": "number",
+            "title": "Context Adjusted Score"
+          },
+          "confidence": {
+            "type": "string",
+            "title": "Confidence"
+          },
+          "rank_in_peer_group": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank In Peer Group"
+          },
+          "is_best": {
+            "type": "boolean",
+            "title": "Is Best",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "role_key",
+          "display_name",
+          "final_score",
+          "raw_score",
+          "context_adjusted_score",
+          "confidence"
+        ],
+        "title": "RoleRatingSummary"
+      },
+      "SimilarGroup": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "players": {
+            "items": {
+              "$ref": "#/components/schemas/SimilarPlayer"
+            },
+            "type": "array",
+            "title": "Players",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "description"
+        ],
+        "title": "SimilarGroup"
+      },
+      "SimilarPlayer": {
+        "properties": {
+          "player_id": {
+            "type": "integer",
+            "title": "Player Id"
+          },
+          "canonical_name": {
+            "type": "string",
+            "title": "Canonical Name"
+          },
+          "club": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Club"
+          },
+          "league": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "League"
+          },
+          "age": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age"
+          },
+          "best_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Role"
+          },
+          "best_role_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Role Score"
+          },
+          "similarity": {
+            "type": "number",
+            "title": "Similarity"
+          },
+          "expected_asking_low_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Asking Low Eur"
+          },
+          "expected_asking_high_eur": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Asking High Eur"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "player_id",
+          "canonical_name",
+          "similarity"
+        ],
+        "title": "SimilarPlayer"
+      },
+      "SimilarResponse": {
+        "properties": {
+          "player_id": {
+            "type": "integer",
+            "title": "Player Id"
+          },
+          "season": {
+            "type": "string",
+            "title": "Season"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/SimilarGroup"
+            },
+            "type": "array",
+            "title": "Groups",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "player_id",
+          "season"
+        ],
+        "title": "SimilarResponse"
+      },
+      "StrengthConcern": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "detail"
+        ],
+        "title": "StrengthConcern"
+      },
+      "SubStat": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "display": {
+            "type": "string",
+            "title": "Display"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit"
+          },
+          "per90_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Per90 Value"
+          },
+          "percentile": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Percentile"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "present": {
+            "type": "boolean",
+            "title": "Present",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "display",
+          "unit"
+        ],
+        "title": "SubStat"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

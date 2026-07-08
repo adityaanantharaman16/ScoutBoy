@@ -1,0 +1,1 @@
+"""ScoutBoy FastAPI application package."""

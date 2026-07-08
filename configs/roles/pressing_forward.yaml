@@ -1,0 +1,52 @@
+role_key: pressing_forward
+display_name: Pressing Forward
+position_group: ATT
+eligible_positions: [CF, ST, LW, RW]
+description: >
+  Leads the press from the front and offers transition threat. Judged on pressing
+  volume and defensive work alongside a baseline of box threat.
+
+metric_groups:
+  pressing_volume:
+    weight: 0.25
+    metrics:
+      - { name: pressures_per90, direction: higher_better, weight: 0.6 }
+      - { name: counterpressures_per90, direction: higher_better, weight: 0.4 }
+  shot_threat:
+    weight: 0.20
+    metrics:
+      - { name: non_penalty_xg_per90, direction: higher_better }
+  defensive_work:
+    weight: 0.15
+    metrics:
+      - { name: tackles_per90, direction: higher_better, weight: 0.5 }
+      - { name: interceptions_per90, direction: higher_better, weight: 0.5 }
+  box_threat:
+    weight: 0.15
+    metrics:
+      - { name: touches_in_box_per90, direction: higher_better, weight: 0.5 }
+      - { name: shots_per90, direction: higher_better, weight: 0.5 }
+  transition_carrying:
+    weight: 0.10
+    metrics:
+      - { name: carries_into_final_third_per90, direction: higher_better }
+  duels:
+    weight: 0.10
+    metrics:
+      - { name: ground_duels_won_pct, direction: higher_better, weight: 0.5 }
+      - { name: aerial_duels_won_pct, direction: higher_better, weight: 0.5 }
+  possession_security:
+    weight: 0.05
+    metrics:
+      - { name: dispossessed_per90, direction: lower_better }
+
+required_metrics: [pressures_per90, non_penalty_xg_per90, touches_in_box_per90]
+optional_metrics: [counterpressures_per90, tackles_per90, interceptions_per90]
+
+confidence_rules:
+  min_minutes: 450
+  full_confidence_minutes: 1800
+  required_coverage: 0.6
+
+concern_rules:
+  - { key: low_defensive_output, metric: pressures_per90, direction: lower_worse, percentile_threshold: 0.25, penalty: 1.5 }

@@ -1,0 +1,56 @@
+role_key: touchline_winger
+display_name: Touchline Winger
+position_group: ATT
+eligible_positions: [LW, RW]
+description: >
+  Receives wide, attacks the fullback 1v1, progresses primarily by carrying, and
+  stretches the pitch. Judged on take-on volume/success, carrying, and wide creation
+  rather than pure goal output.
+
+# Each group has a weight (summing to ~1.0). Within a group, metric weights default
+# to equal if omitted. direction is higher_better | lower_better.
+metric_groups:
+  take_on_threat:
+    weight: 0.25
+    metrics:
+      - { name: take_on_success_pct, direction: higher_better, weight: 0.5 }
+      - { name: successful_take_ons_per90, direction: higher_better, weight: 0.5 }
+  progressive_carrying:
+    weight: 0.20
+    metrics:
+      - { name: progressive_carries_per90, direction: higher_better }
+  final_third_entries:
+    weight: 0.15
+    metrics:
+      - { name: carries_into_final_third_per90, direction: higher_better, weight: 0.5 }
+      - { name: carries_into_penalty_area_per90, direction: higher_better, weight: 0.5 }
+  wide_creation:
+    weight: 0.15
+    metrics:
+      - { name: key_passes_per90, direction: higher_better, weight: 0.6 }
+      - { name: crosses_per90, direction: higher_better, weight: 0.4 }
+  possession_security:
+    weight: 0.10
+    metrics:
+      - { name: dispossessed_per90, direction: lower_better, weight: 0.5 }
+      - { name: miscontrols_per90, direction: lower_better, weight: 0.5 }
+  transition_value:
+    weight: 0.10
+    metrics:
+      - { name: progressive_passes_per90, direction: higher_better }
+  defensive_work:
+    weight: 0.05
+    metrics:
+      - { name: pressures_per90, direction: higher_better }
+
+required_metrics: [successful_take_ons_per90, progressive_carries_per90, carries_into_final_third_per90]
+optional_metrics: [crosses_per90, through_balls_per90, key_passes_per90]
+
+confidence_rules:
+  min_minutes: 450
+  full_confidence_minutes: 1800
+  required_coverage: 0.6   # fraction of required_metrics that must be present for full confidence
+
+concern_rules:
+  - { key: turnover_risk, metric: dispossessed_per90, direction: higher_worse, percentile_threshold: 0.80, penalty: 2.0 }
+  - { key: limited_creation, metric: key_passes_per90, direction: lower_worse, percentile_threshold: 0.25, penalty: 1.0 }

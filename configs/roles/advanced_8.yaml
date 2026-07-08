@@ -1,0 +1,53 @@
+role_key: advanced_8
+display_name: Advanced 8
+position_group: MID
+eligible_positions: [CM, AM, CAM]
+description: >
+  Connects midfield to attack and contributes in the final third. Judged on progressive
+  reception/carrying, final-third passing, chance creation, pressing, and box arrivals.
+
+metric_groups:
+  progressive_receiving:
+    weight: 0.20
+    metrics:
+      - { name: progressive_carries_per90, direction: higher_better }
+  final_third_passing:
+    weight: 0.20
+    metrics:
+      - { name: passes_into_final_third_per90, direction: higher_better }
+  chance_creation:
+    weight: 0.15
+    metrics:
+      - { name: xa_per90, direction: higher_better, weight: 0.6 }
+      - { name: key_passes_per90, direction: higher_better, weight: 0.4 }
+  counterpressing:
+    weight: 0.15
+    metrics:
+      - { name: pressures_per90, direction: higher_better, weight: 0.5 }
+      - { name: counterpressures_per90, direction: higher_better, weight: 0.5 }
+  box_entries:
+    weight: 0.15
+    metrics:
+      - { name: touches_in_box_per90, direction: higher_better, weight: 0.5 }
+      - { name: carries_into_penalty_area_per90, direction: higher_better, weight: 0.5 }
+  possession_security:
+    weight: 0.10
+    metrics:
+      - { name: dispossessed_per90, direction: lower_better, weight: 0.5 }
+      - { name: pass_completion_pct, direction: higher_better, weight: 0.5 }
+  availability:
+    weight: 0.05
+    metrics:
+      - { name: availability_index, direction: higher_better }
+
+required_metrics: [progressive_carries_per90, passes_into_final_third_per90, xa_per90]
+optional_metrics: [key_passes_per90, counterpressures_per90, touches_in_box_per90]
+
+confidence_rules:
+  min_minutes: 450
+  full_confidence_minutes: 1800
+  required_coverage: 0.6
+
+concern_rules:
+  - { key: low_defensive_output, metric: pressures_per90, direction: lower_worse, percentile_threshold: 0.20, penalty: 1.0 }
+  - { key: turnover_risk, metric: dispossessed_per90, direction: higher_worse, percentile_threshold: 0.80, penalty: 1.0 }
