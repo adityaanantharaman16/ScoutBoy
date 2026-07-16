@@ -21,6 +21,7 @@ from .runs import (
     PlayerUniverseMembership,
     RatingRun,
     SimilarityVector,
+    SourceSnapshot,
 )
 
 __all__ = [
@@ -45,4 +46,5 @@ __all__ = [
     "PlayerUniverseMembership",
     "RatingRun",
     "DataQualityReport",
+    "SourceSnapshot",
 ]

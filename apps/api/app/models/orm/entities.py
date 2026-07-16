@@ -104,3 +104,6 @@ class Appearance(Base, TimestampMixin):
     starts: Mapped[int] = mapped_column(Integer, default=0)
     position_group: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
     role_usage_raw: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    source_snapshot_record_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("source_snapshots.id"), nullable=True, index=True
+    )

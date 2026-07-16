@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from app.models.orm import (
     MarketValue,
+    Player,
     PlayerMetricNormalized,
     PlayerPlaystyle,
     RatingAudit,
     RatingRun,
     RoleRating,
 )
+from rolefit import load_role_configs
 from sqlalchemy import func, select
 
 
@@ -32,6 +34,7 @@ def test_runs_recorded_and_completed(db_session):
     assert all(r.status == "completed" for r in runs)
     recompute = next(r for r in runs if r.run_type == "recompute")
     assert recompute.config_hashes_json and recompute.affected_players_count
+    assert recompute.source_snapshot_ids_json
 
 
 def test_normalized_missing_metrics_are_absent_not_zero(db_session):
@@ -47,3 +50,11 @@ def test_ranks_are_dense_and_deterministic(db_session):
     )
     ranks = sorted(r.rank_in_peer_group for r in ratings)
     assert ranks == list(range(1, len(ranks) + 1))
+
+
+def test_every_rating_respects_explicit_role_position_eligibility(db_session):
+    roles = load_role_configs()
+    ratings = list(db_session.scalars(select(RoleRating)))
+    for rating in ratings:
+        player = db_session.get(Player, rating.player_id)
+        assert player.primary_position in roles[rating.role_key].eligible_positions

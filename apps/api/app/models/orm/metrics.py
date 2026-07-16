@@ -32,6 +32,11 @@ class PlayerMetricRaw(Base, TimestampMixin):
     unit: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     raw_payload_json: Mapped[dict] = mapped_column(JSON, default=dict)
     source_snapshot_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    source_snapshot_record_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("source_snapshots.id"), nullable=True, index=True
+    )
+    metric_provider: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, index=True)
+    scope: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
 
 
 class PlayerMetricNormalized(Base, TimestampMixin):

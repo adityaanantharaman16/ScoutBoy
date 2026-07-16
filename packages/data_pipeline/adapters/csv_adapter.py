@@ -40,6 +40,8 @@ REQUIRED_COLUMNS = (
     "source_snapshot_id",
 )
 OPTIONAL_COLUMNS = (
+    "metric_provider",
+    "scope",
     "source_url",
     "provider_player_name",
     "provider_team_id",
@@ -154,6 +156,8 @@ class PerformanceCsvAdapter(SourceAdapter):
                         "notes": r.get("notes"),
                         "snapshot": r.get("source_snapshot_id"),
                     },
+                    metric_provider=(r.get("metric_provider") or SOURCE_NAME).strip(),
+                    scope=(r.get("scope") or r.get("match_scope") or "").strip() or None,
                 )
             )
 

@@ -21,7 +21,8 @@ Implemented in `packages/rating_engine/rolefit/formula.py`.
 
 ## 1. Role-weighted performance score (0–100)
 
-- Metrics are normalized to **peer-group goodness percentiles** (position group, per season)
+- Metrics are normalized to **peer-group goodness percentiles**. Stored card metrics use the
+  broad position group; RoleFit scoring uses the population eligible for that specific role
   in `normalize.py`. `higher_better` comes from the shared metric registry; lower-is-better
   metrics (dispossessions, miscontrols, fouls) are inverted so a high percentile is always good.
 - Each role config (`configs/roles/*.yaml`) defines weighted **metric groups**. A group score is
@@ -59,6 +60,11 @@ in the top 20% for dispossessions). Total capped at 8.0. Each penalty is itemize
 penalties. Below the role's `min_minutes` floor, confidence is capped so small-sample spikes
 cannot look reliable. Missing required metrics are listed and lower confidence — the score is
 still computed from what is present.
+
+For event-backed records, sample confidence uses `performance_covered_minutes`, not the player's
+full-season appearance minutes. A player without event coverage receives zero covered minutes
+in an event-backed season and cannot enter the real pilot cohort. Role assignment also enforces
+each YAML role's `eligible_positions`; a position-group match alone is insufficient.
 
 ## Audit & explainability
 

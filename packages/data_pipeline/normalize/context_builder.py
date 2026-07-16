@@ -19,6 +19,7 @@ def build_player_context(
     minutes: int,
     recent_form_index: Optional[float],
     role_usage: float = 1.0,
+    team_tier: Optional[str] = None,
 ) -> ContextResult:
     return build_context(
         config,
@@ -28,4 +29,5 @@ def build_player_context(
         minutes=minutes,
         recent_form_index=recent_form_index,
         role_usage=role_usage,
+        team_tier=team_tier,
     )

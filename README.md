@@ -4,12 +4,14 @@
 into clean, fan-readable scouting cards with role-specific ratings, playstyle badges, and
 transparent market-value ranges — and it can always show *why* a score, badge, or value exists.
 
-> **MVP scope:** U23 attackers and midfielders in Europe. Everything is explainable; missing
+> **Product scope:** U23 attackers and midfielders in Europe. The current real-data pilot is a
+> **Bayer Leverkusen-centered Bundesliga 2023/24 vertical slice** (34 StatsBomb matches), not
+> full-league coverage. Everything is explainable; missing
 > data is shown as *unknown / low-confidence*, never zero. This is a prototype — it does not yet
 > include the LLM assistant, fullbacks/CBs/GKs, accounts, or paid data providers.
 
 > Independent project. Not affiliated with FUT.gg, EA SPORTS FC, clubs, or data providers.
-> Sample data is synthetic (fictional players; real clubs/leagues).
+> Synthetic fixtures remain available for deterministic development and E2E tests.
 
 ---
 
@@ -97,6 +99,22 @@ make recompute-ratings
 See [docs/milestone_2_real_data_v0.md](docs/milestone_2_real_data_v0.md) and the metrics
 contract [docs/data_contracts/player_season_metrics_v1.md](docs/data_contracts/player_season_metrics_v1.md).
 
+### Real pilot (Milestone 3)
+
+Place the pinned raw snapshots at `data/raw/transfermarkt/` and `data/raw/statsbomb/`.
+Their committed manifests record source versions, licenses, checksums, and row counts.
+
+```bash
+make seed-pilot
+make cohort-report
+make verify-milestone-3
+make dev-pilot
+```
+
+The verified cohort contains Florian Wirtz, Victor Boniface, and Adam Hlozek: the U23
+attackers/midfielders who clear both 450 domestic-season minutes and 450 covered event-data
+minutes. See [docs/milestone_3_real_cohort.md](docs/milestone_3_real_cohort.md).
+
 ### Using Postgres instead of SQLite
 
 ```bash
@@ -120,6 +138,10 @@ make db-migrate seed recompute-ratings
 | `make ingest-transfermarkt` | Ingest a Transfermarkt-style CSV dir (`INPUT=…`; defaults to sample) |
 | `make ingest-performance-csv` | Ingest a `player_season_metrics_v1` CSV (`INPUT=…`; defaults to sample) |
 | `make seed-real` | Real-data-v0 path: transfermarkt + performance CSV + recompute |
+| `make seed-pilot` | Ingest pinned Transfermarkt + StatsBomb pilot snapshots and recompute |
+| `make cohort-report` | Write the honest pilot coverage/cohort report |
+| `make verify-milestone-3` | Enforce Milestone 3 provenance, identity, coverage, and output gates |
+| `make dev-pilot` | Start API + web without reseeding synthetic data |
 | `make data-quality` | Data-quality report (alias of quality-report) |
 | `make quality-report` | Run data-quality checks and store a report |
 | `make dev` / `dev-api` / `dev-web` | Run the stack / API only / web only |
@@ -170,10 +192,7 @@ OpenAPI types with `pnpm --filter @scoutboy/web gen:api`.
 
 | Suite | Runner | Covers |
 | --- | --- | --- |
-| Rating engine (25) | pytest | config load, normalization, formula range, context effect, low-minutes confidence, audit output, **benchmark snapshot**, playstyle thresholds/tiers/concerns |
-| Market model (9) | pytest | three values separate, no negatives, confidence on missing public value, range widens on missing contract, outlier guardrail |
-| Data pipeline (16) | pytest | adapters (sample/csv/transfermarkt/statsbomb/football-data), quality checks, end-to-end ingest→recompute, dense deterministic ranks |
-| API (15) | pytest | search pagination/determinism, full profile sections, **missing data not zeroed**, leaderboard tie-breaks, compare, admin recompute creates a run |
+| Python/domain (99) | pytest | ratings, market, API, adapters, real-schema aggregation, provenance, eligibility, covered minutes, reports |
 | Frontend (11) | Vitest | formatters + component render incl. honest missing/low-confidence states |
 | E2E (1) | Playwright | search → card → audit → leaderboard → compare → methodology |
 
@@ -204,7 +223,10 @@ deterministic (no per-request compilation). The **Postgres path is verified end-
 
 ## Known limitations
 
-- Sample data is **synthetic** — it demonstrates the method, not real players.
+- The real pilot is only 34 StatsBomb matches centered on Bayer Leverkusen. It must not be
+  described as complete Bundesliga or European coverage.
+- Cross-team percentile pools are consequently uneven; covered minutes and confidence are
+  shown separately from full-season Transfermarkt minutes.
 - Opposition quality is a league-strength proxy; role usage is nominal (no positional-split data).
 - Market values are **ranges** from a transparent rule-based model — never exact figures.
 - Search/leaderboard read models are computed in-process (fine for the prototype; precompute/index

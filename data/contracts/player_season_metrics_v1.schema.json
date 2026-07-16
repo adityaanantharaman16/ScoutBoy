@@ -28,6 +28,8 @@
     "minutes": { "type": "integer", "minimum": 0 },
     "position_group": { "type": "string", "enum": ["ATT", "MID", "DEF", "GK"] },
     "source_snapshot_id": { "type": "string", "description": "Snapshot label for reproducibility/traceability." },
+    "metric_provider": { "type": "string", "description": "Provider that measured the metric; distinct from the identity source." },
+    "scope": { "type": "string", "examples": ["covered_matches", "domestic_league", "all_competitions"] },
     "source_url": { "type": "string" },
     "provider_player_name": { "type": "string" },
     "provider_team_id": { "type": "string" },

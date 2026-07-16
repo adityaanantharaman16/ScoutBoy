@@ -89,8 +89,10 @@ class ContextConfig:
             ),
         }
 
-    def team_dimension(self, team_slug: Optional[str]) -> dict:
-        tier = self.team.get("teams", {}).get(team_slug or "", self.team["default_tier"])
+    def team_dimension(self, team_slug: Optional[str], team_tier: Optional[str] = None) -> dict:
+        tier = team_tier or self.team.get("teams", {}).get(
+            team_slug or "", self.team["default_tier"]
+        )
         tier_cfg = self.team["tiers"].get(tier, self.team["tiers"][self.team["default_tier"]])
         mult = _clamp(float(tier_cfg["multiplier"]), self.team["band"])
         return {
@@ -164,9 +166,10 @@ def build_context(
     minutes: Optional[int],
     recent_form_index: Optional[float] = None,
     role_usage: float = 1.0,
+    team_tier: Optional[str] = None,
 ) -> ContextResult:
     league = config.league_dimension(competition_slug)
-    team = config.team_dimension(team_slug)
+    team = config.team_dimension(team_slug, team_tier)
     stakes = config.stakes_dimension(competition_type)
     opposition = config.opposition_dimension(league)
     sample = config.sample_dimension(minutes)

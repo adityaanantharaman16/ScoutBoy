@@ -64,6 +64,11 @@ seed: db-migrate ## Load sample players (Phase 1 fixtures) into the DB
 # ---------------------------------------------------------------------------
 TM_SAMPLE ?= data/sample/transfermarkt_sample
 PERF_SAMPLE ?= data/sample/performance_metrics_sample.csv
+TM_RAW ?= data/raw/transfermarkt
+STATSBOMB_RAW ?= data/raw/statsbomb
+PILOT_COMPETITION_ID ?= L1
+PILOT_TARGET_SEASON ?= 2023
+PILOT_AS_OF_DATE ?= 2024-06-30
 
 .PHONY: ingest-sample
 ingest-sample: ## Ingest the synthetic all-in-one sample source
@@ -82,6 +87,20 @@ seed-real: db-migrate ## Real-data-v0 path: transfermarkt + performance CSV + re
 	$(PY) -m data_pipeline.jobs.ingest --source transfermarkt --input-path $(TM_SAMPLE)
 	$(PY) -m data_pipeline.jobs.ingest --source performance_csv --input-path $(PERF_SAMPLE)
 	$(MAKE) recompute-ratings
+
+.PHONY: seed-pilot
+seed-pilot: db-migrate ## Milestone 3: ingest pinned TM + StatsBomb snapshots and recompute
+	$(PY) -m data_pipeline.jobs.ingest --source transfermarkt --input-path $(TM_RAW) --competition-id $(PILOT_COMPETITION_ID) --target-season $(PILOT_TARGET_SEASON) --as-of-date $(PILOT_AS_OF_DATE)
+	$(PY) -m data_pipeline.jobs.ingest --source statsbomb_pilot --input-path $(STATSBOMB_RAW)
+	$(MAKE) recompute-ratings
+
+.PHONY: cohort-report
+cohort-report: ## Write and print the Milestone 3 coverage report
+	$(PY) -m data_pipeline.quality.cohort_report --output data/reports/milestone3_cohort_report.json
+
+.PHONY: verify-milestone-3
+verify-milestone-3: ## Verify the honest real-data vertical-slice acceptance gates
+	$(PY) -m data_pipeline.quality.cohort_report --verify --output data/reports/milestone3_cohort_report.json
 
 .PHONY: data-quality
 data-quality: ## Alias for quality-report (Milestone 2 name)
@@ -112,6 +131,11 @@ dev-api: ## Start the FastAPI server only
 .PHONY: dev-web
 dev-web: ## Start the Next.js dev server only
 	pnpm --filter @scoutboy/web dev
+
+.PHONY: dev-pilot
+dev-pilot: db-migrate ## Start API + web without replacing the real pilot with sample data
+	@echo ">> Starting real pilot API on http://$(API_HOST):$(API_PORT) and web on http://localhost:3000"
+	@( $(MAKE) dev-api & $(MAKE) dev-web & wait )
 
 # ---------------------------------------------------------------------------
 # Quality gates

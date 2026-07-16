@@ -1,0 +1,71 @@
+{
+  "provider": "Transfermarkt (via dcaribou/transfermarkt-datasets)",
+  "kaggle_ref": "davidcariboo/player-scores",
+  "source_url": "https://www.kaggle.com/datasets/davidcariboo/player-scores",
+  "license": "CC0-1.0",
+  "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "downloaded_at": "2026-07-14T08:19:10.333301+00:00",
+  "target_season": "2023/2024 (games.season=2023)",
+  "files": {
+    "appearances.csv": {
+      "sha256": "be94fb782fa932d1c01d745a8886497b7f9c803283c8ce7cf1b8370536797be5",
+      "bytes": 149145586,
+      "rows": 1894350
+    },
+    "club_games.csv": {
+      "sha256": "a12209a5fb78f7cd70d67a35689f9c37f3c7d364eed082394cde21495718ffcb",
+      "bytes": 11043674,
+      "rows": 177916
+    },
+    "clubs.csv": {
+      "sha256": "0d6ce1af95b7af66833e2b0c78f72295db287bd759c8859dc6c91da8eb1ce0b3",
+      "bytes": 183874,
+      "rows": 796
+    },
+    "competitions.csv": {
+      "sha256": "6e62a5e2b3040464c16d08f1caed33c332b95b3418d33a96a32a4500115b8aba",
+      "bytes": 10875,
+      "rows": 65
+    },
+    "countries.csv": {
+      "sha256": "fe979676a2dec03a23a6d72b02b60f47bf5171e7db42abbcd6073958808acf70",
+      "bytes": 13060,
+      "rows": 124
+    },
+    "game_events.csv": {
+      "sha256": "3076feec58e3f39f82665e5229ebd1fa3297c55d8ba794bcfacc9f1c02ff02e5",
+      "bytes": 156873546,
+      "rows": 1274469
+    },
+    "game_lineups.csv": {
+      "sha256": "ef1c6a9be0e1368bcdd20491a34a392f941c12f6d840630f914aeb67c4b18135",
+      "bytes": 352398556,
+      "rows": 3179016
+    },
+    "games.csv": {
+      "sha256": "026244992cecacfc66ef6929442837deaff0bc2d0f65af0b6f5df32b29eea018",
+      "bytes": 25041698,
+      "rows": 88958
+    },
+    "national_teams.csv": {
+      "sha256": "00280848c0dc0a5021ae81f64231573f45b535c362f9db233ccd3b505b5abf06",
+      "bytes": 29008,
+      "rows": 124
+    },
+    "player_valuations.csv": {
+      "sha256": "d03f484fd0d3ffc7217d4e73e1b4c57bafb3beb6b8d97f5df307f4a3fe5f9ca0",
+      "bytes": 24684851,
+      "rows": 507815
+    },
+    "players.csv": {
+      "sha256": "c18ecc750880f2d969a252ed4e8e8febbe155498e83be39a528bfc8970515029",
+      "bytes": 17122561,
+      "rows": 50149
+    },
+    "transfers.csv": {
+      "sha256": "d4658bc5c39b57e984d907d103830a08fb9720be9c3f18f0cfde1c552c47acb1",
+      "bytes": 2970177,
+      "rows": 35139
+    }
+  }
+}

@@ -158,3 +158,17 @@ universe (API `universe=mvp` default) + data-quality report + full tests/docs. R
 proven by `test_real_data_pipeline.py` (ingest → recompute → API). Sample E2E path unchanged.
 Deferred to M3: aggregating raw per-match dcaribou appearances (games join), context
 calibration, stronger identity resolution.
+
+## Milestone 3 — shipped real vertical slice
+
+The approved data choice is Transfermarkt/dcaribou plus StatsBomb Open Data. The immutable
+Bundesliga 2023/24 StatsBomb snapshot contains 34 Bayer Leverkusen matches, so the product must
+label it a **Leverkusen-centered vertical-slice pilot**, never full Bundesliga coverage.
+
+Implemented: real dcaribou per-match aggregation; as-of valuation history; snapshot provenance;
+StatsBomb event metrics; conservative identity bridge with reviewed overrides and quarantine;
+covered-minute confidence and cohort gates; explicit role-position eligibility; role-eligible
+percentiles; season-derived team strength tiers; cohort report; executable acceptance target.
+
+The verified cohort is Wirtz, Boniface, and Hlozek. The next milestone is broader licensed/open
+performance coverage and rating calibration, not more UI surface area.

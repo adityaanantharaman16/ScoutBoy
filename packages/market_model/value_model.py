@@ -36,7 +36,7 @@ def compute_model_value(inp: MarketInputs) -> tuple[float, float, dict]:
     avg = inp.avg_top3_rolefit if inp.avg_top3_rolefit is not None else best
 
     rolefit_factor = _rolefit_factor(best, avg)
-    age_factor = 1.0 + max(0.0, (23.0 - inp.age)) * 0.05  # U23 premium via youth
+    age_factor = 1.0 if inp.age is None else 1.0 + max(0.0, (23.0 - inp.age)) * 0.05
     league_factor = inp.league_multiplier**1.5
     scarcity = SCARCITY.get(inp.position.upper(), 1.0)
     minutes_factor = 0.7 + 0.3 * min(1.0, inp.minutes / 1800.0)
@@ -66,6 +66,7 @@ def compute_model_value(inp: MarketInputs) -> tuple[float, float, dict]:
         "base_anchor_eur": BASE_ANCHOR_EUR,
         "rolefit_factor": round(rolefit_factor, 3),
         "age_factor": round(age_factor, 3),
+        "age_known": inp.age is not None,
         "league_factor": round(league_factor, 3),
         "scarcity_factor": round(scarcity, 3),
         "minutes_factor": round(minutes_factor, 3),

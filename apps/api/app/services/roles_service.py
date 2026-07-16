@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 from rolefit import RATING_VERSION, load_role_configs
+from scoutboy_shared import MVP_UNIVERSE_KEY
 from sqlalchemy.orm import Session
 
 from app.models.schemas import RoleLeaderboard, RoleRankingRow
@@ -33,8 +34,13 @@ def role_leaderboard(
         return None
 
     rows = _load_rows(session, season)
+    eligible_ids = None
+    if repo.universe_materialized(session, season.id, MVP_UNIVERSE_KEY):
+        eligible_ids = repo.eligible_universe_ids(session, season.id, MVP_UNIVERSE_KEY)
     ranked = []
     for row in rows:
+        if eligible_ids is not None and row.player.id not in eligible_ids:
+            continue
         rr = next((r for r in row.ratings if r.role_key == role_key), None)
         if rr is None:
             continue

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from datetime import date
 
 from app.core.db import SessionLocal
 from app.models.orm import (
@@ -21,6 +22,7 @@ from app.models.orm import (
     PlayerMetricRaw,
     PlayerSourceId,
     Season,
+    SourceSnapshot,
     Team,
 )
 from sqlalchemy import select
@@ -44,6 +46,27 @@ def ingest_bundle(session: Session, bundle: IngestBundle, *, min_minutes: int = 
     run = start_run(
         session, "ingest", f"ingest:{bundle.source_name}", [bundle.source_snapshot_id], {}
     )
+    snapshot = session.scalar(
+        select(SourceSnapshot).where(SourceSnapshot.snapshot_key == bundle.source_snapshot_id)
+    )
+    if snapshot is None:
+        snapshot = SourceSnapshot(
+            snapshot_key=bundle.source_snapshot_id, provider=bundle.source_name
+        )
+        session.add(snapshot)
+    meta = bundle.snapshot_metadata or {}
+    snapshot.provider = meta.get("provider", bundle.source_name)
+    snapshot.dataset_version = meta.get("dataset_version")
+    as_of = meta.get("as_of_date")
+    snapshot.as_of_date = date.fromisoformat(as_of) if isinstance(as_of, str) and as_of else as_of
+    snapshot.target_season = meta.get("target_season")
+    snapshot.local_path = meta.get("local_path")
+    snapshot.checksum = meta.get("checksum")
+    snapshot.license_url = meta.get("license_url")
+    snapshot.row_counts_json = meta.get("row_counts", {})
+    snapshot.metadata_json = meta.get("metadata", {})
+    snapshot.ingested_run_id = run.id
+    session.flush()
     if report["has_errors"]:
         session.add(
             DataQualityReport(source_name=bundle.source_name, run_id=run.id, report_json=report)
@@ -120,6 +143,7 @@ def ingest_bundle(session: Session, bundle: IngestBundle, *, min_minutes: int = 
         appr.minutes, appr.appearances, appr.starts = a.minutes, a.appearances, a.starts
         appr.position_group = a.position_group
         appr.role_usage_raw = a.role_usage_raw
+        appr.source_snapshot_record_id = snapshot.id
 
     # ---- resolve metrics to players (bundle players first, then existing source ids) ----
     psid_cache: dict[tuple, Player | None] = {}
@@ -185,6 +209,9 @@ def ingest_bundle(session: Session, bundle: IngestBundle, *, min_minutes: int = 
                 unit=m.unit,
                 raw_payload_json=m.raw_payload,
                 source_snapshot_id=bundle.source_snapshot_id,
+                source_snapshot_record_id=snapshot.id,
+                metric_provider=m.metric_provider or bundle.source_name,
+                scope=m.scope or m.raw_payload.get("scope"),
             )
         )
 
@@ -230,9 +257,19 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="path to a CSV directory (transfermarkt) or CSV file (performance_csv)",
     )
+    parser.add_argument("--competition-id", default=None, help="source competition id (e.g. L1)")
+    parser.add_argument("--target-season", type=int, default=None, help="season start year")
+    parser.add_argument("--as-of-date", default=None, help="valuation cutoff date (YYYY-MM-DD)")
     args = parser.parse_args(argv)
 
-    adapter = get_adapter(args.source, input_path=args.input_path)
+    as_of = date.fromisoformat(args.as_of_date) if args.as_of_date else None
+    adapter = get_adapter(
+        args.source,
+        input_path=args.input_path,
+        target_competition_id=args.competition_id,
+        target_season=args.target_season,
+        as_of_date=as_of,
+    )
     bundle = adapter.fetch()
     with SessionLocal() as session:
         result = ingest_bundle(session, bundle)

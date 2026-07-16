@@ -26,8 +26,9 @@ identity is joined at ingest time — this file carries no identity beyond the s
 
 ## Optional columns
 
-`source_url`, `provider_player_name`, `provider_team_id`, `provider_competition_id`,
-`match_scope` (e.g. `league` vs `all_competitions`), `notes`.
+`metric_provider` (the provider that measured the metric, distinct from the identity source),
+`scope` (`covered_matches`, `domestic_league`, or `all_competitions`), `source_url`,
+`provider_player_name`, `provider_team_id`, `provider_competition_id`, `match_scope`, `notes`.
 
 ## Accepted metric names
 

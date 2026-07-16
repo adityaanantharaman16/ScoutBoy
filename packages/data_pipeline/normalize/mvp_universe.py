@@ -31,13 +31,16 @@ def evaluate_membership(
     is_european: Optional[bool],
     min_minutes: int = DEFAULT_MIN_MINUTES,
     max_age: int = MAX_AGE,
+    performance_minutes: Optional[int] = None,
 ) -> UniverseVerdict:
     """Pure eligibility check. Every criterion is reported so the reason a player is in
     or out of the universe is always explainable."""
+    covered_minutes = minutes if performance_minutes is None else performance_minutes
     checks = {
         "u23": age is not None and age <= max_age,
         "attacker_or_midfielder": position_group in ELIGIBLE_POSITION_GROUPS,
         "min_minutes": minutes >= min_minutes,
+        "performance_coverage": covered_minutes >= min_minutes,
         "european": bool(is_european),
     }
     reasons = {
@@ -45,6 +48,7 @@ def evaluate_membership(
         "age": age,
         "position_group": position_group,
         "minutes": minutes,
+        "performance_covered_minutes": covered_minutes,
         "min_minutes_threshold": min_minutes,
         "max_age": max_age,
     }

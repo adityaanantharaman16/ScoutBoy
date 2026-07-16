@@ -37,3 +37,16 @@ def test_non_european_excluded():
 def test_unknown_age_excluded():
     v = evaluate_membership(age=None, position_group="ATT", minutes=1800, is_european=True)
     assert not v.eligible
+
+
+def test_event_backed_season_requires_covered_minutes_separately():
+    v = evaluate_membership(
+        age=21,
+        position_group="ATT",
+        minutes=1800,
+        performance_minutes=0,
+        is_european=True,
+    )
+    assert not v.eligible
+    assert v.reasons["min_minutes"] is True
+    assert v.reasons["performance_coverage"] is False

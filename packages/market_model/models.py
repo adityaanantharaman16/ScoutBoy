@@ -9,7 +9,7 @@ class MarketInputs:
     """All market-model inputs. Anything unknown stays None and lowers confidence /
     widens the range rather than being guessed."""
 
-    age: float
+    age: Optional[float]
     position: str
     position_group: str
     minutes: int

@@ -53,6 +53,10 @@ def get_or_create_season(
     start: Optional[str] = None,
     end: Optional[str] = None,
 ) -> Season:
+    if is_current:
+        for existing in session.scalars(select(Season).where(Season.is_current.is_(True))):
+            if existing.label != label:
+                existing.is_current = False
     season = session.scalar(select(Season).where(Season.label == label))
     if season is None:
         season = Season(label=label)

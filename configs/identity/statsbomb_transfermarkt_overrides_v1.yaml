@@ -1,0 +1,14 @@
+version: v1
+# Reviewed aliases for the immutable Bundesliga 2023/24 pilot snapshot. Values are
+# dcaribou/Transfermarkt player IDs. Unlisted ambiguous names are quarantined.
+statsbomb_to_transfermarkt:
+  Alejandro Grimaldo Garcia: 193082
+  Alejandro Grimaldo García: 193082
+  Edmond Faycal Tapsoba: 564545
+  Edmond Fayçal Tapsoba: 564545
+  Odilon Kossonou: 644771
+  Exequiel Alejandro Palacios: 401578
+  Victor Okoh Boniface: 656681
+  Piero Martin Hincapie Reyna: 659813
+  Piero Martín Hincapié Reyna: 659813
+  Jonas Hofmann: 7161

@@ -30,6 +30,10 @@ def market_confidence(inp: MarketInputs) -> tuple[ConfidenceLevel, dict]:
     else:
         notes.append("No RoleFit score available.")
 
+    if inp.age is None:
+        score -= 0.1
+        notes.append("No birth date — age premium not applied.")
+
     if inp.minutes >= 1800:
         score += 0.1
     elif inp.minutes < 450:

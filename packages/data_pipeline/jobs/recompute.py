@@ -30,6 +30,7 @@ from app.models.orm import (
     RoleRating,
     Season,
     SimilarityVector,
+    SourceSnapshot,
     Team,
 )
 from market_model import MarketInputs, estimate_market
@@ -68,10 +69,10 @@ MARKET_INPUT_KEYS = {
 }
 
 
-def _age(birth: Optional[date], ref: Optional[date]) -> float:
+def _age(birth: Optional[date], ref: Optional[date]) -> Optional[float]:
     if not birth or not ref:
-        return 21.0
-    return round((ref - birth).days / 365.25, 1)
+        return None
+    return float(ref.year - birth.year - ((ref.month, ref.day) < (birth.month, birth.day)))
 
 
 def _clear_season(session: Session, season_id: int) -> None:
@@ -98,8 +99,15 @@ def recompute(session: Session, *, do_ratings=True, do_playstyles=True, do_marke
     ctx_config = ContextConfig.load()
     ps_config = PlaystyleConfig.load()
 
+    snapshot_ids = list(
+        session.scalars(select(SourceSnapshot.snapshot_key).order_by(SourceSnapshot.snapshot_key))
+    )
     run = start_run(
-        session, "recompute", RATING_VERSION, [], config_hashes(roles, ctx_config, ps_config)
+        session,
+        "recompute",
+        RATING_VERSION,
+        snapshot_ids,
+        config_hashes(roles, ctx_config, ps_config),
     )
     seed_role_definitions(session, roles)
     seed_playstyle_definitions(session, ps_config)
@@ -130,13 +138,23 @@ def recompute(session: Session, *, do_ratings=True, do_playstyles=True, do_marke
         pg_by_player = {pid: (primary[pid].position_group or "") for pid in primary}
 
         # raw metrics per player for this season
-        raw_rows = session.scalars(
-            select(PlayerMetricRaw).where(PlayerMetricRaw.season_id == season.id)
+        raw_rows = list(
+            session.scalars(select(PlayerMetricRaw).where(PlayerMetricRaw.season_id == season.id))
         )
+        has_covered_performance = any(r.metric_provider == "statsbomb" for r in raw_rows)
         raw: dict[int, dict[str, float]] = {}
         for r in raw_rows:
             if r.metric_value is not None:
                 raw.setdefault(r.player_id, {})[r.metric_name] = r.metric_value
+
+        performance_minutes = {
+            pid: int(
+                raw.get(pid, {}).get(
+                    "performance_covered_minutes", 0 if has_covered_performance else minutes[pid]
+                )
+            )
+            for pid in primary
+        }
 
         # Resolve raw metric names (canonical or legacy alias) to canonical performance
         # metrics; market inputs / unknown names resolve to None and are excluded here.
@@ -150,7 +168,7 @@ def recompute(session: Session, *, do_ratings=True, do_playstyles=True, do_marke
             registry_raw[pid] = resolved
 
         # normalize within peer groups
-        normalized = normalize_metrics(registry_raw, pg_by_player, minutes)
+        normalized = normalize_metrics(registry_raw, pg_by_player, performance_minutes)
         perc: dict[int, dict[str, float]] = {pid: {} for pid in primary}
         for nm in normalized:
             session.add(
@@ -168,6 +186,21 @@ def recompute(session: Session, *, do_ratings=True, do_playstyles=True, do_marke
             if nm.percentile is not None:
                 perc[nm.player_key][nm.metric_name] = nm.percentile
 
+        # Rating percentiles use each role's actual eligible position population.
+        role_perc: dict[str, dict[int, dict[str, float]]] = {}
+        for role in roles.values():
+            eligible = {
+                pid: registry_raw[pid]
+                for pid, player in players.items()
+                if player.primary_position in role.eligible_positions
+            }
+            groups = {pid: role.role_key for pid in eligible}
+            rp = {pid: {} for pid in eligible}
+            for nm in normalize_metrics(eligible, groups, performance_minutes):
+                if nm.percentile is not None:
+                    rp[nm.player_key][nm.metric_name] = nm.percentile
+            role_perc[role.role_key] = rp
+
         comp_by_id = {c.id: c for c in session.scalars(select(Competition))}
         team_by_id = {t.id: t for t in session.scalars(select(Team))}
 
@@ -181,7 +214,7 @@ def recompute(session: Session, *, do_ratings=True, do_playstyles=True, do_marke
             comp = comp_by_id.get(appr.competition_id)
             team = team_by_id.get(appr.team_id)
             pg = pg_by_player[pid]
-            mins = minutes[pid]
+            mins = performance_minutes[pid]
             form = raw.get(pid, {}).get("recent_form_index")
 
             context = build_player_context(
@@ -191,7 +224,13 @@ def recompute(session: Session, *, do_ratings=True, do_playstyles=True, do_marke
                 team_slug=team.slug if team else None,
                 minutes=mins,
                 recent_form_index=form,
+                team_tier=team.strength_tier if team else None,
             )
+            context.explanation["data_coverage"] = {
+                "season_minutes": minutes[pid],
+                "performance_covered_minutes": mins,
+                "scope": "covered_matches" if has_covered_performance else "season",
+            }
             translation_by_player[pid] = context.translation_risk
             session.add(
                 ContextAdjustment(
@@ -208,13 +247,17 @@ def recompute(session: Session, *, do_ratings=True, do_playstyles=True, do_marke
                 )
             )
 
-            # ratings for every role in the player's position group
+            # Ratings only for roles whose explicit eligible positions include the player.
             scores: list[tuple[str, float]] = []
             for role in roles.values():
-                if role.position_group != pg:
+                if player.primary_position not in role.eligible_positions:
                     continue
                 result = compute_role_rating(
-                    role, perc[pid], context, minutes=mins, min_minutes=settings.min_minutes
+                    role,
+                    role_perc.get(role.role_key, {}).get(pid, {}),
+                    context,
+                    minutes=mins,
+                    min_minutes=settings.min_minutes,
                 )
                 audit = build_audit(result)
                 rr = RoleRating(
@@ -269,7 +312,8 @@ def recompute(session: Session, *, do_ratings=True, do_playstyles=True, do_marke
             verdict = evaluate_membership(
                 age=_age(player.birth_date, season.end_date),
                 position_group=pg,
-                minutes=mins,
+                minutes=minutes[pid],
+                performance_minutes=mins,
                 is_european=comp.is_european if comp else None,
                 min_minutes=settings.min_minutes,
             )
@@ -289,7 +333,7 @@ def recompute(session: Session, *, do_ratings=True, do_playstyles=True, do_marke
             badges = compute_playstyles(
                 perc[pid],
                 position_group=pg_by_player[pid],
-                minutes=minutes[pid],
+                minutes=performance_minutes[pid],
                 config=ps_config,
                 translation_risk=translation_by_player.get(pid),
                 market_label=market_label_by_player.get(pid),

@@ -1,0 +1,135 @@
+{
+  "checks": {
+    "all_eligible_players_rated": true,
+    "covered_players_present": true,
+    "eligible_birth_dates_known": true,
+    "eligible_public_values_present": true,
+    "identity_bridge_operational": true,
+    "two_source_snapshots": true,
+    "u23_att_mid_vertical_slice": true
+  },
+  "coverage": {
+    "eligible_u23_att_mid": 3,
+    "players_with_450_covered_minutes": 18,
+    "players_with_event_metrics": 323
+  },
+  "eligible_players": [
+    {
+      "id": 395,
+      "name": "Adam Hlozek",
+      "position": "CF",
+      "public_value_eur": 12000000.0,
+      "rating_count": 4,
+      "ratings": [
+        {
+          "confidence": "medium",
+          "role": "shadow_striker",
+          "score": 72.6
+        },
+        {
+          "confidence": "medium",
+          "role": "inside_forward",
+          "score": 68.4
+        },
+        {
+          "confidence": "medium",
+          "role": "pressing_forward",
+          "score": 66.6
+        },
+        {
+          "confidence": "medium",
+          "role": "complete_forward",
+          "score": 64.4
+        }
+      ],
+      "statsbomb_metric_rows": 37
+    },
+    {
+      "id": 415,
+      "name": "Florian Wirtz",
+      "position": "CAM",
+      "public_value_eur": 130000000.0,
+      "rating_count": 2,
+      "ratings": [
+        {
+          "confidence": "high",
+          "role": "advanced_8",
+          "score": 88.5
+        },
+        {
+          "confidence": "high",
+          "role": "shadow_striker",
+          "score": 86.0
+        }
+      ],
+      "statsbomb_metric_rows": 37
+    },
+    {
+      "id": 428,
+      "name": "Victor Boniface",
+      "position": "CF",
+      "public_value_eur": 40000000.0,
+      "rating_count": 4,
+      "ratings": [
+        {
+          "confidence": "high",
+          "role": "shadow_striker",
+          "score": 86.6
+        },
+        {
+          "confidence": "high",
+          "role": "inside_forward",
+          "score": 77.9
+        },
+        {
+          "confidence": "high",
+          "role": "complete_forward",
+          "score": 72.3
+        },
+        {
+          "confidence": "high",
+          "role": "pressing_forward",
+          "score": 64.5
+        }
+      ],
+      "statsbomb_metric_rows": 37
+    }
+  ],
+  "identity": {
+    "dual_source_players": 320,
+    "source_ids": {
+      "statsbomb": 320,
+      "transfermarkt": 494
+    }
+  },
+  "role_rating_counts": {
+    "advanced_8": 1,
+    "complete_forward": 2,
+    "inside_forward": 2,
+    "pressing_forward": 2,
+    "shadow_striker": 3
+  },
+  "scope": {
+    "claim": "pilot only; not full Bundesliga or European coverage",
+    "label": "Bayer Leverkusen-centered Bundesliga 2023/24 vertical-slice pilot",
+    "statsbomb_matches": 34
+  },
+  "season": "2023/2024",
+  "snapshots": [
+    {
+      "checksum": "98619bd4e4cecd2f805e3d2a59fa3653516333ec21178e5f895f6f1a0684448a",
+      "key": "statsbomb@9-281",
+      "license_url": "https://github.com/statsbomb/open-data/blob/master/LICENSE.pdf",
+      "provider": "StatsBomb Open Data",
+      "version": "b0bc9f22dd77c206ddedc1d742893b3bbe64baec"
+    },
+    {
+      "checksum": "6541b9a30ec12029ba4582918d2356a9a07e1f72cff735fd7c96db3ed983626f",
+      "key": "transfermarkt-player-scores@L1-2023-2024-06-30",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "provider": "Transfermarkt (via dcaribou/transfermarkt-datasets)",
+      "version": "2026-07-14T08:19:10.333301+00:00"
+    }
+  ],
+  "status": "pass"
+}

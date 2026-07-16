@@ -73,6 +73,8 @@ class CanonicalMetric:
     # Defaults to the bundle's source_name when None (set by metric-only sources like
     # the performance CSV, whose rows carry their own identity source_name).
     id_source_name: Optional[str] = None
+    metric_provider: Optional[str] = None
+    scope: Optional[str] = None
 
 
 @dataclass
@@ -96,6 +98,9 @@ class IngestBundle:
     # Adapter-level quality findings (e.g. rows an adapter quarantined during parsing).
     # Merged into the data-quality report by the ingest job.
     adapter_warnings: list = field(default_factory=list)
+    # Optional first-class provenance for immutable external snapshots. The ingest job
+    # upserts this into source_snapshots and links persisted observations to it.
+    snapshot_metadata: dict = field(default_factory=dict)
 
 
 class SourceAdapter(ABC):

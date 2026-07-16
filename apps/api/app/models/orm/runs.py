@@ -1,12 +1,41 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Optional
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base, TimestampMixin, utcnow
+
+
+class SourceSnapshot(Base, TimestampMixin):
+    __tablename__ = "source_snapshots"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    snapshot_key: Mapped[str] = mapped_column(String(120), unique=True, index=True)
+    provider: Mapped[str] = mapped_column(String(80), index=True)
+    dataset_version: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    as_of_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    target_season: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
+    local_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    checksum: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    license_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    row_counts_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    ingested_run_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("rating_runs.id"), nullable=True
+    )
 
 
 class PlayerUniverseMembership(Base, TimestampMixin):
