@@ -361,6 +361,61 @@ export interface components {
             sample_confidence?: string | null;
             /** Minutes */
             minutes?: number | null;
+            /** Appearances */
+            appearances?: number | null;
+            /** Starts */
+            starts?: number | null;
+            /** Data Source */
+            data_source?: string | null;
+            /** Data Type */
+            data_type?: string | null;
+            /** Data Last Updated */
+            data_last_updated?: string | null;
+            /** Matches Covered */
+            matches_covered?: number | null;
+            /** Known Total Matches */
+            known_total_matches?: number | null;
+            /** Competition Coverage Pct */
+            competition_coverage_pct?: number | null;
+            /** Data Recency Days */
+            data_recency_days?: number | null;
+            /** Sample Size Confidence */
+            sample_size_confidence?: string | null;
+            /** Coverage Confidence */
+            coverage_confidence?: string | null;
+            /** League Adjustment Confidence */
+            league_adjustment_confidence?: string | null;
+            /** Role Similarity Confidence */
+            role_similarity_confidence?: string | null;
+            /** Overall Rating Confidence */
+            overall_rating_confidence?: string | null;
+            /**
+             * Uses Event Data
+             * @default false
+             */
+            uses_event_data: boolean;
+            /**
+             * Uses Basic Statistics
+             * @default false
+             */
+            uses_basic_statistics: boolean;
+            /**
+             * Uses Modeled Values
+             * @default false
+             */
+            uses_modeled_values: boolean;
+            /**
+             * Uses Demo Data
+             * @default false
+             */
+            uses_demo_data: boolean;
+            /**
+             * Limitations
+             * @default []
+             */
+            limitations: string[];
+            /** Attribution */
+            attribution?: string | null;
             /**
              * Explanation
              * @default {}
@@ -377,6 +432,16 @@ export interface components {
             source_player_id?: string | null;
             /** Source Url */
             source_url?: string | null;
+            /** Provider Display Name */
+            provider_display_name?: string | null;
+            /** Data Type */
+            data_type?: string | null;
+            /** Last Updated */
+            last_updated?: string | null;
+            /** License Url */
+            license_url?: string | null;
+            /** Attribution */
+            attribution?: string | null;
         };
         /** DataSourceMeta */
         DataSourceMeta: {

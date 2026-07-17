@@ -79,6 +79,26 @@ class ContextPanel(BaseModel):
     translation_risk: Optional[str] = None
     sample_confidence: Optional[str] = None
     minutes: Optional[int] = None
+    appearances: Optional[int] = None
+    starts: Optional[int] = None
+    data_source: Optional[str] = None
+    data_type: Optional[str] = None
+    data_last_updated: Optional[str] = None
+    matches_covered: Optional[int] = None
+    known_total_matches: Optional[int] = None
+    competition_coverage_pct: Optional[float] = None
+    data_recency_days: Optional[int] = None
+    sample_size_confidence: Optional[str] = None
+    coverage_confidence: Optional[str] = None
+    league_adjustment_confidence: Optional[str] = None
+    role_similarity_confidence: Optional[str] = None
+    overall_rating_confidence: Optional[str] = None
+    uses_event_data: bool = False
+    uses_basic_statistics: bool = False
+    uses_modeled_values: bool = False
+    uses_demo_data: bool = False
+    limitations: list[str] = []
+    attribution: Optional[str] = None
     explanation: dict = {}
 
 

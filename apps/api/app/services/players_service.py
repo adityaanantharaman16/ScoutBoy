@@ -293,6 +293,25 @@ def build_player_card(session: Session, player_id: int) -> Optional[PlayerCardRe
     market = repo.market_for_player(session, player_id, season.id)
     ctx = repo.contexts_for_season(session, season.id).get(player_id)
     sources = repo.source_ids_for_player(session, player_id)
+    evidence_rows = repo.evidence_for_player(session, player_id, season.id)
+    primary_evidence = (
+        sorted(evidence_rows, key=lambda e: (-(e.minutes or 0), e.provider_id))[0]
+        if evidence_rows
+        else None
+    )
+    providers = repo.providers_by_id(session) if evidence_rows else {}
+    snapshot_ids = {
+        e.source_snapshot_record_id
+        for e in evidence_rows
+        if e.source_snapshot_record_id is not None
+    }
+    snapshots = repo.source_snapshots_by_id(session, snapshot_ids)
+    primary_provider = providers.get(primary_evidence.provider_id) if primary_evidence else None
+    primary_snapshot = (
+        snapshots.get(primary_evidence.source_snapshot_record_id)
+        if primary_evidence and primary_evidence.source_snapshot_record_id
+        else None
+    )
 
     substats = C.substats_from_normalized(normalized)
     sample_conf = ctx.context_confidence if ctx else "unknown"
@@ -337,14 +356,40 @@ def build_player_card(session: Session, player_id: int) -> Optional[PlayerCardRe
         market=C.market_panel(market),
         strengths=strengths,
         concerns_text=concerns_text,
-        context=C.context_panel(ctx, minutes),
+        context=C.context_panel(
+            ctx,
+            minutes,
+            evidence=primary_evidence,
+            provider=primary_provider,
+            snapshot=primary_snapshot,
+            uses_modeled_values=bool(ratings),
+        ),
         data_sources=[
             DataSource(
                 source_name=s.source_name,
                 source_player_id=s.source_player_id,
                 source_url=s.source_url,
+                data_type="demo" if s.source_name == "sample" else None,
             )
             for s in sources
+        ]
+        + [
+            DataSource(
+                source_name=p.slug,
+                provider_display_name=p.name,
+                data_type=p.provider_type,
+                last_updated=(
+                    snapshots[e.source_snapshot_record_id].as_of_date.isoformat()
+                    if e.source_snapshot_record_id in snapshots
+                    and snapshots[e.source_snapshot_record_id].as_of_date
+                    else None
+                ),
+                license_url=p.license_url,
+                attribution=p.attribution,
+            )
+            for e in evidence_rows
+            for p in [providers.get(e.provider_id)]
+            if p is not None
         ],
         last_updated=player.updated_at.isoformat() if player.updated_at else None,
         rating_version=best.version if best else None,

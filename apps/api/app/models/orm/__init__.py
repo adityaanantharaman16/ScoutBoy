@@ -15,6 +15,16 @@ from .entities import (
 from .market import MarketValue
 from .metrics import ContextAdjustment, PlayerMetricNormalized, PlayerMetricRaw
 from .playstyles import PlayerPlaystyle, PlaystyleDefinition
+from .provenance import (
+    DataCoverage,
+    Event,
+    Match,
+    MatchLineupAppearance,
+    PlayerEvidenceConfidence,
+    PlayerTeamSeasonRegistration,
+    Provider,
+    ProviderIdentifier,
+)
 from .ratings import RatingAudit, RoleDefinition, RoleRating, RoleWeightVersion
 from .runs import (
     DataQualityReport,
@@ -42,6 +52,14 @@ __all__ = [
     "PlaystyleDefinition",
     "PlayerPlaystyle",
     "MarketValue",
+    "Provider",
+    "ProviderIdentifier",
+    "PlayerTeamSeasonRegistration",
+    "Match",
+    "MatchLineupAppearance",
+    "Event",
+    "DataCoverage",
+    "PlayerEvidenceConfidence",
     "SimilarityVector",
     "PlayerUniverseMembership",
     "RatingRun",

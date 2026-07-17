@@ -14,13 +14,16 @@ from app.models.orm import (
     ContextAdjustment,
     MarketValue,
     Player,
+    PlayerEvidenceConfidence,
     PlayerMetricNormalized,
     PlayerMetricRaw,
     PlayerPlaystyle,
     PlayerSourceId,
+    Provider,
     RatingAudit,
     RoleRating,
     Season,
+    SourceSnapshot,
     Team,
 )
 
@@ -150,6 +153,31 @@ def source_ids_for_player(session: Session, player_id: int) -> list[PlayerSource
     return list(
         session.scalars(select(PlayerSourceId).where(PlayerSourceId.player_id == player_id))
     )
+
+
+def evidence_for_player(
+    session: Session, player_id: int, season_id: int
+) -> list[PlayerEvidenceConfidence]:
+    return list(
+        session.scalars(
+            select(PlayerEvidenceConfidence).where(
+                PlayerEvidenceConfidence.player_id == player_id,
+                PlayerEvidenceConfidence.season_id == season_id,
+            )
+        )
+    )
+
+
+def providers_by_id(session: Session) -> dict[int, Provider]:
+    return {p.id: p for p in session.scalars(select(Provider))}
+
+
+def source_snapshots_by_id(session: Session, ids: set[int]) -> dict[int, SourceSnapshot]:
+    if not ids:
+        return {}
+    return {
+        s.id: s for s in session.scalars(select(SourceSnapshot).where(SourceSnapshot.id.in_(ids)))
+    }
 
 
 def eligible_universe_ids(session: Session, season_id: int, universe_key: str) -> set[int]:

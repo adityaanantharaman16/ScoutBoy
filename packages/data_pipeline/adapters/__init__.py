@@ -7,8 +7,16 @@ from typing import Optional
 from .base import (
     CanonicalAppearance,
     CanonicalCompetition,
+    CanonicalDataCoverage,
+    CanonicalEvent,
+    CanonicalLineupAppearance,
+    CanonicalMatch,
     CanonicalMetric,
     CanonicalPlayer,
+    CanonicalPlayerEvidence,
+    CanonicalProvider,
+    CanonicalProviderIdentifier,
+    CanonicalRegistration,
     CanonicalSeason,
     CanonicalTeam,
     IngestBundle,
@@ -16,6 +24,7 @@ from .base import (
 )
 from .csv_adapter import PerformanceCsvAdapter
 from .sample_adapter import SampleAdapter
+from .statsbomb_open_data import StatsBombOpenDataAdapter
 from .statsbomb_pilot import StatsBombPilotAdapter
 from .transfermarkt_adapter import TransfermarktAdapter
 
@@ -23,7 +32,7 @@ from .transfermarkt_adapter import TransfermarktAdapter
 ADAPTERS = {"sample": SampleAdapter}
 
 # Sources that require an --input-path (external data file/dir).
-PATH_ADAPTERS = {"transfermarkt", "performance_csv", "statsbomb_pilot"}
+PATH_ADAPTERS = {"transfermarkt", "performance_csv", "statsbomb_pilot", "statsbomb_open_data"}
 
 
 def get_adapter(
@@ -32,6 +41,8 @@ def get_adapter(
     *,
     target_competition_id: Optional[str] = None,
     target_season: Optional[int] = None,
+    statsbomb_season_ids: Optional[list[int]] = None,
+    recent_seasons: Optional[int] = None,
     as_of_date: Optional[date] = None,
 ) -> SourceAdapter:
     """Resolve a source name (+ optional input path) to an adapter instance."""
@@ -61,8 +72,24 @@ def get_adapter(
             transfermarkt_dir=root / "data/raw/transfermarkt",
             overrides_path=root / "configs/identity/statsbomb_transfermarkt_overrides_v1.yaml",
         )
+    if source == "statsbomb_open_data":
+        if not input_path:
+            raise ValueError(
+                "--input-path <statsbomb_open_data_dir> is required for source 'statsbomb_open_data'"
+            )
+        return StatsBombOpenDataAdapter(
+            root_dir=Path(input_path),
+            competition_ids=(
+                [int(target_competition_id)]
+                if target_competition_id and str(target_competition_id).isdigit()
+                else None
+            ),
+            season_ids=statsbomb_season_ids,
+            recent_seasons=2 if recent_seasons is None else recent_seasons,
+            as_of_date=as_of_date,
+        )
     raise ValueError(
-        f"Unknown source '{source}'. Available: sample, transfermarkt, performance_csv, statsbomb_pilot"
+        f"Unknown source '{source}'. Available: sample, transfermarkt, performance_csv, statsbomb_pilot, statsbomb_open_data"
     )
 
 
@@ -72,6 +99,14 @@ __all__ = [
     "CanonicalPlayer",
     "CanonicalTeam",
     "CanonicalCompetition",
+    "CanonicalProvider",
+    "CanonicalProviderIdentifier",
+    "CanonicalRegistration",
+    "CanonicalMatch",
+    "CanonicalLineupAppearance",
+    "CanonicalEvent",
+    "CanonicalDataCoverage",
+    "CanonicalPlayerEvidence",
     "CanonicalAppearance",
     "CanonicalMetric",
     "CanonicalSeason",
@@ -79,6 +114,7 @@ __all__ = [
     "TransfermarktAdapter",
     "PerformanceCsvAdapter",
     "StatsBombPilotAdapter",
+    "StatsBombOpenDataAdapter",
     "get_adapter",
     "ADAPTERS",
     "PATH_ADAPTERS",

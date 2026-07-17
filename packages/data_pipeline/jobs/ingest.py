@@ -17,10 +17,18 @@ from app.core.db import SessionLocal
 from app.models.orm import (
     Appearance,
     Competition,
+    DataCoverage,
     DataQualityReport,
+    Event,
+    Match,
+    MatchLineupAppearance,
     Player,
+    PlayerEvidenceConfidence,
     PlayerMetricRaw,
     PlayerSourceId,
+    PlayerTeamSeasonRegistration,
+    Provider,
+    ProviderIdentifier,
     Season,
     SourceSnapshot,
     Team,
@@ -75,6 +83,31 @@ def ingest_bundle(session: Session, bundle: IngestBundle, *, min_minutes: int = 
         session.commit()
         raise ValueError(f"Ingestion aborted — data-quality errors in {report['error_checks']}")
 
+    # providers
+    provider_by_slug: dict[str, Provider] = {}
+    for p in bundle.providers:
+        provider = session.scalar(select(Provider).where(Provider.slug == p.slug))
+        if provider is None:
+            provider = Provider(slug=p.slug)
+            session.add(provider)
+        provider.name = p.name
+        provider.provider_type = p.provider_type
+        provider.license_url = p.license_url
+        provider.attribution = p.attribution
+        session.flush()
+        provider_by_slug[p.slug] = provider
+
+    def provider_for(slug: str) -> Provider:
+        if slug in provider_by_slug:
+            return provider_by_slug[slug]
+        provider = session.scalar(select(Provider).where(Provider.slug == slug))
+        if provider is None:
+            provider = Provider(slug=slug, name=slug.replace("_", " ").title())
+            session.add(provider)
+            session.flush()
+        provider_by_slug[slug] = provider
+        return provider
+
     # seasons
     season_by_label = {}
     for s in bundle.seasons:
@@ -119,6 +152,37 @@ def ingest_bundle(session: Session, bundle: IngestBundle, *, min_minutes: int = 
         player_by_source[cp.source_player_id] = resolve_player(session, cp)
     session.flush()
 
+    entity_id_by_key: dict[tuple[str, str], int] = {}
+    entity_id_by_key.update({("competition", slug): c.id for slug, c in comp_by_slug.items()})
+    entity_id_by_key.update({("season", label): s.id for label, s in season_by_label.items()})
+    entity_id_by_key.update({("team", slug): t.id for slug, t in team_by_slug.items()})
+    entity_id_by_key.update({("player", sid): p.id for sid, p in player_by_source.items()})
+
+    for identifier in bundle.provider_identifiers:
+        entity_id = entity_id_by_key.get((identifier.entity_type, identifier.scoutboy_key))
+        if entity_id is None:
+            continue
+        provider = provider_for(identifier.provider_slug)
+        row = session.scalar(
+            select(ProviderIdentifier).where(
+                ProviderIdentifier.provider_id == provider.id,
+                ProviderIdentifier.entity_type == identifier.entity_type,
+                ProviderIdentifier.provider_entity_id == identifier.provider_entity_id,
+            )
+        )
+        if row is None:
+            row = ProviderIdentifier(
+                provider_id=provider.id,
+                entity_type=identifier.entity_type,
+                provider_entity_id=identifier.provider_entity_id,
+            )
+            session.add(row)
+        row.entity_id = entity_id
+        row.provider_entity_name = identifier.provider_entity_name
+        row.source_snapshot_record_id = snapshot.id
+        row.source_version = snapshot.dataset_version
+        row.raw_payload_json = identifier.raw_payload
+
     # appearances (upsert by natural key)
     for a in bundle.appearances:
         player = player_by_source.get(a.source_player_id)
@@ -144,6 +208,218 @@ def ingest_bundle(session: Session, bundle: IngestBundle, *, min_minutes: int = 
         appr.position_group = a.position_group
         appr.role_usage_raw = a.role_usage_raw
         appr.source_snapshot_record_id = snapshot.id
+
+    for r in bundle.registrations:
+        player = player_by_source.get(r.source_player_id)
+        team = team_by_slug.get(r.team_slug)
+        comp = comp_by_slug.get(r.competition_slug)
+        season = season_by_label.get(r.season_label)
+        provider = provider_for(r.provider_slug)
+        if not (player and team and comp and season):
+            continue
+        reg = session.scalar(
+            select(PlayerTeamSeasonRegistration).where(
+                PlayerTeamSeasonRegistration.player_id == player.id,
+                PlayerTeamSeasonRegistration.team_id == team.id,
+                PlayerTeamSeasonRegistration.competition_id == comp.id,
+                PlayerTeamSeasonRegistration.season_id == season.id,
+                PlayerTeamSeasonRegistration.provider_id == provider.id,
+            )
+        )
+        if reg is None:
+            reg = PlayerTeamSeasonRegistration(
+                player_id=player.id,
+                team_id=team.id,
+                competition_id=comp.id,
+                season_id=season.id,
+                provider_id=provider.id,
+            )
+            session.add(reg)
+        reg.provider_registration_id = r.provider_registration_id
+        reg.source_snapshot_record_id = snapshot.id
+        reg.provenance_json = r.provenance
+
+    match_by_provider_id: dict[tuple[str, str], Match] = {}
+    for m in bundle.matches:
+        provider = provider_for(m.provider_slug)
+        comp = comp_by_slug.get(m.competition_slug)
+        season = season_by_label.get(m.season_label)
+        if not (comp and season):
+            continue
+        match = session.scalar(
+            select(Match).where(
+                Match.provider_id == provider.id,
+                Match.provider_match_id == m.provider_match_id,
+            )
+        )
+        if match is None:
+            match = Match(provider_id=provider.id, provider_match_id=m.provider_match_id)
+            session.add(match)
+        match.competition_id = comp.id
+        match.season_id = season.id
+        match.match_date = date.fromisoformat(m.match_date) if m.match_date else None
+        home = team_by_slug.get(m.home_team_slug or "")
+        away = team_by_slug.get(m.away_team_slug or "")
+        match.home_team_id = home.id if home else None
+        match.away_team_id = away.id if away else None
+        match.home_score = m.home_score
+        match.away_score = m.away_score
+        match.match_status = m.match_status
+        match.source_snapshot_record_id = snapshot.id
+        match.raw_payload_json = m.raw_payload
+        session.flush()
+        match_by_provider_id[(m.provider_slug, m.provider_match_id)] = match
+        entity_id_by_key[("match", m.provider_match_id)] = match.id
+
+    for identifier in bundle.provider_identifiers:
+        if identifier.entity_type != "match":
+            continue
+        entity_id = entity_id_by_key.get(("match", identifier.scoutboy_key))
+        if entity_id is None:
+            continue
+        provider = provider_for(identifier.provider_slug)
+        row = session.scalar(
+            select(ProviderIdentifier).where(
+                ProviderIdentifier.provider_id == provider.id,
+                ProviderIdentifier.entity_type == "match",
+                ProviderIdentifier.provider_entity_id == identifier.provider_entity_id,
+            )
+        )
+        if row is None:
+            row = ProviderIdentifier(
+                provider_id=provider.id,
+                entity_type="match",
+                provider_entity_id=identifier.provider_entity_id,
+            )
+            session.add(row)
+        row.entity_id = entity_id
+        row.provider_entity_name = identifier.provider_entity_name
+        row.source_snapshot_record_id = snapshot.id
+        row.source_version = snapshot.dataset_version
+        row.raw_payload_json = identifier.raw_payload
+
+    for la in bundle.lineup_appearances:
+        match = match_by_provider_id.get((la.provider_slug, la.provider_match_id))
+        player = player_by_source.get(la.source_player_id)
+        team = team_by_slug.get(la.team_slug)
+        provider = provider_for(la.provider_slug)
+        if not (match and player and team):
+            continue
+        row = session.scalar(
+            select(MatchLineupAppearance).where(
+                MatchLineupAppearance.match_id == match.id,
+                MatchLineupAppearance.player_id == player.id,
+                MatchLineupAppearance.team_id == team.id,
+            )
+        )
+        if row is None:
+            row = MatchLineupAppearance(match_id=match.id, player_id=player.id, team_id=team.id)
+            session.add(row)
+        row.provider_id = provider.id
+        row.jersey_number = la.jersey_number
+        row.position_name = la.position_name
+        row.position_group = la.position_group
+        row.minutes = la.minutes
+        row.starter = la.starter
+        row.lineup_available = la.lineup_available
+        row.source_snapshot_record_id = snapshot.id
+        row.raw_payload_json = la.raw_payload
+
+    for ev in bundle.events:
+        provider = provider_for(ev.provider_slug)
+        match = match_by_provider_id.get((ev.provider_slug, ev.provider_match_id))
+        if match is None:
+            continue
+        row = session.scalar(
+            select(Event).where(
+                Event.provider_id == provider.id,
+                Event.provider_event_id == ev.provider_event_id,
+            )
+        )
+        if row is None:
+            row = Event(provider_id=provider.id, provider_event_id=ev.provider_event_id)
+            session.add(row)
+        row.match_id = match.id
+        player = player_by_source.get(ev.source_player_id or "")
+        team = team_by_slug.get(ev.team_slug or "")
+        row.player_id = player.id if player else None
+        row.team_id = team.id if team else None
+        row.event_type = ev.event_type
+        row.minute = ev.minute
+        row.second = ev.second
+        row.possession = ev.possession
+        row.location_json = ev.location
+        row.source_snapshot_record_id = snapshot.id
+        row.raw_payload_json = ev.raw_payload
+
+    for c in bundle.coverages:
+        provider = provider_for(c.provider_slug)
+        comp = comp_by_slug.get(c.competition_slug)
+        season = season_by_label.get(c.season_label)
+        if not (comp and season):
+            continue
+        row = session.scalar(
+            select(DataCoverage).where(
+                DataCoverage.provider_id == provider.id,
+                DataCoverage.competition_id == comp.id,
+                DataCoverage.season_id == season.id,
+                DataCoverage.source_snapshot_record_id == snapshot.id,
+            )
+        )
+        if row is None:
+            row = DataCoverage(
+                provider_id=provider.id,
+                competition_id=comp.id,
+                season_id=season.id,
+                source_snapshot_record_id=snapshot.id,
+            )
+            session.add(row)
+        row.matches_covered = c.matches_covered
+        row.known_total_matches = c.known_total_matches
+        row.events_available = c.events_available
+        row.lineups_available = c.lineups_available
+        row.three_sixty_available = c.three_sixty_available
+        row.coverage_pct = c.coverage_pct
+        row.last_match_date = date.fromisoformat(c.last_match_date) if c.last_match_date else None
+        row.confidence_json = c.confidence
+
+    for pe in bundle.player_evidence:
+        provider = provider_for(pe.provider_slug)
+        player = player_by_source.get(pe.source_player_id)
+        comp = comp_by_slug.get(pe.competition_slug)
+        season = season_by_label.get(pe.season_label)
+        if not (player and comp and season):
+            continue
+        row = session.scalar(
+            select(PlayerEvidenceConfidence).where(
+                PlayerEvidenceConfidence.player_id == player.id,
+                PlayerEvidenceConfidence.competition_id == comp.id,
+                PlayerEvidenceConfidence.season_id == season.id,
+                PlayerEvidenceConfidence.provider_id == provider.id,
+            )
+        )
+        if row is None:
+            row = PlayerEvidenceConfidence(
+                player_id=player.id,
+                competition_id=comp.id,
+                season_id=season.id,
+                provider_id=provider.id,
+            )
+            session.add(row)
+        row.source_snapshot_record_id = snapshot.id
+        row.minutes = pe.minutes
+        row.appearances = pe.appearances
+        row.starts = pe.starts
+        row.matches_covered = pe.matches_covered
+        row.known_total_matches = pe.known_total_matches
+        row.competition_coverage_pct = pe.competition_coverage_pct
+        row.data_recency_days = pe.data_recency_days
+        row.sample_size_confidence = pe.sample_size_confidence
+        row.coverage_confidence = pe.coverage_confidence
+        row.league_adjustment_confidence = pe.league_adjustment_confidence
+        row.role_similarity_confidence = pe.role_similarity_confidence
+        row.overall_rating_confidence = pe.overall_rating_confidence
+        row.explanation_json = pe.explanation
 
     # ---- resolve metrics to players (bundle players first, then existing source ids) ----
     psid_cache: dict[tuple, Player | None] = {}
@@ -259,6 +535,19 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--competition-id", default=None, help="source competition id (e.g. L1)")
     parser.add_argument("--target-season", type=int, default=None, help="season start year")
+    parser.add_argument(
+        "--statsbomb-season-id",
+        type=int,
+        action="append",
+        default=None,
+        help="StatsBomb Open Data season_id filter; repeat for multiple seasons",
+    )
+    parser.add_argument(
+        "--recent-seasons",
+        type=int,
+        default=None,
+        help="for statsbomb_open_data, keep N most recent available seasons per competition",
+    )
     parser.add_argument("--as-of-date", default=None, help="valuation cutoff date (YYYY-MM-DD)")
     args = parser.parse_args(argv)
 
@@ -268,6 +557,8 @@ def main(argv: list[str] | None = None) -> int:
         input_path=args.input_path,
         target_competition_id=args.competition_id,
         target_season=args.target_season,
+        statsbomb_season_ids=args.statsbomb_season_id,
+        recent_seasons=args.recent_seasons,
         as_of_date=as_of,
     )
     bundle = adapter.fetch()

@@ -86,15 +86,134 @@ class CanonicalSeason:
 
 
 @dataclass
+class CanonicalProvider:
+    slug: str
+    name: str
+    provider_type: str = "event"
+    license_url: Optional[str] = None
+    attribution: Optional[str] = None
+
+
+@dataclass
+class CanonicalProviderIdentifier:
+    provider_slug: str
+    entity_type: str
+    scoutboy_key: str
+    provider_entity_id: str
+    provider_entity_name: Optional[str] = None
+    raw_payload: dict = field(default_factory=dict)
+
+
+@dataclass
+class CanonicalRegistration:
+    source_player_id: str
+    team_slug: str
+    competition_slug: str
+    season_label: str
+    provider_slug: str
+    provider_registration_id: Optional[str] = None
+    provenance: dict = field(default_factory=dict)
+
+
+@dataclass
+class CanonicalMatch:
+    provider_slug: str
+    provider_match_id: str
+    competition_slug: str
+    season_label: str
+    home_team_slug: Optional[str] = None
+    away_team_slug: Optional[str] = None
+    match_date: Optional[str] = None
+    home_score: Optional[int] = None
+    away_score: Optional[int] = None
+    match_status: Optional[str] = None
+    raw_payload: dict = field(default_factory=dict)
+
+
+@dataclass
+class CanonicalLineupAppearance:
+    provider_slug: str
+    provider_match_id: str
+    source_player_id: str
+    team_slug: str
+    jersey_number: Optional[int] = None
+    position_name: Optional[str] = None
+    position_group: Optional[str] = None
+    minutes: int = 0
+    starter: bool = False
+    lineup_available: bool = True
+    raw_payload: dict = field(default_factory=dict)
+
+
+@dataclass
+class CanonicalEvent:
+    provider_slug: str
+    provider_event_id: str
+    provider_match_id: str
+    source_player_id: Optional[str]
+    team_slug: Optional[str]
+    event_type: str
+    minute: Optional[int] = None
+    second: Optional[int] = None
+    possession: Optional[int] = None
+    location: Optional[list] = None
+    raw_payload: dict = field(default_factory=dict)
+
+
+@dataclass
+class CanonicalDataCoverage:
+    provider_slug: str
+    competition_slug: str
+    season_label: str
+    matches_covered: int
+    known_total_matches: Optional[int] = None
+    events_available: int = 0
+    lineups_available: int = 0
+    three_sixty_available: int = 0
+    coverage_pct: Optional[float] = None
+    last_match_date: Optional[str] = None
+    confidence: dict = field(default_factory=dict)
+
+
+@dataclass
+class CanonicalPlayerEvidence:
+    provider_slug: str
+    source_player_id: str
+    competition_slug: str
+    season_label: str
+    minutes: int
+    appearances: int
+    starts: int
+    matches_covered: int
+    known_total_matches: Optional[int] = None
+    competition_coverage_pct: Optional[float] = None
+    data_recency_days: Optional[int] = None
+    sample_size_confidence: str = "unknown"
+    coverage_confidence: str = "unknown"
+    league_adjustment_confidence: str = "low"
+    role_similarity_confidence: str = "unknown"
+    overall_rating_confidence: str = "unknown"
+    explanation: dict = field(default_factory=dict)
+
+
+@dataclass
 class IngestBundle:
     source_name: str
     source_snapshot_id: str
+    providers: list[CanonicalProvider] = field(default_factory=list)
     seasons: list[CanonicalSeason] = field(default_factory=list)
     competitions: list[CanonicalCompetition] = field(default_factory=list)
     teams: list[CanonicalTeam] = field(default_factory=list)
     players: list[CanonicalPlayer] = field(default_factory=list)
     appearances: list[CanonicalAppearance] = field(default_factory=list)
     metrics: list[CanonicalMetric] = field(default_factory=list)
+    provider_identifiers: list[CanonicalProviderIdentifier] = field(default_factory=list)
+    registrations: list[CanonicalRegistration] = field(default_factory=list)
+    matches: list[CanonicalMatch] = field(default_factory=list)
+    lineup_appearances: list[CanonicalLineupAppearance] = field(default_factory=list)
+    events: list[CanonicalEvent] = field(default_factory=list)
+    coverages: list[CanonicalDataCoverage] = field(default_factory=list)
+    player_evidence: list[CanonicalPlayerEvidence] = field(default_factory=list)
     # Adapter-level quality findings (e.g. rows an adapter quarantined during parsing).
     # Merged into the data-quality report by the ingest job.
     adapter_warnings: list = field(default_factory=list)

@@ -82,6 +82,10 @@ ingest-transfermarkt: ## Ingest a Transfermarkt-style CSV dir (INPUT=... ; defau
 ingest-performance-csv: ## Ingest a performance-metrics CSV (INPUT=... ; defaults to the sample CSV)
 	$(PY) -m data_pipeline.jobs.ingest --source performance_csv --input-path $(or $(INPUT),$(PERF_SAMPLE))
 
+.PHONY: ingest-statsbomb-open
+ingest-statsbomb-open: ## Ingest a local StatsBomb Open Data snapshot (INPUT=... ; defaults to data/raw/statsbomb)
+	$(PY) -m data_pipeline.jobs.ingest --source statsbomb_open_data --input-path $(or $(INPUT),$(STATSBOMB_RAW)) --recent-seasons 2
+
 .PHONY: seed-real
 seed-real: db-migrate ## Real-data-v0 path: transfermarkt + performance CSV + recompute (sample fixtures)
 	$(PY) -m data_pipeline.jobs.ingest --source transfermarkt --input-path $(TM_SAMPLE)

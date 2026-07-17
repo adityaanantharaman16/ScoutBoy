@@ -10,7 +10,15 @@ from typing import Optional
 from rolefit import PlaystyleConfig, load_role_configs
 from scoutboy_shared import FACE_STAT_GROUPS, metric_meta
 
-from app.models.orm import ContextAdjustment, MarketValue, PlayerMetricNormalized, RoleRating
+from app.models.orm import (
+    ContextAdjustment,
+    MarketValue,
+    PlayerEvidenceConfidence,
+    PlayerMetricNormalized,
+    Provider,
+    RoleRating,
+    SourceSnapshot,
+)
 from app.models.schemas import (
     ContextPanel,
     FaceStat,
@@ -145,21 +153,57 @@ def top_playstyle_names(playstyles, limit: int = 3) -> list[str]:
 
 
 def context_panel(
-    ctx: Optional[ContextAdjustment], minutes: Optional[int]
+    ctx: Optional[ContextAdjustment],
+    minutes: Optional[int],
+    evidence: Optional[PlayerEvidenceConfidence] = None,
+    provider: Optional[Provider] = None,
+    snapshot: Optional[SourceSnapshot] = None,
+    *,
+    uses_modeled_values: bool = False,
 ) -> Optional[ContextPanel]:
-    if ctx is None:
+    if ctx is None and evidence is None:
         return None
+    explanation = ctx.explanation_json if ctx else {}
+    limitations = []
+    if evidence and evidence.explanation_json:
+        limitations = [
+            str(v)
+            for k, v in evidence.explanation_json.items()
+            if k in {"coverage", "league_adjustment", "sample"}
+        ]
     return ContextPanel(
-        league_strength=ctx.league_strength,
-        team_strength=ctx.team_strength,
-        opposition_quality=ctx.opposition_quality,
-        competition_stakes=ctx.competition_stakes,
-        role_usage=ctx.role_usage,
-        sample_reliability=ctx.sample_reliability,
-        translation_risk=(ctx.explanation_json or {}).get("league_strength", ""),
-        sample_confidence=ctx.context_confidence,
-        minutes=minutes,
-        explanation=ctx.explanation_json or {},
+        league_strength=ctx.league_strength if ctx else None,
+        team_strength=ctx.team_strength if ctx else None,
+        opposition_quality=ctx.opposition_quality if ctx else None,
+        competition_stakes=ctx.competition_stakes if ctx else None,
+        role_usage=ctx.role_usage if ctx else None,
+        sample_reliability=ctx.sample_reliability if ctx else None,
+        translation_risk=(explanation or {}).get("league_strength", ""),
+        sample_confidence=ctx.context_confidence if ctx else None,
+        minutes=evidence.minutes if evidence else minutes,
+        appearances=evidence.appearances if evidence else None,
+        starts=evidence.starts if evidence else None,
+        data_source=provider.name if provider else None,
+        data_type=provider.provider_type if provider else None,
+        data_last_updated=(
+            snapshot.as_of_date.isoformat() if snapshot and snapshot.as_of_date else None
+        ),
+        matches_covered=evidence.matches_covered if evidence else None,
+        known_total_matches=evidence.known_total_matches if evidence else None,
+        competition_coverage_pct=evidence.competition_coverage_pct if evidence else None,
+        data_recency_days=evidence.data_recency_days if evidence else None,
+        sample_size_confidence=evidence.sample_size_confidence if evidence else None,
+        coverage_confidence=evidence.coverage_confidence if evidence else None,
+        league_adjustment_confidence=evidence.league_adjustment_confidence if evidence else None,
+        role_similarity_confidence=evidence.role_similarity_confidence if evidence else None,
+        overall_rating_confidence=evidence.overall_rating_confidence if evidence else None,
+        uses_event_data=provider.provider_type == "event" if provider else False,
+        uses_basic_statistics=provider.provider_type == "current" if provider else False,
+        uses_modeled_values=uses_modeled_values,
+        uses_demo_data=provider.slug == "sample" if provider else False,
+        limitations=limitations,
+        attribution=provider.attribution if provider else None,
+        explanation={**(explanation or {}), **(evidence.explanation_json if evidence else {})},
     )
 
 

@@ -11,6 +11,11 @@ class DataSource(BaseModel):
     source_name: str
     source_player_id: Optional[str] = None
     source_url: Optional[str] = None
+    provider_display_name: Optional[str] = None
+    data_type: Optional[str] = None
+    last_updated: Optional[str] = None
+    license_url: Optional[str] = None
+    attribution: Optional[str] = None
 
 
 class Paginated(BaseModel, Generic[T]):

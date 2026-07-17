@@ -115,6 +115,22 @@ The verified cohort contains Florian Wirtz, Victor Boniface, and Adam Hlozek: th
 attackers/midfielders who clear both 450 domestic-season minutes and 450 covered event-data
 minutes. See [docs/milestone_3_real_cohort.md](docs/milestone_3_real_cohort.md).
 
+### StatsBomb Open Data normalized import
+
+The provider-agnostic importer reads a local StatsBomb Open Data snapshot without network access:
+
+```bash
+make db-migrate
+make ingest-statsbomb-open INPUT=data/raw/statsbomb
+```
+
+It imports normalized provider provenance, competitions, seasons, teams, players, matches,
+lineups, events, player-season appearances, event-derived metrics, coverage, and confidence
+components. By default it keeps the two most recent available seasons per competition using
+derived season dates, not season-name string sorting. Missing event, lineup, or 360 files are
+recorded as coverage warnings. StatsBomb attribution is displayed in player evidence context
+when Open Data powers the analysis.
+
 ### Using Postgres instead of SQLite
 
 ```bash
@@ -137,6 +153,7 @@ make db-migrate seed recompute-ratings
 | `make ingest-sample` | Ingest the synthetic all-in-one sample source |
 | `make ingest-transfermarkt` | Ingest a Transfermarkt-style CSV dir (`INPUT=…`; defaults to sample) |
 | `make ingest-performance-csv` | Ingest a `player_season_metrics_v1` CSV (`INPUT=…`; defaults to sample) |
+| `make ingest-statsbomb-open` | Ingest a local StatsBomb Open Data snapshot with provenance, events, coverage, and confidence |
 | `make seed-real` | Real-data-v0 path: transfermarkt + performance CSV + recompute |
 | `make seed-pilot` | Ingest pinned Transfermarkt + StatsBomb pilot snapshots and recompute |
 | `make cohort-report` | Write the honest pilot coverage/cohort report |
