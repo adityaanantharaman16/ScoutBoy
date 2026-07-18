@@ -1,9 +1,38 @@
-export const SCOPE_BANNER = "Prototype scope: U23 attackers and midfielders in Europe";
+export const SCOPE_BANNER =
+  "Explore available player profiles with RoleFit analysis where evidence supports it.";
+
+export const SEARCH_SCOPES = [
+  {
+    key: "analyzed",
+    label: "Analyzed",
+    description: "Players with at least one RoleFit rating.",
+  },
+  {
+    key: "all_records",
+    label: "All records",
+    description: "Every player with a usable season profile.",
+  },
+  {
+    key: "high_coverage_u23",
+    label: "High-coverage U23",
+    description: "U23 attackers and midfielders meeting ScoutBoy coverage thresholds.",
+  },
+];
+
+export const AGE_BANDS = [
+  { key: "all", label: "All ages" },
+  { key: "u23", label: "U23" },
+  { key: "24_26", label: "24-26" },
+  { key: "27_30", label: "27-30" },
+  { key: "31_plus", label: "31+" },
+];
 
 export const POSITION_GROUPS = [
   { key: "", label: "All positions" },
   { key: "ATT", label: "Attackers" },
   { key: "MID", label: "Midfielders" },
+  { key: "DEF", label: "Defenders" },
+  { key: "GK", label: "Goalkeepers" },
 ];
 
 // Role keys + display names mirror configs/roles/*.yaml (also exposed via /methodology).

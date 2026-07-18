@@ -32,6 +32,10 @@
 - Identity/value data is pinned to the same season: valuations selected **as of** the reference
   date; never mix one season's performance with unlabeled current values.
 
+Discover now presents this strict cohort as **High-coverage U23** rather than as the whole player
+directory. The broader Discover default is **Analyzed**: players with at least one RoleFit rating
+for the selected/current season. See [`discover_scope_change.md`](discover_scope_change.md).
+
 ## 2. Source permissions / terms (must confirm before download)
 
 | Source | Use | Terms status |

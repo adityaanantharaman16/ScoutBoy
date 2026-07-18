@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 
 import { apiGet } from "./client";
 import type {
@@ -15,6 +15,8 @@ import type {
 
 export interface SearchFilters {
   q?: string;
+  scope?: string;
+  age_band?: string;
   age_min?: number;
   age_max?: number;
   position_group?: string;
@@ -96,5 +98,17 @@ export function useAllPlayersLite() {
   return useQuery({
     queryKey: ["players-lite"],
     queryFn: () => apiGet<Paginated<PlayerSearchCard>>("/players", { page_size: 100 }),
+  });
+}
+
+export function usePlayersByIds(ids: number[]) {
+  return useQueries({
+    queries: ids.map((id) => ({
+      queryKey: ["player", id],
+      queryFn: () => apiGet<PlayerCard>(`/players/${id}`),
+      enabled: Number.isInteger(id) && id > 0,
+      staleTime: 30_000,
+      retry: 1,
+    })),
   });
 }

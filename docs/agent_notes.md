@@ -134,9 +134,10 @@ U23 European attackers/midfielders using a Transfermarkt-style identity/market d
    (player, source, season, team, competition, metric, snapshot), unique
    `role_ratings(player_id, role_key, season_id, version)`, and a new
    `player_universe_memberships` table (materialized MVP universe, non-destructive).
-5. **MVP universe** (`normalize/mvp_universe.py`) materialized during recompute; API search
-   filters to it by default (`universe=mvp`), `universe=all` opts out. Existing sample players
-   all qualify, so existing tests are unaffected.
+5. **MVP universe** (`normalize/mvp_universe.py`) materialized during recompute; preserved as
+   `scope=high_coverage_u23`. Discover now defaults to `scope=analyzed` (players with at least
+   one RoleFit rating). Legacy `universe=mvp` maps to `high_coverage_u23`; `universe=all` maps to
+   `all_records`.
 6. **Context v0**: existing config-driven context is kept; league/stakes configs extended with
    the milestone's leagues/values; unknown → safe default.
 7. **E2E stays on the `sample` seed** (deterministic, already green). The real-data path
@@ -149,12 +150,13 @@ matching + quarantine → performance_csv adapter → transfermarkt adapter (CSV
 fixtures (transfermarkt dir + performance CSV) → mvp_universe + API filter → data contract
 files + docs → tests → full gates + E2E.
 
-## Out of scope (unchanged): scraping, paid providers, assistant, accounts, defenders/GKs, UI polish.
+## Out of scope (unchanged): scraping, paid providers, assistant, accounts, defender/GK RoleFit
+models, fabricated ratings for unrated players, and claims of live/current coverage.
 
 ## Milestone 2 — shipped
 Canonical registry + Transfermarkt (CSV-dir) + performance-CSV adapters + source-id
 join/quarantine + migration 0002 (dedupe/unique + `player_universe_memberships`) + MVP
-universe (API `universe=mvp` default) + data-quality report + full tests/docs. Real path
+universe materialization + data-quality report + full tests/docs. Real path
 proven by `test_real_data_pipeline.py` (ingest → recompute → API). Sample E2E path unchanged.
 Deferred to M3: aggregating raw per-match dcaribou appearances (games join), context
 calibration, stronger identity resolution.

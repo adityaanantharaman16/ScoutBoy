@@ -14,7 +14,7 @@ export function PlaystyleBadges({
         <div className="label mb-2">Playstyles</div>
         <div className="flex flex-wrap gap-2" data-testid="playstyles">
           {playstyles.length === 0 && (
-            <span className="text-xs text-slate-500">No qualifying playstyles for this sample.</span>
+            <span className="text-xs text-ink-soft">No qualifying playstyles for this sample.</span>
           )}
           {playstyles.map((b) => (
             <span
@@ -31,11 +31,11 @@ export function PlaystyleBadges({
       <div>
         <div className="label mb-2">Concerns</div>
         <div className="flex flex-wrap gap-2" data-testid="concerns">
-          {concerns.length === 0 && <span className="text-xs text-slate-500">None flagged.</span>}
+          {concerns.length === 0 && <span className="text-xs text-ink-soft">None flagged.</span>}
           {concerns.map((b) => (
             <span
               key={b.playstyle_key}
-              className="chip border-rose-500/40 bg-rose-500/15 text-rose-200"
+              className="chip border-accent-red bg-[#f4e8e3] text-accent-red"
               title={whyText(b)}
             >
               {b.display_name}

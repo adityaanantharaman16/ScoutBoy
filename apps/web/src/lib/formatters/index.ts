@@ -26,7 +26,7 @@ export function formatScore(score: number | null | undefined): string {
 }
 
 export function formatAge(age: number | null | undefined): string {
-  if (age == null) return "—";
+  if (age == null) return "unknown";
   return `${Math.floor(age)}`;
 }
 
@@ -46,47 +46,47 @@ export function confidenceLabel(c: Confidence | string | null | undefined): stri
 export function confidenceColor(c: Confidence | string | null | undefined): string {
   switch (c) {
     case "high":
-      return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
+      return "bg-[#e9f0ea] text-pitch-dark border-pitch";
     case "medium":
-      return "bg-amber-500/20 text-amber-300 border-amber-500/40";
+      return "bg-[#f6ecd7] text-accent-amber border-accent-amber";
     case "low":
-      return "bg-orange-500/20 text-orange-300 border-orange-500/40";
+      return "bg-[#f2e3dc] text-accent-rust border-accent-rust";
     default:
-      return "bg-slate-500/20 text-slate-300 border-slate-500/40";
+      return "bg-paper-muted text-ink-muted border-line-strong";
   }
 }
 
 export function scoreColor(score: number | null | undefined): string {
-  if (score == null) return "text-slate-400";
-  if (score >= 85) return "text-emerald-300";
-  if (score >= 70) return "text-accent-soft";
-  if (score >= 55) return "text-amber-300";
-  return "text-slate-300";
+  if (score == null) return "text-ink-soft";
+  if (score >= 85) return "text-pitch-dark";
+  if (score >= 70) return "text-pitch-sage";
+  if (score >= 55) return "text-accent-amber";
+  return "text-accent-rust";
 }
 
 export function marketLabelColor(label: MarketLabel | string | null | undefined): string {
   switch (label) {
     case "undervalued":
-      return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
+      return "bg-[#e9f0ea] text-pitch-dark border-pitch";
     case "fair":
-      return "bg-sky-500/20 text-sky-300 border-sky-500/40";
+      return "bg-paper-muted text-ink-muted border-line-strong";
     case "inflated":
-      return "bg-amber-500/20 text-amber-300 border-amber-500/40";
+      return "bg-[#f6ecd7] text-accent-amber border-accent-amber";
     case "high-risk":
-      return "bg-rose-500/20 text-rose-300 border-rose-500/40";
+      return "bg-[#f4e8e3] text-accent-red border-accent-red";
     default:
-      return "bg-slate-500/20 text-slate-300 border-slate-500/40";
+      return "bg-paper-muted text-ink-muted border-line-strong";
   }
 }
 
 export function tierBadge(tier: string | null | undefined): string {
   switch (tier) {
     case "elite":
-      return "bg-fuchsia-500/25 text-fuchsia-200 border-fuchsia-500/50";
+      return "bg-[#e9f0ea] text-pitch-dark border-pitch";
     case "plus":
-      return "bg-accent/20 text-accent-soft border-accent/40";
+      return "bg-paper-panel text-pitch-dark border-pitch";
     default:
-      return "bg-slate-600/30 text-slate-200 border-slate-500/40";
+      return "bg-paper-muted text-ink-muted border-line-strong";
   }
 }
 

@@ -26,7 +26,7 @@ describe("formatters", () => {
   it("does not turn missing scores into zero", () => {
     expect(formatScore(null)).toBe("—");
     expect(formatScore(85.4)).toBe("85.4");
-    expect(formatAge(null)).toBe("—");
+    expect(formatAge(null)).toBe("unknown");
   });
 
   it("labels confidence honestly, including unknown", () => {

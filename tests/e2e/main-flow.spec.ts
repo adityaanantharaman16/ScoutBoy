@@ -5,7 +5,26 @@ import { expect, test } from "@playwright/test";
 test("main scouting flow", async ({ page }) => {
   // 1) Search / home
   await page.goto("/");
-  await expect(page.getByTestId("scope-banner")).toContainText("U23");
+  await expect(page.getByTestId("scope-banner")).toContainText("RoleFit analysis");
+  await expect(page.getByTestId("scope-filter")).toContainText("Analyzed");
+  await expect(page.getByTestId("player-result").first()).toBeVisible();
+  const analyzedCountText = await page.getByTestId("result-count").textContent();
+
+  await page.getByRole("button", { name: /All records/i }).click();
+  await expect(page).toHaveURL(/scope=all_records/);
+  await expect(page.getByTestId("player-result").first()).toBeVisible();
+  const allCountText = await page.getByTestId("result-count").textContent();
+  expect(allCountText).not.toBeNull();
+  expect(analyzedCountText).not.toBeNull();
+
+  await page.getByRole("button", { name: /^U23$/ }).click();
+  await expect(page).toHaveURL(/age_band=u23/);
+
+  await page.getByRole("button", { name: /High-coverage U23/i }).click();
+  await expect(page).toHaveURL(/scope=high_coverage_u23/);
+  await expect(page.getByTestId("result-count")).toContainText("High-coverage U23");
+
+  await page.goto("/");
   await expect(page.getByTestId("player-result").first()).toBeVisible();
 
   // 2) Open a player card

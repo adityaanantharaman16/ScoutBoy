@@ -23,8 +23,9 @@ no new product features.
 - **Schema hardening (migration 0002)** — dedupe unique index on `player_metrics_raw`, unique
   `role_ratings(player, role, season, version)`, and a new `player_universe_memberships` table.
 - **MVP universe** (`normalize/mvp_universe.py`) — materialized during recompute
-  (U23 + attacker/midfielder + European + minutes ≥ threshold), non-destructive. The search
-  API filters to it by default (`universe=mvp`; `universe=all` opts out).
+  (U23 + attacker/midfielder + European + minutes ≥ threshold), non-destructive. At M2 this was
+  the search default; the later Discover scope change preserves it as `scope=high_coverage_u23`
+  while making `scope=analyzed` the default.
 - **Context v0** — config-driven league/team/stakes/sample multipliers (unknown → safe default).
 - **Data-quality report** — flags duplicates, missing fields, unknown source ids, invalid
   metrics, low-sample players, and unsupported positions.
@@ -73,7 +74,7 @@ identity source abort the run (fail loudly); warnings do not.
 ## 9. What is real-data-ready
 
 - Identity/market ingestion, source-id join, performance-metric normalization, RoleFit/
-  playstyle/market recompute, MVP-universe filtering, and the whole API/UI all run on
+  playstyle/market recompute, MVP-universe materialization, and the whole API/UI all run on
   ingested data. Drop in a real Transfermarkt export + a metrics CSV and it works unchanged.
 
 ## 10. Known limitations & next-milestone recommendations

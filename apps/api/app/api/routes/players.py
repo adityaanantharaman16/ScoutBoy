@@ -43,9 +43,17 @@ def search_players(
     value_min: Optional[float] = None,
     value_max: Optional[float] = None,
     sort: str = "rolefit_desc",
-    universe: str = Query(
-        "mvp",
-        description="'mvp' (default) filters to the U23 EU att/mid universe; 'all' includes everyone",
+    scope: Optional[str] = Query(
+        None,
+        description="'analyzed' (default), 'all_records', or 'high_coverage_u23'",
+    ),
+    age_band: Optional[str] = Query(
+        None,
+        description="'all' (default), 'u23', '24_26', '27_30', or '31_plus'",
+    ),
+    universe: Optional[str] = Query(
+        None,
+        description="Legacy alias: 'mvp' maps to high_coverage_u23; 'all' maps to all_records. Ignored when scope is supplied.",
     ),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -68,6 +76,8 @@ def search_players(
         value_min=value_min,
         value_max=value_max,
         sort=sort,
+        scope=scope,
+        age_band=age_band,
         universe=universe,
         page=page,
         page_size=page_size,

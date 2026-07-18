@@ -4,11 +4,12 @@
 into clean, fan-readable scouting cards with role-specific ratings, playstyle badges, and
 transparent market-value ranges — and it can always show *why* a score, badge, or value exists.
 
-> **Product scope:** U23 attackers and midfielders in Europe. The current real-data pilot is a
-> **Bayer Leverkusen-centered Bundesliga 2023/24 vertical slice** (34 StatsBomb matches), not
-> full-league coverage. Everything is explainable; missing
-> data is shown as *unknown / low-confidence*, never zero. This is a prototype — it does not yet
-> include the LLM assistant, fullbacks/CBs/GKs, accounts, or paid data providers.
+> **Product scope:** Broad player discovery across the available local dataset, with detailed
+> RoleFit analysis only where ScoutBoy has enough modeled evidence. U23 scouting remains a
+> prominent segment, and the strict U23 attacker/midfielder cohort is available as
+> **High-coverage U23 analysis**. The current real-data pilot is a **Bayer Leverkusen-centered
+> Bundesliga 2023/24 vertical slice** (34 StatsBomb matches), not full-league or live coverage.
+> Missing data is shown as profile-only / low-confidence, never zero.
 
 > Independent project. Not affiliated with FUT.gg, EA SPORTS FC, clubs, or data providers.
 > Synthetic fixtures remain available for deterministic development and E2E tests.
@@ -17,8 +18,8 @@ transparent market-value ranges — and it can always show *why* a score, badge,
 
 ## What it does
 
-1. **Search / browse** U23 attackers & midfielders with filters (position, role, league, minutes,
-   RoleFit range, playstyle, sort).
+1. **Search / browse** player profiles with filters for analysis scope, age band, position, role,
+   league, minutes, RoleFit range, playstyle, and sort.
 2. **Player card** — identity, face stats, sub-stats, role-specific **RoleFit ratings**, playstyle
    badges, **market panel** (public value vs model value vs expected asking price), strengths &
    concerns, context, and a **"why this score" audit** accordion.
@@ -72,8 +73,10 @@ make recompute-ratings        # compute RoleFit + playstyles + market values
 make dev                      # API on :8000, web on http://localhost:3000
 ```
 
-Open http://localhost:3000. Search → open a card → expand "why these scores" → view a
-leaderboard → compare two players → read the methodology page.
+Open http://localhost:3000. Discover defaults to **Analyzed** players across all ages. Switch to
+**All records** for the broader directory or **High-coverage U23** for the original strict cohort.
+Search → open a card → expand "why these scores" → view a leaderboard → compare two players →
+read the methodology page.
 
 ### Real data v0 (Milestone 2)
 
@@ -84,7 +87,7 @@ identity/market + a strict performance-metrics CSV. With the shipped sample fixt
 make db-migrate
 make seed-real          # transfermarkt sample + performance CSV + recompute
 make data-quality
-make dev                # search defaults to the MVP universe (universe=all to see everyone)
+make dev                # Discover defaults to scope=analyzed; use scope=all_records for all profiles
 ```
 
 With a real dataset: place a Transfermarkt CSV export under `data/raw/transfermarkt/`, fill
@@ -114,6 +117,19 @@ make dev-pilot
 The verified cohort contains Florian Wirtz, Victor Boniface, and Adam Hlozek: the U23
 attackers/midfielders who clear both 450 domestic-season minutes and 450 covered event-data
 minutes. See [docs/milestone_3_real_cohort.md](docs/milestone_3_real_cohort.md).
+
+### Discover scopes
+
+- **Analyzed** (default): players with at least one RoleFit rating for the selected/current
+  season.
+- **All records**: every player with a usable season appearance/profile record. This includes
+  defenders, goalkeepers, unrated players, and limited-coverage records.
+- **High-coverage U23**: the unchanged materialized `mvp_u23_att_mid_eu` universe: U23 attackers
+  and midfielders meeting ScoutBoy's minimum performance-coverage threshold.
+
+Age bands are season-relative: U23 is `age <= 23`, then `24-26`, `27-30`, and `31+`.
+Unknown ages appear under All ages only. Defender and goalkeeper records can be discovered, but
+ScoutBoy does not currently model defender or goalkeeper RoleFit ratings.
 
 ### StatsBomb Open Data normalized import
 

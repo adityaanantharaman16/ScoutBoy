@@ -105,6 +105,7 @@ class ContextPanel(BaseModel):
 class PlayerSearchCard(BaseModel):
     id: int
     canonical_name: str
+    season: str
     age: Optional[float] = None
     club: Optional[str] = None
     league: Optional[str] = None
@@ -114,8 +115,13 @@ class PlayerSearchCard(BaseModel):
     best_role_display: Optional[str] = None
     best_role_score: Optional[float] = None
     confidence: str = "unknown"
+    analysis_status: str = "profile_only"
+    evidence_status: str = "profile_only"
+    has_rolefit_analysis: bool = False
+    is_high_coverage: bool = False
     top_playstyles: list[str] = []
     minutes: Optional[int] = None
+    represented_minutes: Optional[int] = None
     market_label: Optional[str] = None
     expected_asking_low_eur: Optional[float] = None
     expected_asking_high_eur: Optional[float] = None
@@ -132,6 +138,10 @@ class PlayerCardResponse(BaseModel):
     identity: PlayerIdentity
     season: str
     confidence: str
+    analysis_status: str = "profile_only"
+    evidence_status: str = "profile_only"
+    has_rolefit_analysis: bool = False
+    is_high_coverage: bool = False
     best_role: Optional[str] = None
     face_stats: list[FaceStat] = []
     substats: list[SubStat] = []

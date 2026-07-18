@@ -249,16 +249,58 @@
             }
           },
           {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "'analyzed' (default), 'all_records', or 'high_coverage_u23'",
+              "title": "Scope"
+            },
+            "description": "'analyzed' (default), 'all_records', or 'high_coverage_u23'"
+          },
+          {
+            "name": "age_band",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "'all' (default), 'u23', '24_26', '27_30', or '31_plus'",
+              "title": "Age Band"
+            },
+            "description": "'all' (default), 'u23', '24_26', '27_30', or '31_plus'"
+          },
+          {
             "name": "universe",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string",
-              "description": "'mvp' (default) filters to the U23 EU att/mid universe; 'all' includes everyone",
-              "default": "mvp",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Legacy alias: 'mvp' maps to high_coverage_u23; 'all' maps to all_records. Ignored when scope is supplied.",
               "title": "Universe"
             },
-            "description": "'mvp' (default) filters to the U23 EU att/mid universe; 'all' includes everyone"
+            "description": "Legacy alias: 'mvp' maps to high_coverage_u23; 'all' maps to all_records. Ignored when scope is supplied."
           },
           {
             "name": "page",
@@ -1915,6 +1957,26 @@
             "type": "string",
             "title": "Confidence"
           },
+          "analysis_status": {
+            "type": "string",
+            "title": "Analysis Status",
+            "default": "profile_only"
+          },
+          "evidence_status": {
+            "type": "string",
+            "title": "Evidence Status",
+            "default": "profile_only"
+          },
+          "has_rolefit_analysis": {
+            "type": "boolean",
+            "title": "Has Rolefit Analysis",
+            "default": false
+          },
+          "is_high_coverage": {
+            "type": "boolean",
+            "title": "Is High Coverage",
+            "default": false
+          },
           "best_role": {
             "anyOf": [
               {
@@ -2210,6 +2272,10 @@
             "type": "string",
             "title": "Canonical Name"
           },
+          "season": {
+            "type": "string",
+            "title": "Season"
+          },
           "age": {
             "anyOf": [
               {
@@ -2303,6 +2369,26 @@
             "title": "Confidence",
             "default": "unknown"
           },
+          "analysis_status": {
+            "type": "string",
+            "title": "Analysis Status",
+            "default": "profile_only"
+          },
+          "evidence_status": {
+            "type": "string",
+            "title": "Evidence Status",
+            "default": "profile_only"
+          },
+          "has_rolefit_analysis": {
+            "type": "boolean",
+            "title": "Has Rolefit Analysis",
+            "default": false
+          },
+          "is_high_coverage": {
+            "type": "boolean",
+            "title": "Is High Coverage",
+            "default": false
+          },
           "top_playstyles": {
             "items": {
               "type": "string"
@@ -2321,6 +2407,17 @@
               }
             ],
             "title": "Minutes"
+          },
+          "represented_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Represented Minutes"
           },
           "market_label": {
             "anyOf": [
@@ -2359,7 +2456,8 @@
         "type": "object",
         "required": [
           "id",
-          "canonical_name"
+          "canonical_name",
+          "season"
         ],
         "title": "PlayerSearchCard"
       },

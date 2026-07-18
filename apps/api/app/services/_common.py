@@ -155,13 +155,15 @@ def top_playstyle_names(playstyles, limit: int = 3) -> list[str]:
 def context_panel(
     ctx: Optional[ContextAdjustment],
     minutes: Optional[int],
+    appearances: Optional[int] = None,
+    starts: Optional[int] = None,
     evidence: Optional[PlayerEvidenceConfidence] = None,
     provider: Optional[Provider] = None,
     snapshot: Optional[SourceSnapshot] = None,
     *,
     uses_modeled_values: bool = False,
 ) -> Optional[ContextPanel]:
-    if ctx is None and evidence is None:
+    if ctx is None and evidence is None and minutes is None:
         return None
     explanation = ctx.explanation_json if ctx else {}
     limitations = []
@@ -181,8 +183,8 @@ def context_panel(
         translation_risk=(explanation or {}).get("league_strength", ""),
         sample_confidence=ctx.context_confidence if ctx else None,
         minutes=evidence.minutes if evidence else minutes,
-        appearances=evidence.appearances if evidence else None,
-        starts=evidence.starts if evidence else None,
+        appearances=evidence.appearances if evidence else appearances,
+        starts=evidence.starts if evidence else starts,
         data_source=provider.name if provider else None,
         data_type=provider.provider_type if provider else None,
         data_last_updated=(

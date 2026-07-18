@@ -592,6 +592,26 @@ export interface components {
             season: string;
             /** Confidence */
             confidence: string;
+            /**
+             * Analysis Status
+             * @default profile_only
+             */
+            analysis_status: string;
+            /**
+             * Evidence Status
+             * @default profile_only
+             */
+            evidence_status: string;
+            /**
+             * Has Rolefit Analysis
+             * @default false
+             */
+            has_rolefit_analysis: boolean;
+            /**
+             * Is High Coverage
+             * @default false
+             */
+            is_high_coverage: boolean;
             /** Best Role */
             best_role?: string | null;
             /**
@@ -694,6 +714,8 @@ export interface components {
             id: number;
             /** Canonical Name */
             canonical_name: string;
+            /** Season */
+            season: string;
             /** Age */
             age?: number | null;
             /** Club */
@@ -716,12 +738,34 @@ export interface components {
              */
             confidence: string;
             /**
+             * Analysis Status
+             * @default profile_only
+             */
+            analysis_status: string;
+            /**
+             * Evidence Status
+             * @default profile_only
+             */
+            evidence_status: string;
+            /**
+             * Has Rolefit Analysis
+             * @default false
+             */
+            has_rolefit_analysis: boolean;
+            /**
+             * Is High Coverage
+             * @default false
+             */
+            is_high_coverage: boolean;
+            /**
              * Top Playstyles
              * @default []
              */
             top_playstyles: string[];
             /** Minutes */
             minutes?: number | null;
+            /** Represented Minutes */
+            represented_minutes?: number | null;
             /** Market Label */
             market_label?: string | null;
             /** Expected Asking Low Eur */
@@ -1056,8 +1100,12 @@ export interface operations {
                 value_min?: number | null;
                 value_max?: number | null;
                 sort?: string;
-                /** @description 'mvp' (default) filters to the U23 EU att/mid universe; 'all' includes everyone */
-                universe?: string;
+                /** @description 'analyzed' (default), 'all_records', or 'high_coverage_u23' */
+                scope?: string | null;
+                /** @description 'all' (default), 'u23', '24_26', '27_30', or '31_plus' */
+                age_band?: string | null;
+                /** @description Legacy alias: 'mvp' maps to high_coverage_u23; 'all' maps to all_records. Ignored when scope is supplied. */
+                universe?: string | null;
                 page?: number;
                 page_size?: number;
             };

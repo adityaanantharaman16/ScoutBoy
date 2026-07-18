@@ -3,8 +3,8 @@ import type { ContextPanel as ContextPanelType } from "@/lib/api/types";
 function Mult({ label, value }: { label: string; value: number | null | undefined }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-sm text-slate-400">{label}</span>
-      <span className="text-sm font-medium">{value == null ? "—" : `×${value.toFixed(2)}`}</span>
+      <span className="text-sm text-ink-muted">{label}</span>
+      <span className="font-mono text-sm font-semibold text-ink">{value == null ? "—" : `x${value.toFixed(2)}`}</span>
     </div>
   );
 }
@@ -12,14 +12,14 @@ function Mult({ label, value }: { label: string; value: number | null | undefine
 function Value({ label, value }: { label: string; value: string | number | null | undefined }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-sm text-slate-400">{label}</span>
-      <span className="text-right text-sm font-medium">{value ?? "—"}</span>
+      <span className="text-sm text-ink-muted">{label}</span>
+      <span className="text-right text-sm font-semibold text-ink">{value ?? "—"}</span>
     </div>
   );
 }
 
 export function ContextPanel({ context }: { context: ContextPanelType | null | undefined }) {
-  if (!context) return <div className="card text-sm text-slate-400">No context data.</div>;
+  if (!context) return <div className="card text-sm text-ink-soft">No context data.</div>;
   const coverage =
     context.competition_coverage_pct == null && context.matches_covered == null
       ? null
@@ -34,14 +34,14 @@ export function ContextPanel({ context }: { context: ContextPanelType | null | u
         <Value label="Last updated" value={context.data_last_updated} />
       </div>
 
-      <div className="space-y-1.5 border-t border-white/10 pt-2">
+      <div className="space-y-1.5 border-t border-line pt-2">
         <Value label="Appearances" value={context.appearances} />
         <Value label="Starts" value={context.starts} />
         <Value label="Matches covered" value={context.matches_covered} />
         <Value label="Competition coverage" value={coverage} />
       </div>
 
-      <div className="space-y-1.5 border-t border-white/10 pt-2">
+      <div className="space-y-1.5 border-t border-line pt-2">
         <Value label="Sample confidence" value={context.sample_size_confidence ?? context.sample_confidence} />
         <Value label="Coverage confidence" value={context.coverage_confidence} />
         <Value label="League adjustment" value={context.league_adjustment_confidence} />
@@ -49,7 +49,7 @@ export function ContextPanel({ context }: { context: ContextPanelType | null | u
         <Value label="Overall evidence" value={context.overall_rating_confidence} />
       </div>
 
-      <div className="space-y-1.5 border-t border-white/10 pt-2">
+      <div className="space-y-1.5 border-t border-line pt-2">
         <Mult label="League strength" value={context.league_strength} />
         <Mult label="Team strength" value={context.team_strength} />
         <Mult label="Opposition quality" value={context.opposition_quality} />
@@ -57,20 +57,20 @@ export function ContextPanel({ context }: { context: ContextPanelType | null | u
         <Mult label="Role usage" value={context.role_usage} />
         <Mult label="Sample reliability" value={context.sample_reliability} />
       </div>
-      <div className="flex items-center justify-between border-t border-white/10 pt-1.5">
-        <span className="text-sm text-slate-400">Minutes</span>
-        <span className="text-sm font-medium">{context.minutes ?? "—"}</span>
+      <div className="flex items-center justify-between border-t border-line pt-1.5">
+        <span className="text-sm text-ink-muted">Minutes</span>
+        <span className="font-mono text-sm font-semibold text-ink">{context.minutes ?? "—"}</span>
       </div>
       {context.limitations?.slice(0, 2).map((item) => (
-        <p key={item} className="pt-1 text-xs text-slate-500">
+        <p key={item} className="pt-1 text-xs text-ink-soft">
           {item}
         </p>
       ))}
       {context.translation_risk && (
-        <p className="pt-1 text-xs text-slate-500">{context.translation_risk}</p>
+        <p className="pt-1 text-xs text-ink-soft">{context.translation_risk}</p>
       )}
       {context.attribution && (
-        <p className="pt-1 text-xs text-slate-500">{context.attribution}</p>
+        <p className="pt-1 text-xs text-ink-soft">{context.attribution}</p>
       )}
     </div>
   );

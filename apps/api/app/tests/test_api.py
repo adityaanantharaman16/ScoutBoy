@@ -6,6 +6,39 @@ def _first_att_id(client):
     return r.json()["items"][0]["id"]
 
 
+def _insert_profile_only_player(db_session, *, name="Profile Only Defender", birth_date=None):
+    from sqlalchemy import select
+
+    from app.models.orm import Appearance, Competition, Player, Season, Team
+
+    season = db_session.scalar(select(Season).where(Season.is_current.is_(True)))
+    team = db_session.scalar(select(Team))
+    comp = db_session.scalar(select(Competition))
+    player = Player(
+        canonical_name=name,
+        birth_date=birth_date,
+        nationality="Testland",
+        primary_position="CB",
+        secondary_positions=[],
+    )
+    db_session.add(player)
+    db_session.flush()
+    db_session.add(
+        Appearance(
+            player_id=player.id,
+            team_id=team.id,
+            competition_id=comp.id,
+            season_id=season.id,
+            minutes=180,
+            appearances=3,
+            starts=2,
+            position_group="DEF",
+        )
+    )
+    db_session.commit()
+    return player.id
+
+
 def test_search_paginated_and_deterministic(client):
     r1 = client.get("/api/players?sort=rolefit_desc&page=1&page_size=5")
     assert r1.status_code == 200
@@ -19,6 +52,8 @@ def test_search_paginated_and_deterministic(client):
     # sorted by score desc
     scores = [i["best_role_score"] or 0 for i in body["items"]]
     assert scores == sorted(scores, reverse=True)
+    assert all(i["has_rolefit_analysis"] for i in body["items"])
+    assert all(i["analysis_status"] == "analyzed" for i in body["items"])
 
 
 def test_search_filters_scope_and_playstyle(client):
@@ -26,6 +61,63 @@ def test_search_filters_scope_and_playstyle(client):
     assert all(i["position_group"] == "ATT" for i in att["items"])
     mid = client.get("/api/players?position_group=MID&page_size=50").json()
     assert all(i["position_group"] == "MID" for i in mid["items"])
+
+
+def test_scope_filters_and_legacy_universe_aliases(client, db_session):
+    _insert_profile_only_player(db_session)
+    default = client.get("/api/players?page_size=100").json()
+    all_records = client.get("/api/players?scope=all_records&page_size=100").json()
+    high = client.get("/api/players?scope=high_coverage_u23&page_size=100").json()
+    legacy_mvp = client.get("/api/players?universe=mvp&page_size=100").json()
+    legacy_all = client.get("/api/players?universe=all&page_size=100").json()
+
+    assert default["total"] < all_records["total"]
+    assert all(i["has_rolefit_analysis"] for i in default["items"])
+    assert any(not i["has_rolefit_analysis"] for i in all_records["items"])
+    assert [i["id"] for i in legacy_mvp["items"]] == [i["id"] for i in high["items"]]
+    assert legacy_all["total"] == all_records["total"]
+
+
+def test_age_bands_and_unknown_age_handling(client, db_session):
+    from datetime import date
+
+    unknown_id = _insert_profile_only_player(db_session, name="Unknown Age Keeper")
+    _insert_profile_only_player(db_session, name="Known U23 Defender", birth_date=date(2002, 1, 1))
+    all_records = client.get("/api/players?scope=all_records&q=Unknown Age Keeper").json()
+    u23 = client.get("/api/players?scope=all_records&age_band=u23&q=Unknown Age Keeper").json()
+    known_u23 = client.get(
+        "/api/players?scope=all_records&age_band=u23&q=Known U23 Defender"
+    ).json()
+
+    assert all_records["items"][0]["id"] == unknown_id
+    assert all_records["items"][0]["age"] is None
+    assert u23["total"] == 0
+    assert known_u23["total"] == 1
+
+
+def test_role_filter_excludes_profile_only_players(client, db_session):
+    _insert_profile_only_player(db_session, name="Unrated Role Filter")
+    body = client.get("/api/players?scope=all_records&role=touchline_winger&page_size=100").json()
+    assert body["items"]
+    assert all(i["has_rolefit_analysis"] and i["best_role"] for i in body["items"])
+
+
+def test_rolefit_sort_places_unrated_after_rated(client, db_session):
+    _insert_profile_only_player(db_session, name="Unrated Sort Tail")
+    body = client.get("/api/players?scope=all_records&sort=rolefit_desc&page_size=100").json()
+    flags = [i["has_rolefit_analysis"] for i in body["items"]]
+    assert flags == sorted(flags, reverse=True)
+
+
+def test_profile_only_player_card_renders_without_rating(client, db_session):
+    pid = _insert_profile_only_player(db_session, name="Profile Only Detail")
+    card = client.get(f"/api/players/{pid}").json()
+    assert card["identity"]["canonical_name"] == "Profile Only Detail"
+    assert card["has_rolefit_analysis"] is False
+    assert card["analysis_status"] == "profile_only"
+    assert card["evidence_status"] == "profile_only"
+    assert card["role_ratings"] == []
+    assert card["context"]["minutes"] == 180
 
 
 def test_player_profile_has_all_required_sections(client):

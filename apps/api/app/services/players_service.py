@@ -27,6 +27,9 @@ from app.repositories import players_repo as repo
 from . import _common as C
 
 _CONF_ORDER = {"unknown": 0, "low": 1, "medium": 2, "high": 3}
+SEARCH_SCOPES = {"analyzed", "all_records", "high_coverage_u23"}
+AGE_BANDS = {"all", "u23", "24_26", "27_30", "31_plus"}
+UNIVERSE_ALIASES = {"mvp": "high_coverage_u23", "all": "all_records"}
 
 
 @dataclass
@@ -44,6 +47,7 @@ class _Row:
     playstyle_keys: set = field(default_factory=set)
     top_playstyles: list = field(default_factory=list)
     market: object = None
+    is_high_coverage: bool = False
 
 
 def _load_rows(session: Session, season) -> list[_Row]:
@@ -84,11 +88,22 @@ def _load_rows(session: Session, season) -> list[_Row]:
     return rows
 
 
-def _to_card(row: _Row) -> PlayerSearchCard:
+def _evidence_status(row: _Row) -> str:
+    if row.is_high_coverage:
+        return "high_coverage"
+    if row.ratings:
+        return "analyzed_limited"
+    return "profile_only"
+
+
+def _to_card(row: _Row, season_label: str) -> PlayerSearchCard:
     m = row.market
+    evidence = _evidence_status(row)
+    has_analysis = bool(row.ratings)
     return PlayerSearchCard(
         id=row.player.id,
         canonical_name=row.player.canonical_name,
+        season=season_label,
         age=row.age,
         club=row.club,
         league=row.league_name,
@@ -98,12 +113,37 @@ def _to_card(row: _Row) -> PlayerSearchCard:
         best_role_display=C.role_display_map().get(row.best.role_key) if row.best else None,
         best_role_score=row.best.final_score if row.best else None,
         confidence=row.best.confidence if row.best else "unknown",
+        analysis_status="analyzed" if has_analysis else "profile_only",
+        evidence_status=evidence,
+        has_rolefit_analysis=has_analysis,
+        is_high_coverage=row.is_high_coverage,
         top_playstyles=row.top_playstyles,
         minutes=row.minutes,
+        represented_minutes=row.minutes,
         market_label=getattr(m, "label", None),
         expected_asking_low_eur=getattr(m, "expected_asking_low_eur", None),
         expected_asking_high_eur=getattr(m, "expected_asking_high_eur", None),
     )
+
+
+def _normalize_scope(scope: Optional[str], universe: Optional[str]) -> str:
+    if scope in SEARCH_SCOPES:
+        return scope
+    if universe in UNIVERSE_ALIASES:
+        return UNIVERSE_ALIASES[universe]
+    return "analyzed"
+
+
+def _age_band_bounds(age_band: Optional[str]) -> tuple[Optional[float], Optional[float]]:
+    if age_band == "u23":
+        return None, 23
+    if age_band == "24_26":
+        return 24, 26
+    if age_band == "27_30":
+        return 27, 30
+    if age_band == "31_plus":
+        return 31, None
+    return None, None
 
 
 def search_players(
@@ -124,7 +164,9 @@ def search_players(
     value_min=None,
     value_max=None,
     sort="rolefit_desc",
-    universe="mvp",
+    scope=None,
+    age_band=None,
+    universe=None,
     page=1,
     page_size=20,
 ) -> Paginated[PlayerSearchCard]:
@@ -133,12 +175,16 @@ def search_players(
         return Paginated(items=[], total=0, page=page, page_size=page_size, total_pages=0)
     rows = _load_rows(session, season)
 
-    # Default view is the materialized MVP universe (U23 attackers/midfielders in Europe
-    # with enough minutes). universe="all" opts out. If the universe has not been
-    # materialized yet, do not filter (avoid an empty UI before recompute runs).
-    eligible_ids: Optional[set] = None
-    if universe == "mvp" and repo.universe_materialized(session, season.id, UNIVERSE_KEY):
-        eligible_ids = repo.eligible_universe_ids(session, season.id, UNIVERSE_KEY)
+    selected_scope = _normalize_scope(scope, universe)
+    selected_age_band = age_band if age_band in AGE_BANDS else "all"
+
+    high_coverage_ids: set = set()
+    if repo.universe_materialized(session, season.id, UNIVERSE_KEY):
+        high_coverage_ids = repo.eligible_universe_ids(session, season.id, UNIVERSE_KEY)
+    for row in rows:
+        row.is_high_coverage = row.player.id in high_coverage_ids
+
+    band_min, band_max = _age_band_bounds(selected_age_band)
 
     def score_for(row: _Row) -> Optional[float]:
         if role:
@@ -147,7 +193,9 @@ def search_players(
         return row.best.final_score if row.best else None
 
     def keep(row: _Row) -> bool:
-        if eligible_ids is not None and row.player.id not in eligible_ids:
+        if selected_scope == "analyzed" and not row.ratings:
+            return False
+        if selected_scope == "high_coverage_u23" and row.player.id not in high_coverage_ids:
             return False
         if q:
             ql = q.lower()
@@ -184,6 +232,10 @@ def search_players(
             return False
         if age_max is not None and (row.age is None or row.age > age_max):
             return False
+        if band_min is not None and (row.age is None or row.age < band_min):
+            return False
+        if band_max is not None and (row.age is None or row.age > band_max):
+            return False
         s = score_for(row)
         if rolefit_min is not None and (s is None or s < rolefit_min):
             return False
@@ -205,20 +257,22 @@ def search_players(
 
     # deterministic sort with explicit tie-breaks
     def sort_key(row: _Row):
-        s = score_for(row) or 0.0
+        s = score_for(row)
+        rated = s is not None
+        score_value = s if s is not None else 0.0
         conf = _CONF_ORDER.get(row.best.confidence if row.best else "unknown", 0)
         asking = row.market.expected_asking_high_eur if row.market else 0.0
         name = row.player.canonical_name.lower()
         pid = row.player.id
         primary = {
-            "rolefit_desc": (-s, -conf),
-            "rolefit_asc": (s, -conf),
+            "rolefit_desc": (0 if rated else 1, -score_value, -conf),
+            "rolefit_asc": (0 if rated else 1, score_value, -conf),
             "age_asc": (row.age if row.age is not None else 999,),
             "age_desc": (-(row.age if row.age is not None else -1),),
             "value_desc": (-(asking or 0),),
             "value_asc": (asking or 0,),
             "name_asc": (name,),
-        }.get(sort, (-s, -conf))
+        }.get(sort, (0 if rated else 1, -score_value, -conf))
         return (*primary, name, pid)
 
     filtered.sort(key=sort_key)
@@ -227,7 +281,7 @@ def search_players(
     start = (page - 1) * page_size
     page_items = filtered[start : start + page_size]
     return Paginated(
-        items=[_to_card(r) for r in page_items],
+        items=[_to_card(r, season.label) for r in page_items],
         total=total,
         page=page,
         page_size=page_size,
@@ -280,12 +334,15 @@ def build_player_card(session: Session, player_id: int) -> Optional[PlayerCardRe
     comps = repo.competitions_by_id(session)
     club = league = None
     minutes = 0
+    appearances_count = starts_count = None
     if appr:
         team = teams.get(appr.team_id)
         comp = comps.get(appr.competition_id)
         club = team.canonical_name if team else None
         league = comp.name if comp else None
         minutes = appr.minutes or 0
+        appearances_count = appr.appearances
+        starts_count = appr.starts
 
     normalized = repo.normalized_for_player(session, player_id, season.id)
     ratings = repo.ratings_for_player(session, player_id, season.id)
@@ -343,10 +400,22 @@ def build_player_card(session: Session, player_id: int) -> Optional[PlayerCardRe
     )
 
     overall_conf = best.confidence if best else "unknown"
+    is_high_coverage = (
+        player_id in repo.eligible_universe_ids(session, season.id, UNIVERSE_KEY)
+        if repo.universe_materialized(session, season.id, UNIVERSE_KEY)
+        else False
+    )
+    evidence_status = (
+        "high_coverage" if is_high_coverage else "analyzed_limited" if ratings else "profile_only"
+    )
     return PlayerCardResponse(
         identity=identity,
         season=season.label,
         confidence=overall_conf,
+        analysis_status="analyzed" if ratings else "profile_only",
+        evidence_status=evidence_status,
+        has_rolefit_analysis=bool(ratings),
+        is_high_coverage=is_high_coverage,
         best_role=best.role_key if best else None,
         face_stats=face_stats,
         substats=substats,
@@ -359,6 +428,8 @@ def build_player_card(session: Session, player_id: int) -> Optional[PlayerCardRe
         context=C.context_panel(
             ctx,
             minutes,
+            appearances=appearances_count,
+            starts=starts_count,
             evidence=primary_evidence,
             provider=primary_provider,
             snapshot=primary_snapshot,

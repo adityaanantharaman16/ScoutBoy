@@ -4,15 +4,15 @@ import { formatEur, formatEurRange, marketLabelColor } from "@/lib/formatters";
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between border-b border-white/5 py-1.5 last:border-0">
-      <span className="text-sm text-slate-400">{label}</span>
-      <span className="text-sm font-medium">{value}</span>
+    <div className="flex items-center justify-between gap-3 border-b border-line py-2 last:border-0">
+      <span className="text-sm text-ink-muted">{label}</span>
+      <span className="font-mono text-sm font-semibold text-ink">{value}</span>
     </div>
   );
 }
 
 export function MarketValuePanel({ market }: { market: MarketPanel | null | undefined }) {
-  if (!market) return <div className="card text-sm text-slate-400">No market data.</div>;
+  if (!market) return <div className="card text-sm text-ink-soft">No market data.</div>;
   const labelBasis = (market.explanation?.label_basis as string) ?? "";
   return (
     <div className="card" data-testid="market-panel">
@@ -30,12 +30,12 @@ export function MarketValuePanel({ market }: { market: MarketPanel | null | unde
         value={formatEurRange(market.expected_asking_low_eur, market.expected_asking_high_eur)}
       />
       {market.manual_review_required && (
-        <div className="mt-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-xs text-amber-200">
+        <div className="mt-2 border border-accent-amber/50 bg-[#f6ecd7] px-2 py-1 text-xs text-accent-amber" style={{ borderRadius: 4 }}>
           Flagged for manual review (outlier guardrail).
         </div>
       )}
-      {labelBasis && <p className="mt-2 text-xs text-slate-500">{labelBasis}</p>}
-      <p className="mt-1 text-[11px] text-slate-500">
+      {labelBasis && <p className="mt-2 text-xs text-ink-soft">{labelBasis}</p>}
+      <p className="mt-1 text-[11px] text-ink-soft">
         Ranges, not exact values. Public value, model value, and asking price are distinct.
       </p>
     </div>

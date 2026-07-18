@@ -1,10 +1,13 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 import { FaceStatsGrid } from "@/components/player/FaceStatsGrid";
 import { MarketValuePanel } from "@/components/player/MarketValuePanel";
 import { PlaystyleBadges } from "@/components/player/PlaystyleBadges";
-import type { FaceStat, MarketPanel, PlaystyleBadge } from "@/lib/api/types";
+import { PlayerSearchFilters } from "@/components/search/PlayerSearchFilters";
+import { ResultCard } from "@/components/search/PlayerSearchResults";
+import type { FaceStat, MarketPanel, PlayerSearchCard, PlaystyleBadge } from "@/lib/api/types";
+import { ScoutingStateProvider } from "@/lib/state/scouting-state";
 
 const badges: PlaystyleBadge[] = [
   {
@@ -81,5 +84,103 @@ describe("MarketValuePanel", () => {
   it("renders an honest fallback when market data is missing", () => {
     render(<MarketValuePanel market={null} />);
     expect(screen.getByText(/No market data/i)).toBeInTheDocument();
+  });
+});
+
+describe("Discover filters", () => {
+  it("renders Analyzed as the default scope and supports U23 quick filtering", () => {
+    const onChange = vi.fn();
+    render(
+      <PlayerSearchFilters
+        filters={{ scope: "analyzed", age_band: "all", sort: "rolefit_desc", page: 1 }}
+        onChange={onChange}
+      />,
+    );
+    expect(screen.getByText("Analyzed")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("U23"));
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ scope: "analyzed", age_band: "u23", page: 1 }),
+    );
+  });
+
+  it("supports All records and High-coverage U23 scopes plus defender/GK filters", () => {
+    const onChange = vi.fn();
+    render(
+      <PlayerSearchFilters
+        filters={{ scope: "analyzed", age_band: "all", sort: "rolefit_desc", page: 1 }}
+        onChange={onChange}
+      />,
+    );
+    fireEvent.click(screen.getByText("All records"));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ scope: "all_records" }));
+    fireEvent.click(screen.getByText("High-coverage U23"));
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ scope: "high_coverage_u23" }),
+    );
+    expect(screen.getByRole("option", { name: "Defenders" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Goalkeepers" })).toBeInTheDocument();
+  });
+});
+
+describe("Discover cards", () => {
+  const baseCard: PlayerSearchCard = {
+    id: 1,
+    canonical_name: "Card Player",
+    season: "2023/24",
+    age: 22,
+    club: "Test FC",
+    league: "Test League",
+    primary_position: "LW",
+    position_group: "ATT",
+    best_role: "inside_forward",
+    best_role_display: "Inside Forward",
+    best_role_score: 81.2,
+    confidence: "high",
+    analysis_status: "analyzed",
+    evidence_status: "high_coverage",
+    has_rolefit_analysis: true,
+    is_high_coverage: true,
+    top_playstyles: ["Technical Carrier"],
+    minutes: 1200,
+    represented_minutes: 1200,
+    market_label: "fair",
+    expected_asking_low_eur: 1000000,
+    expected_asking_high_eur: 2000000,
+  };
+
+  function renderResultCard(card: PlayerSearchCard) {
+    return render(
+      <ScoutingStateProvider>
+        <ResultCard p={card} />
+      </ScoutingStateProvider>,
+    );
+  }
+
+  it("renders rated scores, confidence, and high-coverage evidence", () => {
+    renderResultCard(baseCard);
+    expect(screen.getByText("81.2")).toBeInTheDocument();
+    expect(screen.getByText("High coverage")).toBeInTheDocument();
+    expect(screen.getByText("high")).toBeInTheDocument();
+  });
+
+  it("renders profile-only players without fake scores or empty playstyles", () => {
+    renderResultCard({
+      ...baseCard,
+      best_role: null,
+      best_role_display: null,
+      best_role_score: null,
+      confidence: "unknown",
+      analysis_status: "profile_only",
+      evidence_status: "profile_only",
+      has_rolefit_analysis: false,
+      is_high_coverage: false,
+      top_playstyles: [],
+      age: null,
+    });
+    expect(screen.getAllByText("Profile only").length).toBeGreaterThan(0);
+    expect(screen.getByTestId("profile-only-card")).toBeInTheDocument();
+    expect(screen.queryByText("0.0")).not.toBeInTheDocument();
+    expect(screen.queryByText(/No qualifying playstyles/)).not.toBeInTheDocument();
+    expect(screen.getByText(/unknown/)).toBeInTheDocument();
   });
 });

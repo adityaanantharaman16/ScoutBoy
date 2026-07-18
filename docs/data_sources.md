@@ -19,11 +19,16 @@ past the adapter.
 The real-data-v0 path (Milestone 2) is documented in
 [`milestone_2_real_data_v0.md`](milestone_2_real_data_v0.md); the metrics contract in
 [`data_contracts/player_season_metrics_v1.md`](data_contracts/player_season_metrics_v1.md).
+Discover scope behavior is documented in [`discover_scope_change.md`](discover_scope_change.md).
 
 ## Rules
 
 - **No live scraping in the MVP.** Adapters exist so real data can be added later behind
   explicit approval. If pre-scraped data is used, label its source and store the snapshot.
+- **Directory coverage is not analytical coverage.** `scope=all_records` may expose defenders,
+  goalkeepers, unrated players, and limited-coverage records. `scope=analyzed` means at least
+  one RoleFit rating exists for the season. `scope=high_coverage_u23` is the unchanged strict
+  U23 attacker/midfielder evidence cohort.
 - **Snapshots.** `source_snapshots` stores provider, dataset version, checksum, license,
   target season, path, and row counts. Appearances and raw metrics link to the snapshot;
   rating runs retain snapshot keys.
