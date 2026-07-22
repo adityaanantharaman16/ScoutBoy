@@ -46,7 +46,7 @@ jobs:
           --cov-fail-under=90
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: python-${{ matrix.python-version }}-coverage
           path: coverage.xml
@@ -187,7 +187,7 @@ jobs:
         run: make e2e
       - name: Upload Playwright diagnostics
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-diagnostics
           path: |
