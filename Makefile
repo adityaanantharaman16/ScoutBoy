@@ -13,6 +13,7 @@ export DATABASE_URL ?= sqlite:///$(CURDIR)/db/scoutboy.db
 export SCOUTBOY_MIN_MINUTES ?= 450
 API_HOST ?= 127.0.0.1
 API_PORT ?= 8000
+FULL_COMPOSE := docker compose -f docker-compose.full.yml
 
 .DEFAULT_GOAL := help
 
@@ -156,9 +157,8 @@ test-web: ## Run Vitest frontend utility tests
 	pnpm --filter @scoutboy/web test run
 
 .PHONY: e2e
-e2e: seed recompute-ratings ## Build web + run Playwright E2E against the production build
-	pnpm --filter @scoutboy/web build
-	pnpm exec playwright test
+e2e: ## Run isolated fixture-backed Playwright E2E against a production build
+	bash scripts/run_e2e.sh
 
 .PHONY: lint
 lint: lint-py lint-web ## Lint Python + TypeScript
@@ -180,6 +180,37 @@ lint-web: ## ESLint the frontend
 .PHONY: openapi
 openapi: ## Export the OpenAPI schema to docs/api_contracts/openapi.json
 	$(PY) -m app.export_openapi
+
+.PHONY: check-api-contract
+check-api-contract: ## Regenerate API contracts and fail when tracked outputs were stale
+	$(PY) scripts/check_api_contract.py
+
+.PHONY: postgres-smoke
+postgres-smoke: ## Verify migration + seeded/recomputed data + API reads on configured PostgreSQL
+	SCOUTBOY_POSTGRES_SMOKE=1 $(VENV)/bin/pytest apps/api/app/tests/test_postgres_smoke.py
+
+# ---------------------------------------------------------------------------
+# Production-shaped full-stack containers
+# ---------------------------------------------------------------------------
+.PHONY: docker-build
+docker-build: ## Build the full-stack API and web images
+	SCOUTBOY_ADMIN_TOKEN=compose-build-validation-only $(FULL_COMPOSE) build
+
+.PHONY: docker-up
+docker-up: ## Start PostgreSQL, migrate, API, and production web containers
+	$(FULL_COMPOSE) up -d --build --wait --wait-timeout 180
+
+.PHONY: docker-down
+docker-down: ## Stop the full-stack containers (preserves PostgreSQL data)
+	SCOUTBOY_ADMIN_TOKEN=compose-control-only $(FULL_COMPOSE) down
+
+.PHONY: docker-logs
+docker-logs: ## Follow full-stack container logs
+	SCOUTBOY_ADMIN_TOKEN=compose-control-only $(FULL_COMPOSE) logs -f
+
+.PHONY: docker-smoke
+docker-smoke: ## Build/start the full stack and probe web, liveness, and readiness
+	bash scripts/docker_smoke.sh
 
 .PHONY: clean
 clean: ## Remove caches and the local SQLite DB

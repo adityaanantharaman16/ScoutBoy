@@ -41,8 +41,9 @@ test("main scouting flow", async ({ page }) => {
 
   // 4) Role leaderboard
   await page.goto("/roles/touchline_winger");
-  await expect(page.getByTestId("leaderboard-table")).toBeVisible();
-  const firstRank = page.getByTestId("leaderboard-table").locator("tbody tr").first();
+  const leaderboard = page.locator('table[data-testid="leaderboard-table"]');
+  await expect(leaderboard).toBeVisible();
+  const firstRank = leaderboard.locator("tbody tr").first();
   await expect(firstRank).toContainText("1");
 
   // 5) Compare two players

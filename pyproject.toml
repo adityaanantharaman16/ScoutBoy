@@ -56,6 +56,14 @@ testpaths = [
 addopts = "-q"
 filterwarnings = ["ignore::DeprecationWarning"]
 
+[tool.coverage.run]
+omit = [
+  "*/tests/*",
+  "apps/api/app/export_openapi.py",
+  "apps/api/app/models/orm/*",
+  "apps/api/app/models/schemas/*",
+]
+
 [tool.ruff]
 line-length = 100
 target-version = "py39"

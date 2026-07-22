@@ -1,0 +1,94 @@
+name: scoutboy-full
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: scoutboy
+      POSTGRES_PASSWORD: scoutboy
+      POSTGRES_DB: scoutboy
+    ports:
+      - "${SCOUTBOY_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - scoutboy_full_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scoutboy -d scoutboy"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  migrate:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    environment: &api-environment
+      DATABASE_URL: postgresql+psycopg://scoutboy:scoutboy@db:5432/scoutboy
+      SCOUTBOY_ENVIRONMENT: production
+      SCOUTBOY_ADMIN_TOKEN: ${SCOUTBOY_ADMIN_TOKEN:?Set SCOUTBOY_ADMIN_TOKEN for the full stack}
+      SCOUTBOY_WEB_ORIGINS: ${SCOUTBOY_WEB_ORIGINS:-http://localhost:3000}
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  bootstrap:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    environment: *api-environment
+    command:
+      [
+        "/bin/sh",
+        "-c",
+        "python -m data_pipeline.jobs.ingest --source sample && python -m data_pipeline.jobs.recompute --ratings --playstyles --market",
+      ]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    environment: *api-environment
+    ports:
+      - "${SCOUTBOY_API_PORT:-8000}:8000"
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/readyz', timeout=3)",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000/api}
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000/api}
+    ports:
+      - "${SCOUTBOY_WEB_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:3000/"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+volumes:
+  scoutboy_full_pgdata:

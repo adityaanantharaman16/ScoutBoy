@@ -13,6 +13,7 @@ __pycache__/
 .ruff_cache/
 *.egg-info/
 .coverage
+coverage.xml
 htmlcov/
 
 # --- Database / data artifacts (local, regenerated) ---
@@ -29,6 +30,8 @@ playwright/.cache/
 
 # --- Env / OS ---
 .env
+.env.*
+!.env.example
 .env.local
 .DS_Store
 __MACOSX/

@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+from unittest.mock import patch
+
+import pytest
+from pydantic import ValidationError
+
+from app.core.config import Settings
+
 
 def _first_att_id(client):
     r = client.get("/api/players?position_group=ATT&page_size=5")
@@ -37,6 +44,107 @@ def _insert_profile_only_player(db_session, *, name="Profile Only Defender", bir
     )
     db_session.commit()
     return player.id
+
+
+def test_development_configuration_keeps_local_admin_optional():
+    settings = Settings(
+        _env_file=None,
+        environment="development",
+        admin_token="",
+        web_origins="http://localhost:3000",
+    )
+    assert settings.admin_token == ""
+    assert settings.allowed_web_origins == ["http://localhost:3000"]
+
+
+def test_production_configuration_requires_admin_token():
+    with pytest.raises(ValidationError, match="SCOUTBOY_ADMIN_TOKEN"):
+        Settings(
+            _env_file=None,
+            environment="production",
+            admin_token="",
+            web_origins="https://scoutboy.example",
+        )
+
+
+def test_production_configuration_rejects_wildcard_cors():
+    with pytest.raises(ValidationError, match="wildcard"):
+        Settings(
+            _env_file=None,
+            environment="production",
+            admin_token="not-a-real-secret",
+            web_origins="*",
+        )
+
+
+def test_production_configuration_rejects_embedded_wildcard_cors():
+    with pytest.raises(ValidationError, match="wildcard"):
+        Settings(
+            _env_file=None,
+            environment="production",
+            admin_token="not-a-real-secret",
+            web_origins="https://*.example.test",
+        )
+
+
+def test_production_configuration_accepts_single_https_origin():
+    settings = Settings(
+        _env_file=None,
+        environment="production",
+        admin_token="not-a-real-secret",
+        web_origins="https://app.example.com",
+    )
+    assert settings.allowed_web_origins == ["https://app.example.com"]
+
+
+def test_production_configuration_accepts_multiple_explicit_origins():
+    settings = Settings(
+        _env_file=None,
+        environment="production",
+        admin_token="not-a-real-secret",
+        web_origins="http://localhost:3000, http://127.0.0.1:3000, https://app.example.com",
+    )
+    assert settings.allowed_web_origins == [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://app.example.com",
+    ]
+
+
+def test_production_configuration_requires_an_explicit_origin():
+    with pytest.raises(ValidationError, match="at least one production origin"):
+        Settings(
+            _env_file=None,
+            environment="production",
+            admin_token="not-a-real-secret",
+            web_origins=" , ",
+        )
+
+
+def test_liveness_is_small_and_database_independent(client):
+    response = client.get("/healthz")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+def test_readiness_reports_database_success(client):
+    with patch(
+        "app.api.routes.health.check_database_readiness",
+        return_value={"status": "ready", "database": "ready"},
+    ):
+        response = client.get("/readyz")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ready", "database": "ready"}
+
+
+def test_readiness_hides_database_failure_details(client):
+    with patch(
+        "app.api.routes.health.check_database_readiness",
+        side_effect=RuntimeError("postgresql://user:secret@example.invalid/database"),
+    ):
+        response = client.get("/readyz")
+    assert response.status_code == 503
+    assert response.json() == {"detail": {"status": "not_ready", "database": "unavailable"}}
 
 
 def test_search_paginated_and_deterministic(client):

@@ -1,5 +1,8 @@
 # ScoutBoy
 
+[![CI](https://github.com/adityaanantharaman16/ScoutBoy/actions/workflows/ci.yml/badge.svg)](https://github.com/adityaanantharaman16/ScoutBoy/actions/workflows/ci.yml)
+[![Security](https://github.com/adityaanantharaman16/ScoutBoy/actions/workflows/security.yml/badge.svg)](https://github.com/adityaanantharaman16/ScoutBoy/actions/workflows/security.yml)
+
 **FUT.gg-style, real-life football player discovery.** ScoutBoy turns messy football data
 into clean, fan-readable scouting cards with role-specific ratings, playstyle badges, and
 transparent market-value ranges — and it can always show *why* a score, badge, or value exists.
@@ -55,15 +58,14 @@ See [`docs/agent_notes.md`](docs/agent_notes.md) for decisions and intentional o
 - **Frontend:** Next.js (App Router), TypeScript, Tailwind, TanStack Query, Vitest, Playwright.
 - **Backend:** FastAPI, Pydantic v2, SQLAlchemy 2.0, Alembic, Uvicorn.
 - **Domain/data:** Python 3.9+ (3.11+ recommended), pandas/DuckDB optional, pytest.
-- **DB:** **SQLite by default** (zero-setup local dev); Postgres fully supported via `DATABASE_URL`
-  + `docker compose up -d db`. *(SQLite default is a documented deviation — the build host had no
-  Docker/Postgres; SQLAlchemy/Alembic keep everything DB-agnostic.)*
+- **DB:** **SQLite by default** for zero-setup local development; PostgreSQL 16 for the
+  production-shaped Compose stack and its CI integration smoke.
 
 ---
 
 ## Quickstart
 
-Prereqs: Python 3.9+ and Node ≥18 with `corepack` (for pnpm). No Docker required.
+Prereqs: Python 3.9 or 3.11 and Node 20 with `corepack` (for pnpm). No Docker required.
 
 ```bash
 corepack enable pnpm          # once, if pnpm isn't available
@@ -156,6 +158,40 @@ pip install -e ".[postgres]"
 make db-migrate seed recompute-ratings
 ```
 
+### Full-stack Docker
+
+The separate full-stack configuration preserves the database-only `docker-compose.yml` workflow:
+
+```bash
+export SCOUTBOY_ADMIN_TOKEN=choose-a-local-secret
+make docker-up       # build and start db -> migrate -> synthetic fixture bootstrap -> API -> web
+make docker-logs     # follow logs
+make docker-down     # stop containers; preserve PostgreSQL data
+```
+
+Open the web app at `http://localhost:3000` and API docs at `http://localhost:8000/docs`.
+Defaults publish PostgreSQL on `5432`; override host ports with `SCOUTBOY_WEB_PORT`,
+`SCOUTBOY_API_PORT`, and `SCOUTBOY_POSTGRES_PORT`. `NEXT_PUBLIC_API_BASE_URL` is a build-time
+browser URL and defaults to `http://localhost:8000/api`; do not set it to Docker's internal
+`http://api:8000` address because a host browser cannot resolve that name.
+
+Compose refuses to render without an explicit admin token. Use a strong `SCOUTBOY_ADMIN_TOKEN` and
+explicit `SCOUTBOY_WEB_ORIGINS` before adapting this reference configuration for deployment.
+
+### Configuration modes
+
+`SCOUTBOY_ENVIRONMENT` accepts `development`, `test`, or `production`. Development remains
+zero-config: the admin token may be empty and localhost CORS origins are enabled. Production mode
+refuses to start when `SCOUTBOY_ADMIN_TOKEN` is empty and rejects wildcard CORS origins. Copy
+`.env.example` for the complete configuration surface; `.env` files remain untracked and are never
+included in container images.
+
+Health probes are deliberately small:
+
+- `GET /healthz` confirms the API process is alive without touching the database.
+- `GET /readyz` confirms database connectivity and that Alembic is at the current head revision.
+- `GET /api/health` remains available for backward compatibility.
+
 ---
 
 ## Commands (`make help` for all)
@@ -179,9 +215,15 @@ make db-migrate seed recompute-ratings
 | `make quality-report` | Run data-quality checks and store a report |
 | `make dev` / `dev-api` / `dev-web` | Run the stack / API only / web only |
 | `make test` | Backend (pytest) + frontend (Vitest) |
-| `make e2e` | Seed + build web + Playwright main-flow E2E (self-contained, runs against the production build) |
+| `make e2e` | Isolated DB + dedicated ports + production build/`next start` Playwright flow |
 | `make lint` / `make format` | Ruff+Black+ESLint / auto-format Python |
 | `make openapi` | Export OpenAPI to `docs/api_contracts/openapi.json` |
+| `make check-api-contract` | Regenerate OpenAPI + TypeScript schema and fail if either was stale |
+| `make postgres-smoke` | Exercise the configured PostgreSQL database and an API read (requires prepared PostgreSQL) |
+| `make docker-build` | Build the API and production web images |
+| `make docker-up` / `make docker-down` | Start/stop the production-shaped full stack |
+| `make docker-logs` | Follow full-stack container logs |
+| `make docker-smoke` | Build/start a disposable stack on 13000/18000/55432 and probe web/API health |
 
 Raw pipeline commands (equivalent to the Make targets; run inside the venv with `PYTHONPATH` set):
 
@@ -211,13 +253,16 @@ GET  /api/players/{id}/similar         style / quality / cheaper / higher-upside
 GET  /api/roles/{role_key}/rankings    role leaderboard
 GET  /api/compare                      side-by-side + why one rates higher
 GET  /api/methodology                  methodology metadata for the UI
+GET  /healthz                          process liveness
+GET  /readyz                           database + migration readiness
 POST /api/admin/ingest                 (local admin) trigger ingestion
 POST /api/admin/recompute-ratings      (local admin) trigger recompute
 GET  /api/admin/rating-runs            run history
 ```
 
-The frontend consumes a single typed module (`apps/web/src/lib/api/types.ts`); regenerate raw
-OpenAPI types with `pnpm --filter @scoutboy/web gen:api`.
+The frontend consumes a single typed module (`apps/web/src/lib/api/types.ts`). Run
+`make check-api-contract` after API schema changes; if the first run updates stale artifacts, rerun
+it to verify freshness before committing.
 
 ---
 
@@ -225,18 +270,34 @@ OpenAPI types with `pnpm --filter @scoutboy/web gen:api`.
 
 | Suite | Runner | Covers |
 | --- | --- | --- |
-| Python/domain (99) | pytest | ratings, market, API, adapters, real-schema aggregation, provenance, eligibility, covered minutes, reports |
-| Frontend (11) | Vitest | formatters + component render incl. honest missing/low-confidence states |
-| E2E (1) | Playwright | search → card → audit → leaderboard → compare → methodology |
+| Python/domain | pytest | ratings, market, API, adapters, real-schema aggregation, provenance, eligibility, covered minutes, reports |
+| Frontend | Vitest | formatters + component rendering, including honest missing/low-confidence states |
+| E2E | Playwright | search → card → audit → leaderboard → compare → methodology |
+| PostgreSQL smoke | pytest + service DB | migrations → sample ingest → recompute → readiness → API read |
 
 ```bash
 make test          # pytest + vitest
 make e2e           # seeds, builds web, runs the Playwright flow against `next start`
 ```
 
-The E2E runs against the **production build** (`next start`), not the dev server, so it's
-deterministic (no per-request compilation). The **Postgres path is verified end-to-end**
-(Alembic migration + ingest + recompute + API) and produces results identical to SQLite.
+The E2E runs against the **production build** (`next start`), not the dev server, so it is
+deterministic and fixture-backed. By default it creates a disposable SQLite database and uses API
+port `18080` plus web port `13080`, so it can run while `make dev` remains active on `8000`/`3000`
+without touching the development database. Override the ports with `SCOUTBOY_E2E_API_PORT` and
+`SCOUTBOY_E2E_WEB_PORT`. Existing servers are never reused unless
+`SCOUTBOY_E2E_REUSE_EXISTING_SERVER=1` is deliberately set.
+
+The web container uses Next.js standalone output: its final stage contains traced production
+runtime files and static assets, not the workspace's development dependency tree. Local and CI E2E
+continue to use a normal production build with literal `next start`.
+
+CI runs the PostgreSQL path on a genuine PostgreSQL service; its smoke test asserts the configured
+SQLAlchemy dialect is PostgreSQL before checking migrations, ingestion/recomputation output,
+readiness, and a player API read.
+
+Pull requests also run Ruff, Black, a 90% Python coverage floor, frontend lint/typecheck/build,
+contract freshness, Gitleaks, Python dependency auditing, production JavaScript dependency
+auditing, and a full-stack container smoke. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -264,9 +325,14 @@ deterministic (no per-request compilation). The **Postgres path is verified end-
 - Market values are **ranges** from a transparent rule-based model — never exact figures.
 - Search/leaderboard read models are computed in-process (fine for the prototype; precompute/index
   when scaling, per the plan's performance note).
-- No auth beyond an optional local admin token (`SCOUTBOY_ADMIN_TOKEN`).
+- There is no end-user authentication or public rate limiting. Admin routes use a shared token;
+  it is optional only in development/test and mandatory in production mode.
+- The containers and CI make delivery reproducible, but this remains a production-shaped portfolio
+  project without a chosen deployment host, monitoring vendor, uptime target, or commercial SLA.
 
 ## Repo layout
 
 See [`docs/agent_notes.md`](docs/agent_notes.md) for the full structure and rationale;
 `docs/rating_methodology.md` and `docs/methodology/playstyles.md` document the models.
+Operational guidance lives under [`docs/runbooks/`](docs/runbooks/), and engineering decisions are
+recorded under [`docs/adr/`](docs/adr/).

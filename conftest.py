@@ -12,10 +12,16 @@ import pathlib
 import tempfile
 
 # Must run before any `app.*` import so the engine binds to the test DB.
-_TESTDB = pathlib.Path(tempfile.gettempdir()) / "scoutboy_pytest.db"
-if _TESTDB.exists():
-    _TESTDB.unlink()
-os.environ["DATABASE_URL"] = f"sqlite:///{_TESTDB}"
+_POSTGRES_SMOKE = os.environ.get("SCOUTBOY_POSTGRES_SMOKE") == "1"
+if _POSTGRES_SMOKE:
+    if not os.environ.get("DATABASE_URL", "").startswith("postgresql"):
+        raise RuntimeError("SCOUTBOY_POSTGRES_SMOKE requires a PostgreSQL DATABASE_URL")
+else:
+    _TESTDB = pathlib.Path(tempfile.gettempdir()) / "scoutboy_pytest.db"
+    if _TESTDB.exists():
+        _TESTDB.unlink()
+    os.environ["DATABASE_URL"] = f"sqlite:///{_TESTDB}"
+os.environ.setdefault("SCOUTBOY_ENVIRONMENT", "test")
 os.environ.setdefault("SCOUTBOY_MIN_MINUTES", "450")
 os.environ.setdefault("SCOUTBOY_ADMIN_TOKEN", "")
 
