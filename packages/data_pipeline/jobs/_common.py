@@ -19,31 +19,61 @@ from sqlalchemy.orm import Session
 
 
 def start_run(
-    session: Session, run_type: str, version: str, snapshot_ids: list, config_hashes: dict
+    session: Session,
+    run_type: str,
+    version: str,
+    snapshot_ids: list,
+    config_hashes: dict,
+    *,
+    status: str = "running",
+    provider: Optional[str] = None,
+    ingestion_mode: Optional[str] = None,
+    snapshot_fingerprint: Optional[str] = None,
+    scope: Optional[dict] = None,
 ) -> RatingRun:
     run = RatingRun(
         run_type=run_type,
         version=version,
-        status="running",
+        status=status,
         source_snapshot_ids_json=snapshot_ids,
         config_hashes_json=config_hashes,
         started_at=datetime.now(timezone.utc),
+        provider=provider,
+        ingestion_mode=ingestion_mode,
+        snapshot_fingerprint=snapshot_fingerprint,
+        scope_json=scope or {},
+        summary_json={"transitions": [{"status": status, "at": _now_iso()}]},
     )
     session.add(run)
     session.flush()
     return run
 
 
-def finish_run(session: Session, run: RatingRun, affected: int) -> None:
-    run.status = "completed"
+def transition_run(run: RatingRun, status: str) -> None:
+    summary = dict(run.summary_json or {})
+    transitions = list(summary.get("transitions", []))
+    transitions.append({"status": status, "at": _now_iso()})
+    summary["transitions"] = transitions
+    run.summary_json = summary
+    run.status = status
+
+
+def finish_run(
+    session: Session, run: RatingRun, affected: int, *, status: str = "completed"
+) -> None:
+    transition_run(run, status)
     run.completed_at = datetime.now(timezone.utc)
     run.affected_players_count = affected
 
 
 def fail_run(session: Session, run: RatingRun, message: str) -> None:
-    run.status = "failed"
+    transition_run(run, "failed")
     run.completed_at = datetime.now(timezone.utc)
     run.error_message = message[:2000]
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 def get_or_create_season(

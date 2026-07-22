@@ -76,7 +76,7 @@ def run_bundle_checks(bundle: IngestBundle, *, min_minutes: int = 450) -> dict:
         and m.metric_name not in ("goals_minus_xg_per90", "finishing_over_xg")
     ]
     findings.append(
-        _finding("negative_metrics", "error" if negative else "ok", len(negative), negative[:10])
+        _finding("negative_metrics", "warn" if negative else "ok", len(negative), negative[:10])
     )
 
     # duplicate player-season appearance rows

@@ -12,6 +12,8 @@ past the adapter.
 | **Performance metrics CSV** (`player_season_metrics_v1`) | Real/curated performance metrics from FBref/StatsBomb/Wyscout/etc. | **Active** (`--source performance_csv --input-path <csv>`) | `csv_adapter.py` |
 | **StatsBomb Open Data pilot** | Real event-derived player metrics for the 2023/24 pilot | **Active** (`--source statsbomb_pilot`) | `statsbomb_pilot.py` |
 | **StatsBomb Open Data normalized import** | Provider-agnostic competitions, seasons, teams, players, matches, lineups, events, coverage, confidence, and event-derived metrics | **Active** (`--source statsbomb_open_data`) | `statsbomb_open_data.py` |
+| **Mock commercial provider** | Licensed-provider boundary proof with canonical fixture records | **Fixture/demo only** (`--source mock_commercial_provider`) | `mock_commercial_provider.py` |
+| **Generated scale fixture** | Deterministic 5,000+ player-season batching and benchmark | **Fixture/demo only** (`--source generated_fixture`) | `generated_fixture.py` |
 | **Football-Data.co.uk** | Team-strength / stakes **context** proxies | Helper tested | `football_data_adapter.py` |
 | FBref / Understat / TM public pages | Manual validation & methodology reference | Not scraped | — |
 | Paid providers (Opta, Wyscout, SkillCorner, StatsBomb commercial) | Later only | Architecture ready | — |
@@ -29,15 +31,22 @@ Discover scope behavior is documented in [`discover_scope_change.md`](discover_s
   goalkeepers, unrated players, and limited-coverage records. `scope=analyzed` means at least
   one RoleFit rating exists for the season. `scope=high_coverage_u23` is the unchanged strict
   U23 attacker/midfielder evidence cohort.
-- **Snapshots.** `source_snapshots` stores provider, dataset version, checksum, license,
-  target season, path, and row counts. Appearances and raw metrics link to the snapshot;
-  rating runs retain snapshot keys.
+- **Provider capabilities.** Every ingestable adapter declares provider type, mode, credentials,
+  supported canonical entities/metrics, coverage dimensions, freshness, attribution, and known
+  limitations. Run `make providers` to inspect the machine-readable contract.
+- **Snapshots.** `source_snapshots` stores provider, dataset version, checksum/fingerprint,
+  scope, license/attribution, health, limitation, path, row counts, and a hashed operational
+  inventory. Appearances and raw metrics link to the snapshot; runs retain snapshot keys.
 - **Provider ids are external ids.** Provider-specific ids are stored in
   `provider_identifiers` / `player_source_ids`. ScoutBoy domain rows keep their own primary
   keys so a commercial StatsBomb feed or another provider can be swapped in later.
-- **Fail loudly.** `packages/data_pipeline/quality/checks.py` aborts ingestion on error-level
-  findings (schema drift, duplicate ids, impossible dates, negative metrics) rather than
-  emitting silently-bad ratings (US-7.9).
+- **Fail or quarantine explicitly.** Blocking contract/schema/identity failures stop publication.
+  Invalid row-level metrics can be persistently quarantined while valid rows finish with warnings.
+  Missing values are never converted to zero.
+- **Resolve player identities conservatively.** An exact provider source id wins; otherwise one
+  canonical name + date-of-birth match may bridge sources. No match creates a legitimate
+  first-time source-backed player, while multiple matches are quarantined as ambiguous and the
+  player's appearances, metrics, and other dependent observations are not published.
 
 ## Sample data
 
@@ -115,17 +124,18 @@ positions, competitions, sample sizes, and confidence states. It is marked `fixt
 `never_present_as_provider_supplied: true`. Use it to exercise product workflows while keeping
 seeded/demo records visually distinct from StatsBomb-imported records.
 
-## Current-data provider spike
+## Provider readiness
 
-The normalized provider interface is ready for a lightweight current-data provider covering
-competitions, seasons, squads, players, fixtures, standings, and basic player statistics. No
-credentials are assumed in this repo, and no secrets should be committed. Until credentials are
-available, use fixture-backed discovery/showcase records and label them as demo/current-discovery
-fixtures.
+The normalized provider interface is ready for a future licensed provider without claiming that a
+client exists today. `mock_commercial_provider` is local-fixture-only, makes no network requests,
+and is always marked demo data. Its optional credential-required mode documents the environment
+shape `SCOUTBOY_MOCK_COMMERCIAL_TOKEN`; tests use a dummy value, never a vendor token. See the
+[provider onboarding runbook](runbooks/provider-onboarding.md).
 
 ## Adding a new source (checklist)
 
-1. Implement `SourceAdapter.fetch()` returning an `IngestBundle` of canonical records.
-2. Register it in `packages/data_pipeline/adapters/__init__.py` (`ADAPTERS`).
-3. Run `python -m data_pipeline.jobs.ingest --source <name>` then `recompute`.
-4. Add adapter unit tests mapping a small fixture → canonical records.
+1. Implement `SourceAdapter.fetch()` and a complete immutable `ProviderCapabilities` declaration.
+2. Register it in `packages/data_pipeline/adapters/__init__.py`.
+3. Add shared conformance, dry-run, idempotency, quarantine, replay, and report tests.
+4. Validate and dry-run before normal ingestion; inspect the run; recompute explicitly only after
+   acceptance.

@@ -24,7 +24,13 @@ from typing import Optional
 
 from scoutboy_shared import metric_meta, resolve_metric
 
-from .base import CanonicalMetric, CanonicalSeason, IngestBundle, SourceAdapter
+from .base import (
+    CanonicalMetric,
+    CanonicalSeason,
+    IngestBundle,
+    ProviderCapabilities,
+    SourceAdapter,
+)
 
 REQUIRED_COLUMNS = (
     "source_name",
@@ -90,6 +96,19 @@ def _allows_negative(metric_name: str) -> bool:
 
 class PerformanceCsvAdapter(SourceAdapter):
     name = SOURCE_NAME
+    capabilities = ProviderCapabilities(
+        provider_id=SOURCE_NAME,
+        display_name="Performance metrics CSV",
+        provider_type="basic_statistics",
+        ingestion_mode="file_import",
+        credentials_required=False,
+        supported_entities=frozenset({"seasons"}),
+        supported_metric_families=frozenset({"performance"}),
+        coverage_dimensions=frozenset({"season", "player"}),
+        freshness_semantics="source-declared snapshot id",
+        known_limitations=("Metric-only import; player identities must already exist.",),
+        metric_only=True,
+    )
 
     def __init__(self, csv_path: Path):
         self.csv_path = Path(csv_path)
@@ -120,20 +139,48 @@ class PerformanceCsvAdapter(SourceAdapter):
         invalid_negative = 0
         seasons: set = set()
 
-        for r in rows:
+        quarantine_candidates: list[dict] = []
+        for row_number, r in enumerate(rows, start=2):
             metric_name = (r.get("metric_name") or "").strip()
             canonical = resolve_metric(metric_name)
             if canonical is None:
                 invalid_metric_names.add(metric_name)
+                quarantine_candidates.append(
+                    {
+                        "entity_type": "metric",
+                        "external_id": (r.get("source_player_id") or None),
+                        "reason_code": "invalid_canonical_metric_name",
+                        "severity": "warning",
+                        "context": {"row_number": row_number, "metric_name": metric_name},
+                    }
+                )
                 continue
             raw_val = (r.get("metric_value") or "").strip()
             try:
                 value = float(raw_val)
             except ValueError:
                 invalid_values += 1
+                quarantine_candidates.append(
+                    {
+                        "entity_type": "metric",
+                        "external_id": (r.get("source_player_id") or None),
+                        "reason_code": "invalid_metric_value",
+                        "severity": "warning",
+                        "context": {"row_number": row_number, "metric_name": canonical},
+                    }
+                )
                 continue
             if value < 0 and not _allows_negative(canonical):
                 invalid_negative += 1
+                quarantine_candidates.append(
+                    {
+                        "entity_type": "metric",
+                        "external_id": (r.get("source_player_id") or None),
+                        "reason_code": "invalid_metric_value",
+                        "severity": "warning",
+                        "context": {"row_number": row_number, "metric_name": canonical},
+                    }
+                )
                 continue
 
             season = (r.get("season") or "").strip()
@@ -147,6 +194,7 @@ class PerformanceCsvAdapter(SourceAdapter):
                     unit=(r.get("unit") or None),
                     id_source_name=(r.get("source_name") or "").strip() or None,
                     raw_payload={
+                        "source_row_number": row_number,
                         "competition_name": r.get("competition_name"),
                         "team_name": r.get("team_name"),
                         "minutes": r.get("minutes"),
@@ -182,4 +230,5 @@ class PerformanceCsvAdapter(SourceAdapter):
                 "details": [],
             },
         ]
+        bundle.quarantine_candidates = quarantine_candidates
         return bundle

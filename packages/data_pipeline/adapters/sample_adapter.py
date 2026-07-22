@@ -21,6 +21,7 @@ from .base import (
     CanonicalSeason,
     CanonicalTeam,
     IngestBundle,
+    ProviderCapabilities,
     SourceAdapter,
 )
 from .csv_adapter import read_metrics_csv
@@ -30,6 +31,21 @@ SOURCE_NAME = "sample"
 
 class SampleAdapter(SourceAdapter):
     name = SOURCE_NAME
+    capabilities = ProviderCapabilities(
+        provider_id=SOURCE_NAME,
+        display_name="ScoutBoy synthetic sample",
+        provider_type="fixture",
+        ingestion_mode="local_snapshot",
+        credentials_required=False,
+        supported_entities=frozenset(
+            {"players", "teams", "competitions", "seasons", "appearances", "valuations"}
+        ),
+        supported_metric_families=frozenset({"performance", "market"}),
+        coverage_dimensions=frozenset({"competition", "season", "team", "player"}),
+        freshness_semantics="immutable versioned fixture",
+        known_limitations=("Synthetic demo data; not real scouting coverage.",),
+        fixture_data=True,
+    )
 
     def __init__(self, data_dir: Path | None = None):
         self.data_dir = data_dir or (repo_root() / "data" / "sample")

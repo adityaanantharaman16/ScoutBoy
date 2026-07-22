@@ -10,11 +10,14 @@ from app.models.orm import (
 )
 from data_pipeline.adapters import TransfermarktAdapter
 from data_pipeline.jobs.ingest import ingest_bundle
+from data_pipeline.provider_contract import validate_adapter
 from sqlalchemy import func, select
 
 
 def test_transfermarkt_adapter_builds_full_bundle(tm_dir):
-    b = TransfermarktAdapter(csv_dir=tm_dir).fetch()
+    adapter = TransfermarktAdapter(csv_dir=tm_dir)
+    b = adapter.fetch()
+    assert validate_adapter(adapter, b)["valid"] is True
     assert b.source_name == "transfermarkt"
     assert b.players and b.teams and b.competitions and b.appearances
     # market value emitted as a metric

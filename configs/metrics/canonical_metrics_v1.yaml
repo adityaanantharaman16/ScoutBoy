@@ -77,3 +77,4 @@ metrics:
   competition_stakes:  { display: Competition stakes, unit: index, higher_better: true, kind: context }
   sample_reliability:  { display: Sample reliability, unit: index, higher_better: true, kind: context }
   performance_covered_minutes: { display: Covered event-data minutes, unit: count, higher_better: true, kind: context }
+  performance_covered_appearances: { display: Covered event-data appearances, unit: count, higher_better: true, kind: context }

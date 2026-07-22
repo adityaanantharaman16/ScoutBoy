@@ -28,6 +28,8 @@ full-stack container path.
 5. Add focused tests and update documentation whenever behavior or operator steps change.
 6. Regenerate API contracts after an API schema change with `make check-api-contract`. A stale
    first run updates the files and fails; rerun it to confirm they are current.
+7. For adapter changes, declare honest provider capabilities and test contract conformance,
+   no-write validation, fingerprint idempotency, quarantine/replay, and coverage limitations.
 
 Before opening a pull request, run:
 
@@ -55,6 +57,9 @@ pipeline and an API read against a real PostgreSQL service.
 - Keep deterministic synthetic fixtures under `data/sample/`; keep local provider input under
   gitignored `data/raw/` paths.
 - Preserve provider attribution, license metadata, checksums, and coverage caveats.
+- Keep complete commercial payloads out of quarantine; store limited safe diagnostics and hashes.
+- Run `make validate-source` and `make ingest-dry-run` before publishing a new snapshot. Ingestion
+  never authorizes or triggers rating recomputation automatically.
 - Report suspected vulnerabilities through the process in `SECURITY.md`, not a public issue.
 
 ## Pull requests

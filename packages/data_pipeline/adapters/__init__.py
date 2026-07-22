@@ -20,16 +20,23 @@ from .base import (
     CanonicalSeason,
     CanonicalTeam,
     IngestBundle,
+    ProviderCapabilities,
     SourceAdapter,
 )
 from .csv_adapter import PerformanceCsvAdapter
+from .generated_fixture import GeneratedFixtureAdapter
+from .mock_commercial_provider import MockCommercialProviderAdapter
 from .sample_adapter import SampleAdapter
 from .statsbomb_open_data import StatsBombOpenDataAdapter
 from .statsbomb_pilot import StatsBombPilotAdapter
 from .transfermarkt_adapter import TransfermarktAdapter
 
 # Sources that need no external input path.
-ADAPTERS = {"sample": SampleAdapter}
+ADAPTERS = {
+    "sample": SampleAdapter,
+    "mock_commercial_provider": MockCommercialProviderAdapter,
+    "generated_fixture": GeneratedFixtureAdapter,
+}
 
 # Sources that require an --input-path (external data file/dir).
 PATH_ADAPTERS = {"transfermarkt", "performance_csv", "statsbomb_pilot", "statsbomb_open_data"}
@@ -44,10 +51,19 @@ def get_adapter(
     statsbomb_season_ids: Optional[list[int]] = None,
     recent_seasons: Optional[int] = None,
     as_of_date: Optional[date] = None,
+    generated_size: int = 5000,
+    credential_required_mode: bool = False,
 ) -> SourceAdapter:
     """Resolve a source name (+ optional input path) to an adapter instance."""
     if source == "sample":
         return SampleAdapter()
+    if source == "mock_commercial_provider":
+        return MockCommercialProviderAdapter(
+            Path(input_path) if input_path else None,
+            credential_required_mode=credential_required_mode,
+        )
+    if source == "generated_fixture":
+        return GeneratedFixtureAdapter(size=generated_size)
     if source == "transfermarkt":
         if not input_path:
             raise ValueError("--input-path <csv_dir> is required for source 'transfermarkt'")
@@ -89,13 +105,28 @@ def get_adapter(
             as_of_date=as_of_date,
         )
     raise ValueError(
-        f"Unknown source '{source}'. Available: sample, transfermarkt, performance_csv, statsbomb_pilot, statsbomb_open_data"
+        f"Unknown source '{source}'. Available: {', '.join(sorted(provider_capabilities()))}"
     )
+
+
+def provider_capabilities() -> dict[str, ProviderCapabilities]:
+    """Return deterministic capability metadata without fetching provider data."""
+    classes = (
+        SampleAdapter,
+        TransfermarktAdapter,
+        PerformanceCsvAdapter,
+        StatsBombPilotAdapter,
+        StatsBombOpenDataAdapter,
+        MockCommercialProviderAdapter,
+        GeneratedFixtureAdapter,
+    )
+    return {cls.capabilities.provider_id: cls.capabilities for cls in classes}
 
 
 __all__ = [
     "SourceAdapter",
     "IngestBundle",
+    "ProviderCapabilities",
     "CanonicalPlayer",
     "CanonicalTeam",
     "CanonicalCompetition",
@@ -115,7 +146,10 @@ __all__ = [
     "PerformanceCsvAdapter",
     "StatsBombPilotAdapter",
     "StatsBombOpenDataAdapter",
+    "MockCommercialProviderAdapter",
+    "GeneratedFixtureAdapter",
     "get_adapter",
+    "provider_capabilities",
     "ADAPTERS",
     "PATH_ADAPTERS",
 ]

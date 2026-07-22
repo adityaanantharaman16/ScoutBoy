@@ -24,7 +24,14 @@ from typing import Optional
 
 import yaml
 
-from .base import CanonicalMetric, CanonicalPlayer, CanonicalSeason, IngestBundle, SourceAdapter
+from .base import (
+    CanonicalMetric,
+    CanonicalPlayer,
+    CanonicalSeason,
+    IngestBundle,
+    ProviderCapabilities,
+    SourceAdapter,
+)
 from .transfermarkt_adapter import map_player_row
 
 SOURCE_NAME = "statsbomb"
@@ -371,6 +378,22 @@ def derive_player_seasons(
 
 class StatsBombPilotAdapter(SourceAdapter):
     name = SOURCE_NAME
+    capabilities = ProviderCapabilities(
+        provider_id=SOURCE_NAME,
+        display_name="StatsBomb Open Data pilot mapping",
+        provider_type="event",
+        ingestion_mode="local_snapshot",
+        credentials_required=False,
+        supported_entities=frozenset({"players", "seasons", "appearances", "events"}),
+        supported_metric_keys=frozenset({"performance_covered_minutes"}),
+        supported_metric_families=frozenset({"performance", "event"}),
+        coverage_dimensions=frozenset({"competition", "season", "match", "player"}),
+        freshness_semantics="pinned manifest snapshot",
+        attribution_required=True,
+        attribution="StatsBomb Open Data",
+        license_url="https://github.com/statsbomb/open-data/blob/master/LICENSE.pdf",
+        known_limitations=("Bayer Leverkusen-centered 34-match Bundesliga 2023/24 pilot only.",),
+    )
 
     def __init__(
         self,
@@ -445,6 +468,19 @@ class StatsBombPilotAdapter(SourceAdapter):
                 if tm_row is None:
                     (ambiguous if method == "ambiguous" else unmatched).append(
                         {"statsbomb_id": spid, "name": r["player_name"], "team": r["team_name"]}
+                    )
+                    bundle.quarantine_candidates.append(
+                        {
+                            "entity_type": "player",
+                            "external_id": spid,
+                            "reason_code": "unresolved_or_ambiguous_player_identity",
+                            "severity": "warning",
+                            "context": {
+                                "match_method": method,
+                                "provider_player_name": r["player_name"],
+                                "provider_team_name": r["team_name"],
+                            },
+                        }
                     )
                     continue
                 tm_player = map_player_row(tm_row)

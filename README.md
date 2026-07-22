@@ -192,6 +192,30 @@ Health probes are deliberately small:
 - `GET /readyz` confirms database connectivity and that Alembic is at the current head revision.
 - `GET /api/health` remains available for backward compatibility.
 
+### Data operations (Milestone 5)
+
+Every ingestable adapter now declares provider capabilities and follows an auditable snapshot
+lifecycle. Validate or plan without writes, ingest idempotently, inspect quarantine, compare
+snapshots, and report freshness/coverage through JSON CLI output:
+
+```bash
+make providers
+make validate-source SOURCE=sample
+make ingest-dry-run SOURCE=sample
+make ingest-sample
+make ingestion-runs
+make quarantine-report
+make freshness-report
+make coverage-report
+make data-benchmark SIZE=5000
+```
+
+Identical provider + fingerprint + scope inputs are recorded as `skipped_idempotent` without
+duplicate publication. Corrected source files can be replayed at snapshot scope; ratings still
+require the separate `make recompute-ratings` command. The mock commercial provider is local demo
+data only and makes no network calls. See
+[docs/milestone_5_data_operations.md](docs/milestone_5_data_operations.md).
+
 ---
 
 ## Commands (`make help` for all)
@@ -213,6 +237,13 @@ Health probes are deliberately small:
 | `make dev-pilot` | Start API + web without reseeding synthetic data |
 | `make data-quality` | Data-quality report (alias of quality-report) |
 | `make quality-report` | Run data-quality checks and store a report |
+| `make providers` | List provider capability contracts as JSON |
+| `make validate-source` / `make ingest-dry-run` | Validate or plan ingestion without database writes |
+| `make ingestion-runs` / `make quarantine-report` | Inspect lifecycle and rejected-row history |
+| `make replay-ingestion` | Replay corrected input at snapshot scope without duplicates |
+| `make snapshot-diff` | Compare two snapshots deterministically |
+| `make freshness-report` / `make coverage-report` | Emit operational health and honest coverage JSON |
+| `make data-benchmark` | Ingest a generated 5,000-record scale fixture and emit benchmark JSON |
 | `make dev` / `dev-api` / `dev-web` | Run the stack / API only / web only |
 | `make test` | Backend (pytest) + frontend (Vitest) |
 | `make e2e` | Isolated DB + dedicated ports + production build/`next start` Playwright flow |
@@ -258,6 +289,13 @@ GET  /readyz                           database + migration readiness
 POST /api/admin/ingest                 (local admin) trigger ingestion
 POST /api/admin/recompute-ratings      (local admin) trigger recompute
 GET  /api/admin/rating-runs            run history
+GET  /api/admin/providers              provider capabilities
+GET  /api/admin/ingestion-runs         ingestion lifecycle history
+GET  /api/admin/ingestion-runs/{id}    one ingestion run
+GET  /api/admin/quarantine             persistent rejected-row diagnostics
+GET  /api/admin/snapshots/{id}/diff    deterministic snapshot comparison
+GET  /api/admin/freshness              provider freshness/health
+GET  /api/admin/coverage               observed coverage and completeness
 ```
 
 The frontend consumes a single typed module (`apps/web/src/lib/api/types.ts`). Run
@@ -304,7 +342,8 @@ auditing, and a full-stack container smoke. See [CONTRIBUTING.md](CONTRIBUTING.m
 ## Extending
 
 - **Add a data source:** implement `SourceAdapter.fetch()` → `IngestBundle`, register in
-  `packages/data_pipeline/adapters/__init__.py`, add mapping tests. See
+  `packages/data_pipeline/adapters/__init__.py`, declare `ProviderCapabilities`, and add shared
+  conformance/lifecycle tests. See
   [`docs/data_sources.md`](docs/data_sources.md).
 - **Add a role:** drop a YAML in `configs/roles/` (weights sum ~1.0, metrics from the registry),
   then `make recompute-ratings`. Auto-loaded, scored, ranked, and exposed — no code change.

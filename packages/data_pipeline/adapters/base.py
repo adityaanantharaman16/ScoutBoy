@@ -13,6 +13,110 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Optional
 
+from scoutboy_shared import METRIC_REGISTRY
+
+PROVIDER_TYPES = frozenset(
+    {"fixture", "market_identity", "basic_statistics", "event", "tracking", "commercial"}
+)
+INGESTION_MODES = frozenset({"local_snapshot", "file_import", "api_ready"})
+SUPPORTED_ENTITIES = frozenset(
+    {
+        "players",
+        "teams",
+        "competitions",
+        "seasons",
+        "appearances",
+        "lineups",
+        "matches",
+        "events",
+        "valuations",
+        "transfers",
+    }
+)
+COVERAGE_DIMENSIONS = frozenset(
+    {"competition", "season", "team", "match", "player", "event_location"}
+)
+METRIC_FAMILIES = frozenset({"performance", "market", "identity", "context", "event"})
+
+
+@dataclass(frozen=True)
+class ProviderCapabilities:
+    """Provider-neutral declaration consumed by validation and operator surfaces."""
+
+    provider_id: str
+    display_name: str
+    provider_type: str
+    ingestion_mode: str
+    credentials_required: bool
+    supported_entities: frozenset[str] = frozenset()
+    supported_metric_keys: frozenset[str] = frozenset()
+    supported_metric_families: frozenset[str] = frozenset()
+    coverage_dimensions: frozenset[str] = frozenset()
+    freshness_semantics: str = "unknown"
+    attribution_required: bool = False
+    attribution: Optional[str] = None
+    license_url: Optional[str] = None
+    known_limitations: tuple[str, ...] = ()
+    fixture_data: bool = False
+    metric_only: bool = False
+    credential_env_vars: tuple[str, ...] = ()
+
+    def validate(self) -> list[str]:
+        errors: list[str] = []
+        if not self.provider_id or self.provider_id != self.provider_id.strip().lower():
+            errors.append("provider_id must be a deterministic lowercase slug")
+        if not self.display_name.strip():
+            errors.append("display_name is required")
+        if self.provider_type not in PROVIDER_TYPES:
+            errors.append(f"unsupported provider_type: {self.provider_type}")
+        if self.ingestion_mode not in INGESTION_MODES:
+            errors.append(f"unsupported ingestion_mode: {self.ingestion_mode}")
+        unknown_entities = self.supported_entities - SUPPORTED_ENTITIES
+        if unknown_entities:
+            errors.append(f"unsupported entities: {sorted(unknown_entities)}")
+        unknown_dimensions = self.coverage_dimensions - COVERAGE_DIMENSIONS
+        if unknown_dimensions:
+            errors.append(f"unsupported coverage dimensions: {sorted(unknown_dimensions)}")
+        unknown_families = self.supported_metric_families - METRIC_FAMILIES
+        if unknown_families:
+            errors.append(f"unsupported metric families: {sorted(unknown_families)}")
+        allowed_metric_keys = set(METRIC_REGISTRY) | {
+            "public_value_eur",
+            "contract_until",
+            "international_caps",
+            "hype_index",
+            "recent_form_index",
+        }
+        unknown_metrics = self.supported_metric_keys - allowed_metric_keys
+        if unknown_metrics:
+            errors.append(f"unknown canonical metric keys: {sorted(unknown_metrics)}")
+        if self.credentials_required and not self.credential_env_vars:
+            errors.append("credential-required providers must declare credential_env_vars")
+        if self.attribution_required and not self.attribution:
+            errors.append("attribution_required providers must provide attribution text")
+        return errors
+
+    def to_dict(self) -> dict:
+        return {
+            "provider_id": self.provider_id,
+            "display_name": self.display_name,
+            "provider_type": self.provider_type,
+            "ingestion_mode": self.ingestion_mode,
+            "credentials_required": self.credentials_required,
+            "credential_env_vars": list(self.credential_env_vars),
+            "supported_entities": sorted(self.supported_entities),
+            "supported_metric_keys": sorted(self.supported_metric_keys),
+            "supported_metric_families": sorted(self.supported_metric_families),
+            "coverage_dimensions": sorted(self.coverage_dimensions),
+            "freshness_semantics": self.freshness_semantics,
+            "attribution_required": self.attribution_required,
+            "attribution": self.attribution,
+            "license_url": self.license_url,
+            "known_limitations": list(self.known_limitations),
+            "fixture_data": self.fixture_data,
+            "metric_only": self.metric_only,
+        }
+
 
 @dataclass
 class CanonicalCompetition:
@@ -220,12 +324,23 @@ class IngestBundle:
     # Optional first-class provenance for immutable external snapshots. The ingest job
     # upserts this into source_snapshots and links persisted observations to it.
     snapshot_metadata: dict = field(default_factory=dict)
+    # Rejected source records represented without retaining full provider payloads.
+    quarantine_candidates: list = field(default_factory=list)
 
 
 class SourceAdapter(ABC):
     """Port implemented by every data source."""
 
     name: str = "base"
+    capabilities: ProviderCapabilities
+
+    def validate_contract(self) -> list[str]:
+        if not hasattr(self, "capabilities"):
+            return ["adapter does not declare capabilities"]
+        errors = self.capabilities.validate()
+        if self.name != self.capabilities.provider_id:
+            errors.append("adapter name must match capability provider_id")
+        return errors
 
     @abstractmethod
     def fetch(self) -> IngestBundle:

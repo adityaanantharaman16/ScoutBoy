@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.db import get_db
 from app.core.errors import UnauthorizedError
-from app.models.orm import RatingRun
+from app.models.orm import QuarantineRecord, RatingRun
 from app.models.schemas import IngestResult, RatingRunSummary, RecomputeResult
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -29,10 +29,10 @@ def _iso(dt):
 @router.post("/ingest", response_model=IngestResult, dependencies=[Depends(require_admin)])
 def trigger_ingest(source: str = "sample", db: Session = Depends(get_db)):
     from data_pipeline.adapters import get_adapter
-    from data_pipeline.jobs.ingest import ingest_bundle
+    from data_pipeline.jobs.ingest import execute_ingestion
 
-    bundle = get_adapter(source).fetch()
-    result = ingest_bundle(db, bundle)
+    adapter = get_adapter(source)
+    result = execute_ingestion(db, adapter)
     findings = result["report"]["findings"]
     return IngestResult(
         run_id=result["run_id"],
@@ -79,3 +79,71 @@ def rating_runs(limit: int = 50, db: Session = Depends(get_db)):
         )
         for r in runs
     ]
+
+
+@router.get("/providers", dependencies=[Depends(require_admin)])
+def providers():
+    from data_pipeline.adapters import provider_capabilities
+
+    return [capability.to_dict() for capability in provider_capabilities().values()]
+
+
+@router.get("/ingestion-runs", dependencies=[Depends(require_admin)])
+def ingestion_runs(limit: int = 50, db: Session = Depends(get_db)):
+    from data_pipeline.operations import run_summary
+
+    rows = db.scalars(
+        select(RatingRun)
+        .where(RatingRun.run_type == "ingest")
+        .order_by(RatingRun.id.desc())
+        .limit(limit)
+    )
+    return [run_summary(row) for row in rows]
+
+
+@router.get("/ingestion-runs/{run_id}", dependencies=[Depends(require_admin)])
+def ingestion_run(run_id: int, db: Session = Depends(get_db)):
+    from data_pipeline.operations import run_summary
+
+    row = db.get(RatingRun, run_id)
+    if row is None or row.run_type != "ingest":
+        from app.core.errors import NotFoundError
+
+        raise NotFoundError("Ingestion run not found")
+    return run_summary(row)
+
+
+@router.get("/quarantine", dependencies=[Depends(require_admin)])
+def quarantine(status: Optional[str] = None, limit: int = 100, db: Session = Depends(get_db)):
+    from data_pipeline.operations import quarantine_summary
+
+    statement = select(QuarantineRecord).order_by(QuarantineRecord.id.desc())
+    if status:
+        statement = statement.where(QuarantineRecord.status == status)
+    return [quarantine_summary(row) for row in db.scalars(statement.limit(limit))]
+
+
+@router.get("/snapshots/{snapshot_id}/diff", dependencies=[Depends(require_admin)])
+def diff_snapshot(snapshot_id: int, other_snapshot_id: int, db: Session = Depends(get_db)):
+    from data_pipeline.operations import snapshot_diff
+
+    try:
+        return snapshot_diff(db, snapshot_id, other_snapshot_id)
+    except ValueError as exc:
+        from app.core.errors import BadRequestError
+
+        raise BadRequestError(str(exc)) from exc
+
+
+@router.get("/freshness", dependencies=[Depends(require_admin)])
+def source_freshness(db: Session = Depends(get_db)):
+    from data_pipeline.operations import freshness_report
+
+    return freshness_report(db)
+
+
+@router.get("/coverage", dependencies=[Depends(require_admin)])
+def source_coverage(db: Session = Depends(get_db)):
+    from data_pipeline.operations import coverage_report
+
+    return coverage_report(db)

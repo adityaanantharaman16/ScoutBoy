@@ -347,5 +347,25 @@ def test_admin_recompute_creates_a_run(client):
     assert after[0]["status"] == "completed"
 
 
+def test_admin_data_operations_reads_are_available(client):
+    providers = client.get("/api/admin/providers")
+    assert providers.status_code == 200
+    assert any(row["provider_id"] == "mock_commercial_provider" for row in providers.json())
+
+    runs = client.get("/api/admin/ingestion-runs")
+    assert runs.status_code == 200
+    assert runs.json() and all(row["run_type"] == "ingest" for row in runs.json())
+    detail = client.get(f"/api/admin/ingestion-runs/{runs.json()[0]['id']}")
+    assert detail.status_code == 200
+
+    quarantine = client.get("/api/admin/quarantine")
+    assert quarantine.status_code == 200
+    assert isinstance(quarantine.json(), list)
+    assert client.get("/api/admin/freshness").status_code == 200
+    coverage = client.get("/api/admin/coverage")
+    assert coverage.status_code == 200
+    assert coverage.json()["snapshots"]
+
+
 def test_player_not_found_404(client):
     assert client.get("/api/players/999999").status_code == 404

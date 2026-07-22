@@ -12,6 +12,7 @@ from data_pipeline.coverage import (
     weakest_confidence,
 )
 from data_pipeline.jobs.ingest import ingest_bundle
+from data_pipeline.provider_contract import validate_adapter
 from sqlalchemy import func, select
 
 
@@ -201,7 +202,10 @@ def test_confidence_components_are_deterministic():
 
 def test_statsbomb_recent_seasons_use_match_dates(tmp_path):
     _fixture(tmp_path)
-    bundle = StatsBombOpenDataAdapter(tmp_path, competition_ids=[9], recent_seasons=2).fetch()
+    adapter = StatsBombOpenDataAdapter(tmp_path, competition_ids=[9], recent_seasons=2)
+    bundle = adapter.fetch()
+    conformance = validate_adapter(adapter, bundle)
+    assert conformance["valid"] is True, conformance
     assert {s.label for s in bundle.seasons} == {"2022/2023", "2023/2024"}
     assert len(bundle.matches) == 2
     assert bundle.coverages[0].matches_covered == 1
@@ -230,7 +234,9 @@ def test_statsbomb_ingest_is_idempotent(fresh_sessions, tmp_path):
     with sessions() as session:
         first = ingest_bundle(session, bundle)
         second = ingest_bundle(session, bundle)
-        assert first["players"] == second["players"] == 1
+        assert first["players"] == 1
+        assert second["players"] == 0
+        assert second["status"] == "skipped_idempotent"
         assert session.scalar(select(func.count(Match.id))) == 1
         assert session.scalar(select(func.count(Event.id))) == len(bundle.events)
         assert session.scalar(select(func.count(DataCoverage.id))) == 1

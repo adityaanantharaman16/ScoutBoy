@@ -29,6 +29,7 @@ from .ratings import RatingAudit, RoleDefinition, RoleRating, RoleWeightVersion
 from .runs import (
     DataQualityReport,
     PlayerUniverseMembership,
+    QuarantineRecord,
     RatingRun,
     SimilarityVector,
     SourceSnapshot,
@@ -64,5 +65,6 @@ __all__ = [
     "PlayerUniverseMembership",
     "RatingRun",
     "DataQualityReport",
+    "QuarantineRecord",
     "SourceSnapshot",
 ]

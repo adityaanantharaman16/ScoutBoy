@@ -67,6 +67,8 @@ TM_SAMPLE ?= data/sample/transfermarkt_sample
 PERF_SAMPLE ?= data/sample/performance_metrics_sample.csv
 TM_RAW ?= data/raw/transfermarkt
 STATSBOMB_RAW ?= data/raw/statsbomb
+SOURCE ?= sample
+SIZE ?= 5000
 PILOT_COMPETITION_ID ?= L1
 PILOT_TARGET_SEASON ?= 2023
 PILOT_AS_OF_DATE ?= 2024-06-30
@@ -118,6 +120,46 @@ recompute-ratings: ## Recompute RoleFit ratings + playstyles + market values
 .PHONY: quality-report
 quality-report: ## Run data-quality checks and print/store a report
 	$(PY) -m data_pipeline.quality.report
+
+.PHONY: providers
+providers: ## List provider capabilities as JSON
+	$(PY) -m data_pipeline.operations providers
+
+.PHONY: validate-source
+validate-source: ## Validate a source without DB writes (SOURCE=... INPUT=...)
+	$(PY) -m data_pipeline.jobs.ingest --source $(SOURCE) $(if $(INPUT),--input-path $(INPUT),) --validate-only
+
+.PHONY: ingest-dry-run
+ingest-dry-run: ## Plan ingestion without DB writes (SOURCE=... INPUT=...)
+	$(PY) -m data_pipeline.jobs.ingest --source $(SOURCE) $(if $(INPUT),--input-path $(INPUT),) --dry-run
+
+.PHONY: ingestion-runs
+ingestion-runs: ## List ingestion lifecycle runs as JSON
+	$(PY) -m data_pipeline.operations runs
+
+.PHONY: quarantine-report
+quarantine-report: ## List persistent quarantine records as JSON
+	$(PY) -m data_pipeline.operations quarantine
+
+.PHONY: replay-ingestion
+replay-ingestion: ## Replay corrected snapshot scope (RUN=... SOURCE=... INPUT=...)
+	$(PY) -m data_pipeline.jobs.ingest --source $(SOURCE) $(if $(INPUT),--input-path $(INPUT),) --replay-run-id $(RUN)
+
+.PHONY: snapshot-diff
+snapshot-diff: ## Compare snapshots as JSON (BEFORE=... AFTER=...)
+	$(PY) -m data_pipeline.operations diff $(BEFORE) $(AFTER)
+
+.PHONY: freshness-report
+freshness-report: ## Report provider snapshot freshness as JSON
+	$(PY) -m data_pipeline.operations freshness
+
+.PHONY: coverage-report
+coverage-report: ## Report honest snapshot coverage and metric completeness as JSON
+	$(PY) -m data_pipeline.operations coverage
+
+.PHONY: data-benchmark
+data-benchmark: ## Ingest deterministic generated records and emit benchmark JSON (SIZE=5000)
+	$(PY) -m data_pipeline.operations benchmark --size $(SIZE)
 
 # ---------------------------------------------------------------------------
 # Dev servers

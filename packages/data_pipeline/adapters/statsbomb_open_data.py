@@ -43,6 +43,7 @@ from .base import (
     CanonicalSeason,
     CanonicalTeam,
     IngestBundle,
+    ProviderCapabilities,
     SourceAdapter,
 )
 from .statsbomb_pilot import _accumulate_match, _blank_counts, _canonical
@@ -154,6 +155,38 @@ def _latest_commit_hint(root_dir: Path) -> Optional[str]:
 
 
 class StatsBombOpenDataAdapter(SourceAdapter):
+    name = SOURCE_NAME
+    capabilities = ProviderCapabilities(
+        provider_id=SOURCE_NAME,
+        display_name="StatsBomb Open Data",
+        provider_type="event",
+        ingestion_mode="local_snapshot",
+        credentials_required=False,
+        supported_entities=frozenset(
+            {
+                "players",
+                "teams",
+                "competitions",
+                "seasons",
+                "appearances",
+                "lineups",
+                "matches",
+                "events",
+            }
+        ),
+        supported_metric_keys=frozenset(
+            {"performance_covered_minutes", "performance_covered_appearances"}
+        ),
+        supported_metric_families=frozenset({"performance", "event"}),
+        coverage_dimensions=frozenset(
+            {"competition", "season", "team", "match", "player", "event_location"}
+        ),
+        freshness_semantics="local immutable snapshot with match-date recency",
+        attribution_required=True,
+        attribution=ATTRIBUTION,
+        license_url=LICENSE_URL,
+        known_limitations=("Coverage is exactly the local files selected; absence is missing.",),
+    )
     name = SOURCE_NAME
 
     def __init__(

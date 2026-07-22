@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 
 from data_pipeline.adapters.statsbomb_pilot import StatsBombPilotAdapter, derive_player_seasons
+from data_pipeline.provider_contract import validate_adapter
 
 
 def _event(event_id, event_type, minute, **values):
@@ -179,7 +180,10 @@ def test_synthetic_snapshot_exercises_event_metrics_without_gitignored_data(tmp_
 def test_synthetic_snapshot_adapter_builds_canonical_metrics(tmp_path):
     snapshot = _write_synthetic_snapshot(tmp_path)
 
-    bundle = StatsBombPilotAdapter(snapshot, min_minutes=30).fetch()
+    adapter = StatsBombPilotAdapter(snapshot, min_minutes=30)
+    bundle = adapter.fetch()
+    conformance = validate_adapter(adapter, bundle)
+    assert conformance["valid"] is True, conformance
 
     assert bundle.source_name == "statsbomb"
     assert bundle.source_snapshot_id == "statsbomb@9-281"

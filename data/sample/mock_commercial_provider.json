@@ -1,0 +1,39 @@
+{
+  "snapshot_version": "fixture-v1",
+  "as_of_date": "2024-05-31",
+  "season": "2023/24",
+  "players": [
+    {
+      "id": "mock-101",
+      "name": "Fixture Forward",
+      "birth_date": "2003-02-10",
+      "nationality": "Testland",
+      "position": "CF",
+      "team": "mock_city",
+      "minutes": 900,
+      "metrics": {
+        "non_penalty_xg_per90": 0.42,
+        "shots_per90": 3.1,
+        "progressive_carries_per90": 4.4,
+        "progressive_passes_per90": 2.2,
+        "pass_completion_pct": 78.5
+      }
+    },
+    {
+      "id": "mock-102",
+      "name": "Fixture Creator",
+      "birth_date": "2002-09-17",
+      "nationality": "Example Republic",
+      "position": "CAM",
+      "team": "mock_city",
+      "minutes": 810,
+      "metrics": {
+        "non_penalty_xg_per90": 0.18,
+        "shots_per90": 2.0,
+        "progressive_carries_per90": 3.7,
+        "progressive_passes_per90": 6.4,
+        "pass_completion_pct": 84.2
+      }
+    }
+  ]
+}

@@ -88,7 +88,7 @@ def test_real_rating_runs_recorded(real_client):
     runs = real_client.get("/api/admin/rating-runs").json()
     types = {r["run_type"] for r in runs}
     assert "ingest" in types and "recompute" in types
-    assert all(r["status"] == "completed" for r in runs)
+    assert all(r["status"] in {"completed", "completed_with_warnings"} for r in runs)
 
 
 def test_missing_metrics_are_low_confidence_not_zero(real_client):

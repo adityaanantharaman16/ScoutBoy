@@ -28,6 +28,7 @@ from .base import (
     CanonicalSeason,
     CanonicalTeam,
     IngestBundle,
+    ProviderCapabilities,
     SourceAdapter,
 )
 
@@ -181,6 +182,25 @@ def _manifest_metadata(path: Path, snapshot_key: str, target_season: str, as_of_
 
 
 class TransfermarktAdapter(SourceAdapter):
+    name = SOURCE_NAME
+    capabilities = ProviderCapabilities(
+        provider_id=SOURCE_NAME,
+        display_name="Transfermarkt-style local dataset",
+        provider_type="market_identity",
+        ingestion_mode="local_snapshot",
+        credentials_required=False,
+        supported_entities=frozenset(
+            {"players", "teams", "competitions", "seasons", "appearances", "valuations"}
+        ),
+        supported_metric_keys=frozenset(
+            {"public_value_eur", "contract_until", "international_caps"}
+        ),
+        coverage_dimensions=frozenset({"competition", "season", "team", "player"}),
+        freshness_semantics="local manifest download and valuation as-of dates",
+        attribution_required=True,
+        attribution="Transfermarkt-style dataset; follow source attribution and license metadata.",
+        known_limitations=("Local snapshot only; not live or current-market coverage.",),
+    )
     """Reads a Transfermarkt-style CSV directory (or DuckDB file) into a full canonical
     bundle. Raw ingest keeps ALL players (incl. out-of-scope positions); the MVP-universe
     filter narrows the view later. Introspects which files exist and validates required
@@ -321,6 +341,17 @@ class TransfermarktAdapter(SourceAdapter):
         for row in _read_csv(d / "players.csv", ("player_id", "name")):
             cp = map_player_row(row)
             bundle.players.append(cp)
+            raw_position = row.get("sub_position") or row.get("position")
+            if raw_position and cp.primary_position is None:
+                bundle.quarantine_candidates.append(
+                    {
+                        "entity_type": "player",
+                        "external_id": cp.source_player_id,
+                        "reason_code": "unsupported_position_mapping",
+                        "severity": "warning",
+                        "context": {"provider_position": raw_position},
+                    }
+                )
             spid = cp.source_player_id
             season = primary_season.get(spid, default_season)
             if not row.get("current_club_id"):
@@ -510,7 +541,19 @@ class TransfermarktAdapter(SourceAdapter):
             for row in reader:
                 if row["player_id"] in player_ids:
                     player_rows[row["player_id"]] = row
-                    bundle.players.append(map_player_row(row))
+                    cp = map_player_row(row)
+                    bundle.players.append(cp)
+                    raw_position = row.get("sub_position") or row.get("position")
+                    if raw_position and cp.primary_position is None:
+                        bundle.quarantine_candidates.append(
+                            {
+                                "entity_type": "player",
+                                "external_id": cp.source_player_id,
+                                "reason_code": "unsupported_position_mapping",
+                                "severity": "warning",
+                                "context": {"provider_position": raw_position},
+                            }
+                        )
         for (pid, cid), values in aggregates.items():
             if pid not in player_rows or cid not in club_slug:
                 continue

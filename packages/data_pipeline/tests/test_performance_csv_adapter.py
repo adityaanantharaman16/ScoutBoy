@@ -5,6 +5,7 @@ from app.models.orm import PlayerMetricNormalized, PlayerMetricRaw
 from data_pipeline.adapters import PerformanceCsvAdapter, TransfermarktAdapter
 from data_pipeline.adapters.csv_adapter import CsvContractError
 from data_pipeline.jobs.ingest import ingest_bundle
+from data_pipeline.provider_contract import validate_adapter
 from sqlalchemy import func, select
 
 
@@ -18,7 +19,9 @@ def _write_csv(path, rows, header=None):
 
 
 def test_valid_contract_loads(perf_csv):
-    bundle = PerformanceCsvAdapter(csv_path=perf_csv).fetch()
+    adapter = PerformanceCsvAdapter(csv_path=perf_csv)
+    bundle = adapter.fetch()
+    assert validate_adapter(adapter, bundle)["valid"] is True
     assert bundle.source_name == "performance_csv"
     assert bundle.metrics
     # every emitted metric resolves to a canonical performance metric

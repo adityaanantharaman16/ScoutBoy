@@ -41,6 +41,14 @@ class PlayerMetricRaw(Base, TimestampMixin):
 
 class PlayerMetricNormalized(Base, TimestampMixin):
     __tablename__ = "player_metrics_normalized"
+    __table_args__ = (
+        Index(
+            "ix_metric_normalized_player_season_metric",
+            "player_id",
+            "season_id",
+            "metric_name",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     player_id: Mapped[int] = mapped_column(ForeignKey("players.id", ondelete="CASCADE"), index=True)
