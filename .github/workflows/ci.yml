@@ -21,7 +21,7 @@ jobs:
       matrix:
         python-version: ["3.9", "3.11"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -56,7 +56,7 @@ jobs:
     name: Frontend quality, tests, and production build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -86,7 +86,7 @@ jobs:
     name: API contract freshness
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -136,7 +136,7 @@ jobs:
       DATABASE_URL: postgresql+psycopg://scoutboy:scoutboy@localhost:5432/scoutboy_test
       SCOUTBOY_ENVIRONMENT: test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -157,7 +157,7 @@ jobs:
     name: Production-build Playwright critical flow
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -202,7 +202,7 @@ jobs:
     env:
       SCOUTBOY_ADMIN_TOKEN: ci-compose-validation-token
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Validate Compose configuration
         run: docker compose -f docker-compose.full.yml config --quiet
       - name: Build, start, and probe the full stack
