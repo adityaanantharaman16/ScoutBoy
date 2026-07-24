@@ -45,6 +45,7 @@ jobs:
           --cov=data_pipeline
           --cov=market_model
           --cov=rolefit
+          --cov=evaluation
           --cov=scoutboy_shared
           --cov-report=term-missing
           --cov-report=xml

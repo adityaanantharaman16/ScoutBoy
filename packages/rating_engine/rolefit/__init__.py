@@ -15,7 +15,12 @@ Config-driven, explainable role ratings + playstyles. Public surface:
 
 from __future__ import annotations
 
-RATING_VERSION = "rolefit-v1"
+# rolefit-v2: recent-form bonus now honors the configured `requires_confidence` floor (a
+# below-floor low-confidence sample earns exactly zero instead of a halved bonus). This is an
+# observable scoring change, so it ships under a new version — v1 and v2 semantics can never be
+# reported under the same identifier. Role weights are unchanged. See
+# docs/milestone_6_rating_calibration.md.
+RATING_VERSION = "rolefit-v2"
 PLAYSTYLE_VERSION = "playstyles-v1"
 
 from .audit import build_audit, build_explanation_text, build_strengths_concerns

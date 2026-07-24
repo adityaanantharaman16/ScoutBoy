@@ -334,6 +334,50 @@ def test_methodology(client):
     assert m["rating_version"] and m["formula"]
     assert len(m["roles"]) == 9
     assert m["limitations"]
+    # Milestone 6: calibration/evidence surface
+    cal = m["calibration"]
+    assert cal is not None
+    assert cal["suite_id"] == "rolefit_calibration"
+    assert cal["status"] in ("pass", "warn", "fail", "inconclusive")
+    assert cal["benchmarks"]["total"] >= 9
+    assert cal["scenarios"]["total"] >= 1
+    assert "Leverkusen" in cal["pilot_coverage_limitation"]
+    assert cal["config_hash"]
+    assert cal["rating_version"]  # present when available
+
+
+def test_methodology_calibration_unavailable_fallback(client, monkeypatch):
+    """When fixture calibration can't run, Methodology still succeeds with an honest
+    inconclusive/unavailable calibration block — no fabricated totals, hashes, or versions."""
+    from app.services import methodology_service
+
+    def _boom(*args, **kwargs):
+        raise RuntimeError("forced calibration failure")
+
+    # get_methodology() is lru_cached: clear before injecting the fault, and restore after so the
+    # cached unavailable result cannot contaminate other tests.
+    methodology_service.get_methodology.cache_clear()
+    monkeypatch.setattr("evaluation.evaluator.evaluate_fixtures", _boom)
+    try:
+        m = client.get("/api/methodology").json()
+        # the page/endpoint stays operational
+        assert m["rating_version"] and len(m["roles"]) == 9
+        cal = m["calibration"]
+        assert cal["available"] is False
+        assert cal["status"] == "inconclusive"
+        assert cal["benchmarks"]["total"] == 0
+        assert cal["scenarios"]["total"] == 0
+        # nothing fabricated
+        assert cal["config_hash"] is None
+        assert cal["suite_id"] is None
+        assert cal["suite_version"] is None
+        assert cal["rating_version"] is None
+        # honest disclosure retained
+        assert "unavailable" in cal["methodology_note"].lower()
+        assert "Leverkusen" in cal["pilot_coverage_limitation"]
+    finally:
+        monkeypatch.undo()
+        methodology_service.get_methodology.cache_clear()
 
 
 def test_admin_recompute_creates_a_run(client):

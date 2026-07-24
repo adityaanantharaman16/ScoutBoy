@@ -216,6 +216,24 @@ require the separate `make recompute-ratings` command. The mock commercial provi
 data only and makes no network calls. See
 [docs/milestone_5_data_operations.md](docs/milestone_5_data_operations.md).
 
+### RoleFit calibration & model evaluation (Milestone 6)
+
+A versioned calibration framework measures whether the existing RoleFit engine produces credible,
+role-specific, context-aware, evidence-honest outputs. It **reuses the production scoring engine**
+(no second model, no ML, no auto-tuning) and reports `pass` / `warn` / `fail` / `inconclusive`.
+
+```bash
+make calibration-evaluate-fixtures   # deterministic; no DB writes, no network
+make calibration-evaluate-pilot      # read-only real-pilot evaluation (inconclusive if absent)
+make calibration-evaluate            # both + a Markdown report at data/reports/calibration_report.md
+```
+
+Fixture evaluation is byte-stable (a regression gate); pilot evaluation is read-only and returns
+`inconclusive` whenever the local pilot data is absent, so CI never fails on missing real data.
+The pilot is a Bayer Leverkusen-centered StatsBomb slice, not full Bundesliga/European validation.
+The Methodology page and `GET /api/methodology` surface a compact calibration status block. See
+[docs/milestone_6_rating_calibration.md](docs/milestone_6_rating_calibration.md).
+
 ---
 
 ## Commands (`make help` for all)
@@ -244,6 +262,9 @@ data only and makes no network calls. See
 | `make snapshot-diff` | Compare two snapshots deterministically |
 | `make freshness-report` / `make coverage-report` | Emit operational health and honest coverage JSON |
 | `make data-benchmark` | Ingest a generated 5,000-record scale fixture and emit benchmark JSON |
+| `make calibration-evaluate-fixtures` | Deterministic RoleFit fixture calibration (no DB writes, no network) |
+| `make calibration-evaluate-pilot` | Read-only real-pilot calibration (inconclusive when data absent) |
+| `make calibration-evaluate` | Fixtures + read-only pilot; write a Markdown review report |
 | `make dev` / `dev-api` / `dev-web` | Run the stack / API only / web only |
 | `make test` | Backend (pytest) + frontend (Vitest) |
 | `make e2e` | Isolated DB + dedicated ports + production build/`next start` Playwright flow |

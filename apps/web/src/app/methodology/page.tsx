@@ -1,6 +1,7 @@
 "use client";
 
 import { ErrorState, Loading, ScopeBanner, Section } from "@/components/common";
+import { CalibrationPanel } from "@/components/methodology/CalibrationPanel";
 import { useMethodology } from "@/lib/api/hooks";
 
 export default function MethodologyPage() {
@@ -34,6 +35,10 @@ export default function MethodologyPage() {
             {data.market_version}
           </p>
         </div>
+      </Section>
+
+      <Section title="Calibration & evidence" eyebrow="Model evaluation">
+        <CalibrationPanel calibration={data.calibration} />
       </Section>
 
       <Section title="Context adjustments" eyebrow="Multipliers">

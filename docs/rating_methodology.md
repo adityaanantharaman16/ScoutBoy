@@ -46,8 +46,13 @@ trust; it does not erase production.** Each multiplier is clamped to a documente
 
 ## 3. Recent-form bonus (additive)
 
-Up to +2.0 points, scaled by `recent_form_index` and gated by sample confidence
-(halved on low confidence, zero on unknown).
+Up to +2.0 points (`form_bonus.max_points`), scaled by `recent_form_index` and **gated by the
+configured confidence floor** `form_bonus.requires_confidence` (default `medium`) in
+`configs/context/sample_reliability_v1.yaml`. **Below** the floor the bonus is exactly **zero** —
+a small, low-confidence sample cannot earn a form bump; at or above the floor it is positive and
+capped at `max_points`. (Milestone 6 correction: the bonus previously halved on low confidence
+instead of honoring the configured floor; see
+[docs/milestone_6_rating_calibration.md](milestone_6_rating_calibration.md).)
 
 ## 4. Risk penalties (subtractive)
 
@@ -74,15 +79,42 @@ breakdown (multipliers + explanations), confidence breakdown, penalties, and a p
 
 ## Versioning & reproducibility
 
-Ratings are idempotent and versioned (`rolefit-v1`). Each `rating_run` stores the config hashes,
-source snapshot ids, status, and affected player count. Re-running with the same inputs reproduces
-the same scores (guarded by the benchmark snapshot test, US-3.11).
+Ratings are idempotent and versioned (**`rolefit-v2`**). Each `rating_run` stores the config
+hashes, source snapshot ids, status, and affected player count. Re-running with the same inputs
+reproduces the same scores (guarded by the benchmark snapshot test, US-3.11).
+
+`rolefit-v2` supersedes `rolefit-v1`: the recent-form bonus now honors the configured
+`requires_confidence` floor (a below-floor low-confidence sample earns exactly zero rather than a
+halved bonus). This changed observable output, so the identifier was bumped — v1 and v2 semantics
+are never reported under the same version. Role weights are unchanged. Stored `rolefit-v1` ratings
+are **not** current evidence; re-run `make recompute-ratings` to produce v2 ratings + audits (see
+[docs/milestone_6_rating_calibration.md](milestone_6_rating_calibration.md)).
 
 ## Extending
 
 - **New role:** add `configs/roles/<role>.yaml` (weights must sum to ~1.0; metrics must exist in
   the registry). It is auto-loaded, scored, ranked, and exposed — no code change.
 - **Change weights:** edit the YAML and `make recompute-ratings`. The config hash changes, so the
-  run is distinguishable from previous ones.
+  run is distinguishable from previous ones. **Also regenerate the calibration baseline** and
+  document the change (see below) — the calibration regression test fails on any config-hash
+  change, so a weight edit is always a deliberate, reviewed act.
 - **New metric:** add it to `packages/shared/python/scoutboy_shared/metrics.py` (name, unit,
   direction, face group), provide it via an adapter, then reference it in role/playstyle configs.
+
+## Calibration & model evaluation (Milestone 6)
+
+RoleFit outputs are measured by a versioned calibration framework that **reuses this same engine**
+— it never re-implements the formula and never claims objective scouting truth. It verifies role
+order, confidence outcomes, playstyle/concern presence, and bounded context effects against a
+committed contract, distinguishing `pass` / `warn` / `fail` / `inconclusive`.
+
+```bash
+make calibration-evaluate-fixtures   # deterministic; no DB writes, no network
+make calibration-evaluate-pilot      # read-only real-pilot evaluation (inconclusive if absent)
+make calibration-evaluate            # both + a Markdown review report
+```
+
+The Methodology API (`GET /api/methodology`) exposes a compact `calibration` block (suite version,
+status, benchmark/guardrail counts, contract hash, and the real-pilot coverage limitation). Full
+details, evidence levels, and the safe change-review workflow are in
+[`docs/milestone_6_rating_calibration.md`](milestone_6_rating_calibration.md).

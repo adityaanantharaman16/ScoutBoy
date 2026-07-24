@@ -87,6 +87,8 @@ def get_methodology() -> MethodologyResponse:
         for c in ps.concerns
     ]
 
+    calibration = _calibration_meta()
+
     context_dims = [
         {
             "key": "league_strength",
@@ -114,5 +116,64 @@ def get_methodology() -> MethodologyResponse:
         context_dimensions=context_dims,
         data_sources=DATA_SOURCES,
         limitations=LIMITATIONS,
+        calibration=calibration,
         last_updated=None,
     )
+
+
+def _calibration_meta() -> dict:
+    """Compact calibration status for the Methodology surface.
+
+    Runs the deterministic fixture suite only (no DB, no network). Never raises: if calibration
+    cannot be evaluated in this environment it returns an evidence-honest ``inconclusive`` /
+    unavailable block (available=False, zero totals, no config hash, real-pilot limitation kept)
+    rather than fabricating a successful status or silently hiding the section."""
+    try:
+        from evaluation import CalibrationContract
+        from evaluation.database_evaluator import PILOT_COVERAGE_NOTE
+        from evaluation.evaluator import evaluate_fixtures
+
+        result = evaluate_fixtures()
+        contract = CalibrationContract.load()
+
+        def _summary(totals: dict) -> dict:
+            return {
+                "passed": totals.get("pass", 0),
+                "warned": totals.get("warn", 0),
+                "failed": totals.get("fail", 0),
+                "inconclusive": totals.get("inconclusive", 0),
+                "total": sum(totals.values()),
+            }
+
+        return {
+            "available": True,
+            "suite_id": result["suite_id"],
+            "suite_version": result["contract_version"],
+            "calibration_version": result["calibration_version"],
+            "rating_version": result["rating_version"],
+            "status": result["overall_status"],
+            "benchmarks": _summary(result["totals"]["benchmarks"]),
+            "scenarios": _summary(result["totals"]["scenarios"]),
+            "methodology_note": contract.methodology_note,
+            "pilot_coverage_limitation": PILOT_COVERAGE_NOTE,
+            "config_hash": result["config_hashes"]["contract"],
+        }
+    except Exception:  # noqa: BLE001 — methodology must render even if calibration is unavailable
+        try:
+            from evaluation.database_evaluator import PILOT_COVERAGE_NOTE
+
+            pilot_limit = PILOT_COVERAGE_NOTE
+        except Exception:  # noqa: BLE001
+            pilot_limit = (
+                "Real-pilot evaluation is a Bayer Leverkusen-centered StatsBomb slice, not full "
+                "Bundesliga/European coverage."
+            )
+        return {
+            "available": False,
+            "status": "inconclusive",
+            "methodology_note": (
+                "Calibration evidence is unavailable in this environment; run "
+                "`make calibration-evaluate-fixtures` to produce it."
+            ),
+            "pilot_coverage_limitation": pilot_limit,
+        }

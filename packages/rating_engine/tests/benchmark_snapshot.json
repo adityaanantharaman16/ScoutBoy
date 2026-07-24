@@ -1,6 +1,6 @@
 {
   "_note": "Regression snapshot for 5 benchmark synthetic players. Update deliberately if the formula or fixtures change (US-3.11).",
-  "rating_version": "rolefit-v1",
+  "rating_version": "rolefit-v2",
   "players": {
     "sample-002": { "archetype": "touchline_winger",        "best_role": "touchline_winger",        "final_score": 85.5 },
     "sample-005": { "archetype": "inside_forward",           "best_role": "inside_forward",          "final_score": 85.4 },

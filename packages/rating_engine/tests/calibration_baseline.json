@@ -1,0 +1,120 @@
+{
+  "benchmarks": {
+    "ball_winner_bwm": {
+      "primary_role": "ball_winning_midfielder",
+      "role_scores": {
+        "ball_winning_midfielder": 90.1,
+        "deep_lying_playmaker": 36.3,
+        "tempo_controller": 35.0
+      },
+      "status": "pass"
+    },
+    "goal_first_inside_forward": {
+      "primary_role": "inside_forward",
+      "role_scores": {
+        "inside_forward": 91.4,
+        "pressing_forward": 56.5,
+        "touchline_winger": 23.6
+      },
+      "status": "pass"
+    },
+    "low_minute_high_output": {
+      "primary_role": "inside_forward",
+      "role_scores": {
+        "inside_forward": 84.5,
+        "pressing_forward": 74.4,
+        "touchline_winger": 62.7
+      },
+      "status": "pass"
+    },
+    "lower_league_high_production": {
+      "primary_role": "touchline_winger",
+      "role_scores": {
+        "inside_forward": 63.3,
+        "pressing_forward": 61.9,
+        "touchline_winger": 75.8
+      },
+      "status": "pass"
+    },
+    "missing_required_metric": {
+      "primary_role": "pressing_forward",
+      "role_scores": {
+        "inside_forward": 48.3,
+        "pressing_forward": 60.3,
+        "touchline_winger": 45.2
+      },
+      "status": "pass"
+    },
+    "progressive_deep_lying_playmaker": {
+      "primary_role": "deep_lying_playmaker",
+      "role_scores": {
+        "advanced_8": 55.3,
+        "ball_winning_midfielder": 53.9,
+        "deep_lying_playmaker": 94.5,
+        "tempo_controller": 91.5
+      },
+      "status": "pass"
+    },
+    "stronger_league_lower_volume": {
+      "primary_role": "deep_lying_playmaker",
+      "role_scores": {
+        "advanced_8": 62.1,
+        "ball_winning_midfielder": 52.7,
+        "deep_lying_playmaker": 79.9,
+        "tempo_controller": 77.8
+      },
+      "status": "pass"
+    },
+    "two_way_advanced_8": {
+      "primary_role": "advanced_8",
+      "role_scores": {
+        "advanced_8": 76.9,
+        "ball_winning_midfielder": 52.1,
+        "deep_lying_playmaker": 47.0,
+        "tempo_controller": 46.3
+      },
+      "status": "pass"
+    },
+    "wide_carrier_touchline_winger": {
+      "primary_role": "touchline_winger",
+      "role_scores": {
+        "inside_forward": 24.3,
+        "pressing_forward": 48.4,
+        "touchline_winger": 89.5
+      },
+      "status": "pass"
+    }
+  },
+  "calibration_version": "rolefit-calibration-v1",
+  "config_hashes": {
+    "context": "f4eff9047b7cfaed",
+    "contract": "6f25ab01e7b575c4",
+    "fixtures": "faab92d605bc9dfb",
+    "playstyles": "f2736564e701a211",
+    "roles": {
+      "advanced_8": "ac4607b92b1f5b3d",
+      "ball_winning_midfielder": "52122e68cdf93fcf",
+      "complete_forward": "affef5e2e2ed53ff",
+      "deep_lying_playmaker": "76a5df8b550428f5",
+      "inside_forward": "0ffd99b6e741943a",
+      "pressing_forward": "fe5cd7350a061c65",
+      "shadow_striker": "2536fee675b7a5e7",
+      "tempo_controller": "6158fd5669ba5995",
+      "touchline_winger": "21678a6543016ea9"
+    }
+  },
+  "contract_version": "v1",
+  "note": "Baseline RoleFit calibration snapshot. Regenerate ONLY for an intentional, documented config/formula change (see docs/milestone_6_rating_calibration.md). A diff here means role scores/order moved.",
+  "rating_version": "rolefit-v2",
+  "scenarios": {
+    "competition_stakes_ordering": "pass",
+    "concern_trigger_boundary": "pass",
+    "confidence_within_bounds": "pass",
+    "deterministic_ordering": "pass",
+    "league_strength_ordering": "pass",
+    "minutes_sample_monotonicity": "pass",
+    "playstyle_tier_thresholds": "pass",
+    "recent_form_confidence_gating": "pass",
+    "team_strength_ordering": "pass"
+  }
+}

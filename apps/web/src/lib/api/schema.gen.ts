@@ -417,6 +417,88 @@ export interface components {
             /** Explanation Text */
             explanation_text?: string | null;
         };
+        /**
+         * CalibrationMeta
+         * @description Compact, evidence-honest calibration status for the Methodology surface.
+         *
+         *     When calibration cannot be evaluated in this environment, ``available`` is False and
+         *     ``status`` is ``inconclusive`` — totals stay zero and ``config_hash`` is null rather than
+         *     fabricating a successful result or hiding the section.
+         */
+        CalibrationMeta: {
+            /**
+             * Available
+             * @default true
+             */
+            available: boolean;
+            /** Suite Id */
+            suite_id?: string | null;
+            /** Suite Version */
+            suite_version?: string | null;
+            /** Calibration Version */
+            calibration_version?: string | null;
+            /** Rating Version */
+            rating_version?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pass" | "warn" | "fail" | "inconclusive";
+            /**
+             * @default {
+             *       "passed": 0,
+             *       "warned": 0,
+             *       "failed": 0,
+             *       "inconclusive": 0,
+             *       "total": 0
+             *     }
+             */
+            benchmarks: components["schemas"]["CalibrationSummary"];
+            /**
+             * @default {
+             *       "passed": 0,
+             *       "warned": 0,
+             *       "failed": 0,
+             *       "inconclusive": 0,
+             *       "total": 0
+             *     }
+             */
+            scenarios: components["schemas"]["CalibrationSummary"];
+            /** Methodology Note */
+            methodology_note: string;
+            /** Pilot Coverage Limitation */
+            pilot_coverage_limitation: string;
+            /** Config Hash */
+            config_hash?: string | null;
+        };
+        /** CalibrationSummary */
+        CalibrationSummary: {
+            /**
+             * Passed
+             * @default 0
+             */
+            passed: number;
+            /**
+             * Warned
+             * @default 0
+             */
+            warned: number;
+            /**
+             * Failed
+             * @default 0
+             */
+            failed: number;
+            /**
+             * Inconclusive
+             * @default 0
+             */
+            inconclusive: number;
+            /**
+             * Total
+             * @default 0
+             */
+            total: number;
+        };
         /** CompareResponse */
         CompareResponse: {
             /** Season */
@@ -722,6 +804,7 @@ export interface components {
              * @default []
              */
             limitations: string[];
+            calibration?: components["schemas"]["CalibrationMeta"] | null;
             /** Last Updated */
             last_updated?: string | null;
         };

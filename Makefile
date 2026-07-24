@@ -162,6 +162,26 @@ data-benchmark: ## Ingest deterministic generated records and emit benchmark JSO
 	$(PY) -m data_pipeline.operations benchmark --size $(SIZE)
 
 # ---------------------------------------------------------------------------
+# RoleFit calibration & model evaluation (Milestone 6)
+# ---------------------------------------------------------------------------
+CALIBRATION_REPORT ?= data/reports/calibration_report.md
+
+.PHONY: calibration-evaluate-fixtures
+calibration-evaluate-fixtures: ## Deterministic fixture calibration — no DB writes, no network
+	@$(PY) -m evaluation fixtures
+
+.PHONY: calibration-evaluate-pilot
+calibration-evaluate-pilot: ## Read-only real-pilot calibration (inconclusive when data absent)
+	@$(PY) -m evaluation pilot
+
+.PHONY: calibration-evaluate
+calibration-evaluate: ## Fixtures + read-only pilot; write a Markdown review report
+	@mkdir -p $(dir $(CALIBRATION_REPORT))
+	@$(PY) -m evaluation all --format markdown --output $(CALIBRATION_REPORT)
+	@echo ">> Wrote $(CALIBRATION_REPORT)"
+	@$(PY) -m evaluation all
+
+# ---------------------------------------------------------------------------
 # Dev servers
 # ---------------------------------------------------------------------------
 .PHONY: dev

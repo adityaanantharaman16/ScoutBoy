@@ -27,6 +27,18 @@ CONTEXT_FILES = {
 }
 
 
+_CONFIDENCE_ORDER = {
+    ConfidenceLevel.UNKNOWN.value: 0,
+    ConfidenceLevel.LOW.value: 1,
+    ConfidenceLevel.MEDIUM.value: 2,
+    ConfidenceLevel.HIGH.value: 3,
+}
+
+
+def _confidence_rank(level: str) -> int:
+    return _CONFIDENCE_ORDER.get(level, 0)
+
+
 def _clamp(value: float, band: dict) -> float:
     return max(float(band["min"]), min(float(band["max"]), value))
 
@@ -146,15 +158,23 @@ class ContextConfig:
     def form_bonus_points(
         self, recent_form_index: Optional[float], sample_confidence: str
     ) -> float:
+        """Recent-form bonus, additive, gated by the configured ``requires_confidence`` floor.
+
+        The form bonus is only awarded once the sample is reliable enough: below the
+        configured confidence floor it is exactly zero (a small sample cannot earn a form
+        bump), and at/above the floor it scales with ``recent_form_index`` but is capped at
+        ``max_points``. This honors ``configs/context/sample_reliability_v1.yaml``'s
+        ``form_bonus.requires_confidence`` rather than duplicating gating downstream.
+        """
         cfg = self.sample["form_bonus"]
         if recent_form_index is None:
             return 0.0
-        base = max(0.0, float(recent_form_index) - 0.5) * 2.0 * float(cfg["max_points"])
-        if sample_confidence == ConfidenceLevel.LOW.value:
-            base *= 0.5
-        elif sample_confidence == ConfidenceLevel.UNKNOWN.value:
-            base = 0.0
-        return round(base, 2)
+        max_points = float(cfg["max_points"])
+        required = str(cfg.get("requires_confidence", ConfidenceLevel.MEDIUM.value))
+        if _confidence_rank(sample_confidence) < _confidence_rank(required):
+            return 0.0
+        base = max(0.0, float(recent_form_index) - 0.5) * 2.0 * max_points
+        return round(min(max_points, base), 2)
 
 
 def build_context(

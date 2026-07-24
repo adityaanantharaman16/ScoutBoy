@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { CalibrationPanel } from "@/components/methodology/CalibrationPanel";
 import { FaceStatsGrid } from "@/components/player/FaceStatsGrid";
 import { MarketValuePanel } from "@/components/player/MarketValuePanel";
 import { PlaystyleBadges } from "@/components/player/PlaystyleBadges";
@@ -182,5 +183,53 @@ describe("Discover cards", () => {
     expect(screen.queryByText("0.0")).not.toBeInTheDocument();
     expect(screen.queryByText(/No qualifying playstyles/)).not.toBeInTheDocument();
     expect(screen.getByText(/unknown/)).toBeInTheDocument();
+  });
+});
+
+describe("CalibrationPanel", () => {
+  const available = {
+    available: true,
+    suite_id: "rolefit_calibration",
+    suite_version: "v1",
+    calibration_version: "rolefit-calibration-v1",
+    rating_version: "rolefit-v2",
+    status: "pass",
+    benchmarks: { passed: 9, warned: 0, failed: 0, inconclusive: 0, total: 9 },
+    scenarios: { passed: 9, warned: 0, failed: 0, inconclusive: 0, total: 9 },
+    methodology_note: "Benchmarks re-scored with the production engine.",
+    pilot_coverage_limitation: "Bayer Leverkusen-centered StatsBomb slice.",
+    config_hash: "abc123",
+  } as unknown as NonNullable<
+    import("@/lib/api/types").Methodology["calibration"]
+  >;
+
+  it("renders the available calibration summary", () => {
+    render(<CalibrationPanel calibration={available} />);
+    expect(screen.getByTestId("calibration-available")).toBeInTheDocument();
+    expect(screen.getByText(/benchmarks 9\/9 pass/)).toBeInTheDocument();
+    expect(screen.getByText(/guardrails 9\/9 pass/)).toBeInTheDocument();
+    expect(screen.getByText(/Real-pilot limitation/)).toBeInTheDocument();
+  });
+
+  it("renders an honest unavailable/inconclusive state without fabricating totals", () => {
+    const unavailable = {
+      available: false,
+      status: "inconclusive",
+      benchmarks: { passed: 0, warned: 0, failed: 0, inconclusive: 0, total: 0 },
+      scenarios: { passed: 0, warned: 0, failed: 0, inconclusive: 0, total: 0 },
+      methodology_note: "Calibration evidence is unavailable in this environment.",
+      pilot_coverage_limitation: "Bayer Leverkusen-centered StatsBomb slice.",
+    } as unknown as NonNullable<import("@/lib/api/types").Methodology["calibration"]>;
+    render(<CalibrationPanel calibration={unavailable} />);
+    expect(screen.getByTestId("calibration-unavailable")).toBeInTheDocument();
+    expect(screen.getByText(/evidence unavailable/)).toBeInTheDocument();
+    expect(screen.getByText(/inconclusive/)).toBeInTheDocument();
+    expect(screen.queryByText(/9\/9 pass/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Real-pilot limitation/)).toBeInTheDocument();
+  });
+
+  it("handles a null calibration block", () => {
+    render(<CalibrationPanel calibration={null} />);
+    expect(screen.getByTestId("calibration-unavailable")).toBeInTheDocument();
   });
 });

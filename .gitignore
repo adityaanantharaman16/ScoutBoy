@@ -23,6 +23,9 @@ data/normalized/*
 !data/raw/.gitkeep
 !data/normalized/.gitkeep
 
+# --- Calibration reports (generated locally; baseline lives in docs/) ---
+data/reports/calibration_report.*
+
 # --- Test / E2E output ---
 test-results/
 playwright-report/

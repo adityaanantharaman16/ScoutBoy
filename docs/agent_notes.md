@@ -174,3 +174,97 @@ percentiles; season-derived team strength tiers; cohort report; executable accep
 
 The verified cohort is Wirtz, Boniface, and Hlozek. The next milestone is broader licensed/open
 performance coverage and rating calibration, not more UI surface area.
+
+## Milestone 6 — RoleFit Calibration & Model Evaluation (implementation plan)
+
+Goal: make RoleFit outputs **measurable, reviewable, repeatable, and regression-protected**
+without building a second scoring engine or claiming objective scouting truth.
+
+### Design decisions
+1. **Reuse production scoring end-to-end.** The evaluator calls `normalize_metrics`
+   (data_pipeline) → `percentile_ranks` (rolefit) → `build_context` → `compute_role_rating`
+   → `compute_playstyles` → `build_audit`. No formula is duplicated. This is exactly the
+   recompute pipeline path, minus the database.
+2. **Fixtures are raw per-90 metric values, not magical scores.** A benchmark declares a
+   player's raw metrics + context. Percentiles emerge from a committed, deterministic
+   **reference cohort** per position group (ATT/MID) the same way recompute percentiles a
+   player against role-eligible peers. Role ordering, confidence, and playstyle/concern
+   presence are therefore *earned from evidence*, not asserted as absolute numbers.
+3. **Contract vs fixtures are separate files** (task §1/§2):
+   - `configs/calibration/rolefit_calibration_v1.yaml` — versioned contract: suite metadata,
+     benchmark expectations (primary role, role ordering, playstyles, concerns, confidence),
+     context scenarios, `inconclusive_allowed`, evidence level, limitations.
+   - `configs/calibration/fixtures_v1.yaml` — committed raw-metric fixtures: benchmark
+     players + reference cohorts + context. Independent of DB / network.
+   Loader cross-validates: every `fixture`-kind benchmark needs matching fixture data;
+   every fixture player is referenced. Pilot benchmarks have no fixture (resolved from DB).
+4. **Four-way status** — `pass` (expectation satisfied), `warn` (borderline / partial),
+   `fail` (sufficient evidence contradicts expectation), `inconclusive` (evidence absent
+   or insufficient). Inconclusive is never silently a pass or fail.
+5. **Pilot mode is read-only + honest.** `database_evaluator.py` resolves real players by
+   stable source id / provenance; if the DB, identity, role coverage, or required metrics
+   are absent it returns `inconclusive` with a reason. CI never fails on missing pilot data.
+   Reports always carry the Leverkusen-centered-slice caveat (never "full Bundesliga").
+6. **Baseline, not tuning.** M6 establishes a baseline against the *current* configs. No
+   role weights are changed unless the suite gives a defensible, documented, regression-
+   tested reason. Config hashes are recorded in every result so drift is detectable.
+
+### Package layout (task §3) — `packages/rating_engine/evaluation/`
+`contract.py` (load+validate contract), `fixtures.py` (load fixtures, build populations,
+score a benchmark reusing production modules), `evaluator.py` (per-benchmark + scenario
+evaluation, suite totals, deterministic ordering), `database_evaluator.py` (read-only pilot),
+`reporting.py` (byte-stable JSON + Markdown), `__main__.py` (CLI). Imports as `evaluation`
+under the Makefile/pytest PYTHONPATH (`packages/rating_engine`). Tests live in
+`packages/rating_engine/tests/` (already a testpath).
+
+### Fixtures covered (task §2)
+wide carrier→touchline_winger, goal-first wide→inside_forward, progressive press-resistant
+mid→deep_lying_playmaker, two-way mid→advanced_8, defensive mid→ball_winning_midfielder,
+low-minute/high-output (low/medium confidence), lower-league/high-production (translation
+risk), stronger-league/lower-volume (stronger reliability), missing-required-metric
+(low/inconclusive), playstyle+concern threshold boundary cases.
+
+### Scenarios / guardrails (task §5)
+league-strength ordering & bounded impact, team-strength & stakes effects, minutes
+monotonicity, form-bonus confidence gating, required-metric coverage, confidence bounds,
+playstyle tiers at base/plus/elite, concern trigger/non-trigger, deterministic tie-breaks.
+
+### Operator commands (task §7)
+`make calibration-evaluate-fixtures` (no DB writes, no network), `make calibration-evaluate-pilot`
+(read-only), `make calibration-evaluate` (both). Deterministic JSON to stdout; optional
+Markdown report. Generated reports are gitignored unless curated as baseline docs.
+
+### Methodology surface (task §8)
+Add a small `calibration` block to `MethodologyResponse` (+ `methodology_service`): suite
+version, current summary/status counts, rating/config version, evidence-weighted note, and
+the explicit real-pilot coverage limitation. Regenerate OpenAPI + `schema.gen.ts`.
+
+### Build order
+contract → fixtures + reference cohorts → fixture evaluator → reporting + CLI → tests →
+pilot evaluator → methodology surface + contract regen → docs → full gates + byte-stable check.
+
+## Milestone 6 — shipped RoleFit calibration & model evaluation
+
+Versioned calibration contract (`configs/calibration/rolefit_calibration_v1.yaml`) + committed
+deterministic synthetic fixtures (`configs/calibration/fixtures_v1.yaml`) + an evaluation package
+(`packages/rating_engine/evaluation/`) that REUSES the production engine (normalize_metrics →
+percentile_ranks → build_context → compute_role_rating → compute_playstyles). Distinguishes
+pass/warn/fail/inconclusive. 9 fixture benchmarks (role order, playstyles, concerns, confidence,
+translation risk) + 9 guardrail scenarios (league/team/stakes ordering bounded & non-erasing,
+minutes→confidence monotonicity, form gating, confidence bounds, playstyle tiers, concern
+boundary, deterministic ordering) — all pass on the UNCHANGED config. Baseline established; NO
+weights tuned (`calibration_baseline.json` pins scores + config hashes; the regression test fails
+on any config-hash change, so tuning is always deliberate).
+
+Read-only pilot evaluation (`database_evaluator.py`) resolves real players via stable
+`PlayerSourceId` provenance (never fuzzy names) and returns `inconclusive` — never fail — when the
+DB/identity/ratings are absent or the schema mismatches. Pilot is always labelled the Leverkusen-
+centered StatsBomb slice.
+
+Operator commands: `make calibration-evaluate-fixtures|pilot|evaluate`. Fixture JSON is byte-
+stable; reports are gitignored (`data/reports/calibration_report.*`). Methodology API gained a
+compact `calibration` block (schema + service + regenerated OpenAPI/TS + frontend section).
+
+Next milestone: broader licensed/open multi-league performance coverage so calibration can move
+from fixture-and-slice evidence toward genuine validation — still no universal overall, no ML, no
+auto-tuning.

@@ -1,0 +1,294 @@
+# ScoutBoy RoleFit calibration contract (v1).
+#
+# This contract is the versioned, human-reviewable definition of what a CREDIBLE RoleFit
+# output looks like. It deliberately avoids magical absolute scores: it asserts role ORDER,
+# CONFIDENCE outcomes, PLAYSTYLE/CONCERN presence, and TRANSLATION-RISK direction — the
+# things RoleFit actually promises. It does not claim ScoutBoy produces objective scouting
+# truth, and it does not tune weights. See docs/milestone_6_rating_calibration.md.
+#
+# status semantics: pass = expectation satisfied; warn = borderline/partial;
+# fail = sufficient evidence contradicts the expectation; inconclusive = evidence absent.
+suite:
+  id: rolefit_calibration
+  # Calibration-suite version (schema/expectations); intentionally independent of the production
+  # rating_version below.
+  version: v1
+  # Must equal the production RATING_VERSION; bumped to v2 with the form-gating correction.
+  rating_version: rolefit-v2
+  methodology_note: >
+    Benchmarks are evaluated by re-scoring controlled synthetic fixtures with the production
+    RoleFit engine (percentiles earned against a committed reference cohort, then
+    compute_role_rating / compute_playstyles). Real-pilot benchmarks are read-only and resolve
+    players through stable source-id provenance; they return inconclusive whenever the local
+    database lacks the required evidence. Nothing here re-implements the scoring formula.
+
+defaults:
+  inconclusive_allowed: false
+
+limitations:
+  - Fixtures are controlled synthetic profiles, not real footballers; they validate engine
+    behavior and internal consistency, not real-world scouting accuracy.
+  - The real-data pilot is a Bayer Leverkusen-centered StatsBomb Open Data slice; it cannot
+    validate full Bundesliga, European, or global player coverage.
+  - Calibration establishes a baseline for the current configuration. It is not a claim that
+    the current role weights are optimal.
+
+benchmarks:
+  # ---------------------------------------------------------------- fixture benchmarks
+  - id: wide_carrier_touchline_winger
+    kind: fixture
+    evidence_level: fixture
+    description: >
+      A wide carrier — elite take-ons/carries, modest goal threat — should prefer the
+      Touchline Winger role over Inside Forward.
+    expected_primary_role: touchline_winger
+    role_ordering:
+      - { higher: touchline_winger, lower: inside_forward }
+    expected_playstyles:
+      - { key: touchline_isolator, present: true, min_tier: base }
+      - { key: technical_carrier, present: true, min_tier: base }
+    expected_concerns:
+      - { key: raw_finishing, present: true }
+    confidence: { max_level: high, min_level: high }
+    expected_translation_risk: low
+    limitations: Controlled synthetic wide-carrier profile.
+
+  - id: goal_first_inside_forward
+    kind: fixture
+    evidence_level: fixture
+    description: >
+      A goal-first wide attacker — elite shot threat and box presence, low carrying — should
+      prefer Inside Forward over Touchline Winger.
+    expected_primary_role: inside_forward
+    role_ordering:
+      - { higher: inside_forward, lower: touchline_winger }
+    expected_playstyles:
+      - { key: inverted_threat, present: true, min_tier: base }
+    expected_concerns:
+      - { key: limited_carrying_threat, present: true }
+    confidence: { min_level: high }
+    expected_translation_risk: low
+    limitations: Controlled synthetic goal-first wide profile.
+
+  - id: progressive_deep_lying_playmaker
+    kind: fixture
+    evidence_level: fixture
+    description: >
+      A progressive, press-resistant deep midfielder should prefer Deep-Lying Playmaker and
+      out-rank the more advanced/defensive midfield roles.
+    expected_primary_role: deep_lying_playmaker
+    role_ordering:
+      - { higher: deep_lying_playmaker, lower: advanced_8 }
+      - { higher: deep_lying_playmaker, lower: ball_winning_midfielder }
+    expected_playstyles:
+      - { key: line_breaker, present: true, min_tier: base }
+      - { key: press_resistant, present: true, min_tier: base }
+    confidence: { min_level: high }
+    expected_translation_risk: low
+    limitations: Controlled synthetic deep-playmaker profile.
+
+  - id: two_way_advanced_8
+    kind: fixture
+    evidence_level: fixture
+    description: >
+      A two-way creative/box-arriving midfielder should prefer Advanced 8 over the deeper and
+      pure ball-winning roles.
+    expected_primary_role: advanced_8
+    role_ordering:
+      - { higher: advanced_8, lower: deep_lying_playmaker }
+      - { higher: advanced_8, lower: ball_winning_midfielder }
+    expected_playstyles:
+      - { key: box_crasher, present: true, min_tier: base }
+    confidence: { min_level: high }
+    expected_translation_risk: low
+    limitations: Controlled synthetic two-way midfielder profile.
+
+  - id: ball_winner_bwm
+    kind: fixture
+    evidence_level: fixture
+    description: >
+      A defensive midfielder — elite tackling/interceptions/pressing, low progression — should
+      prefer Ball-Winning Midfielder over Deep-Lying Playmaker.
+    expected_primary_role: ball_winning_midfielder
+    role_ordering:
+      - { higher: ball_winning_midfielder, lower: deep_lying_playmaker }
+    expected_playstyles:
+      - { key: duel_winner, present: true, min_tier: base }
+      - { key: interceptor, present: true, min_tier: base }
+    confidence: { min_level: high }
+    expected_translation_risk: low
+    limitations: Controlled synthetic ball-winner profile.
+
+  - id: low_minute_high_output
+    kind: fixture
+    evidence_level: fixture
+    description: >
+      A high-output player below the minutes floor must stay LOW confidence and carry a
+      small-sample concern — small samples never masquerade as reliable.
+    expected_primary_role: inside_forward
+    confidence: { max_level: low }
+    expected_concerns:
+      - { key: small_sample, present: true }
+    inconclusive_allowed: true
+    limitations: 420 minutes is below the reliability floor; output is real but uncertain.
+
+  - id: lower_league_high_production
+    kind: fixture
+    evidence_level: fixture
+    description: >
+      A lower-league, high-production wide carrier keeps visible production but carries medium
+      translation risk and a role-translation concern — production is not erased.
+    expected_primary_role: touchline_winger
+    role_ordering:
+      - { higher: touchline_winger, lower: inside_forward }
+    expected_concerns:
+      - { key: role_translation_risk, present: true }
+    expected_translation_risk: medium
+    confidence: { min_level: medium }
+    limitations: Second-tier production; translation to a stronger level is uncertain.
+
+  - id: stronger_league_lower_volume
+    kind: fixture
+    evidence_level: fixture
+    description: >
+      A stronger-league midfielder with moderate minutes still ranks Deep-Lying Playmaker
+      first, with low translation risk and reliable-enough confidence.
+    expected_primary_role: deep_lying_playmaker
+    expected_translation_risk: low
+    confidence: { min_level: medium }
+    limitations: Stronger-league reliability with moderate sample size.
+
+  - id: missing_required_metric
+    kind: fixture
+    evidence_level: fixture
+    description: >
+      When a role's required metrics are absent, that role's confidence must collapse to
+      low/unknown and report the missing metrics — the score is never forced to zero.
+    expected_primary_role: null
+    confidence:
+      role: inside_forward
+      max_level: low
+      expect_missing_required: true
+    inconclusive_allowed: true
+    limitations: Deliberately drops Inside Forward's required shot-threat metrics.
+
+  # ---------------------------------------------------------------- pilot benchmarks
+  # Real Bayer Leverkusen-centered StatsBomb pilot players, resolved by reviewed Transfermarkt
+  # source ids (configs/identity/statsbomb_transfermarkt_overrides_v1.yaml). These are
+  # read-only and return `inconclusive` whenever the local DB lacks the pilot evidence — CI
+  # never fails because raw pilot data is unavailable.
+  - id: pilot_boniface_attacking_role
+    kind: pilot
+    evidence_level: pilot
+    description: >
+      If pilot evidence is present, a high-volume central striker should rate highest in a
+      central attacking role rather than a wide/deep role.
+    source_ids:
+      - { source_name: transfermarkt, source_player_id: 656681 }
+    season_label: "2023/2024"
+    expected_primary_role: [complete_forward, pressing_forward, shadow_striker, inside_forward]
+    inconclusive_allowed: true
+    limitations: Single pilot player; a Leverkusen-centered slice, not Bundesliga validation.
+
+  - id: pilot_palacios_midfield_role
+    kind: pilot
+    evidence_level: pilot
+    description: >
+      If pilot evidence is present, a progressive central midfielder should rate highest in a
+      midfield playmaking/box-to-box role.
+    source_ids:
+      - { source_name: transfermarkt, source_player_id: 401578 }
+    season_label: "2023/2024"
+    expected_primary_role: [deep_lying_playmaker, advanced_8, tempo_controller, ball_winning_midfielder]
+    inconclusive_allowed: true
+    limitations: Single pilot player; a Leverkusen-centered slice, not Bundesliga validation.
+
+scenarios:
+  - id: league_strength_ordering
+    type: context_ordering
+    description: >
+      A stronger league produces a higher final score than a weaker one for the same profile,
+      but the effect is numerically bounded (combined-multiplier ratio ≤ max_ratio, both within
+      the configured context bands) and never erases production.
+    params:
+      fixture_id: wide_carrier_touchline_winger
+      role: touchline_winger
+      dimension: league
+      high: { competition_slug: eng_premier_league }
+      low: { competition_slug: eng_championship }
+      # Reviewable bound: PL (1.05, opp proxy 1.03) vs Championship (0.94, opp 0.964)
+      # gives a combined ratio ≈ 1.19; 1.25 leaves a small, intentional margin.
+      max_ratio: 1.25
+
+  - id: team_strength_ordering
+    type: context_ordering
+    description: An elite team environment earns slightly more trust than a weak one, bounded.
+    params:
+      fixture_id: two_way_advanced_8
+      role: advanced_8
+      dimension: team
+      high: { team_tier: elite }
+      low: { team_tier: weak }
+      # elite (1.04) vs weak (0.96) -> ratio ≈ 1.083; 1.15 leaves margin.
+      max_ratio: 1.15
+
+  - id: competition_stakes_ordering
+    type: context_ordering
+    description: Higher-stakes competition nudges the score above a low-stakes friendly, bounded.
+    params:
+      fixture_id: goal_first_inside_forward
+      role: inside_forward
+      dimension: stakes
+      # uefa_elite_knockout (1.06) vs friendly (0.97) -> ratio ≈ 1.093; 1.15 leaves margin.
+      max_ratio: 1.15
+      high: { competition_type: uefa_elite_knockout }
+      low: { competition_type: friendly }
+
+  - id: minutes_sample_monotonicity
+    type: minutes_monotonicity
+    description: Confidence is non-decreasing as sample minutes grow.
+    params:
+      fixture_id: two_way_advanced_8
+      role: advanced_8
+      minutes_ladder: [200, 600, 1000, 1800, 2600]
+
+  - id: recent_form_confidence_gating
+    type: form_gating
+    description: >
+      The recent-form bonus is gated by the configured medium-confidence floor — exactly zero on
+      a below-threshold low-confidence sample (200 minutes → low), positive and capped at
+      max_points on a reliable (high-confidence) sample.
+    params:
+      fixture_id: goal_first_inside_forward
+      role: inside_forward
+      recent_form_index: 0.9
+
+  - id: confidence_within_bounds
+    type: confidence_bounds
+    description: Every computed confidence score stays within [0, 1].
+    params: {}
+
+  - id: playstyle_tier_thresholds
+    type: playstyle_tiers
+    description: >
+      A positive playstyle earns base/plus/elite exactly at the configured composite
+      thresholds, and no badge below base.
+    params:
+      position_group: ATT
+      playstyle_key: volume_shooter
+      metric: shots_per90
+
+  - id: concern_trigger_boundary
+    type: concern_boundary
+    description: >
+      A low-tail concern triggers just inside its percentile threshold and does not trigger
+      just outside it.
+    params:
+      position_group: ATT
+      concern_key: limited_carrying_threat
+      metric: progressive_carries_per90
+
+  - id: deterministic_ordering
+    type: deterministic_ordering
+    description: Re-scoring every fixture yields byte-identical role ordering and scores.
+    params: {}

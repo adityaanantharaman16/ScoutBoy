@@ -1465,6 +1465,147 @@
         ],
         "title": "AuditBreakdown"
       },
+      "CalibrationMeta": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available",
+            "default": true
+          },
+          "suite_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suite Id"
+          },
+          "suite_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suite Version"
+          },
+          "calibration_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calibration Version"
+          },
+          "rating_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating Version"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "warn",
+              "fail",
+              "inconclusive"
+            ],
+            "title": "Status"
+          },
+          "benchmarks": {
+            "$ref": "#/components/schemas/CalibrationSummary",
+            "default": {
+              "passed": 0,
+              "warned": 0,
+              "failed": 0,
+              "inconclusive": 0,
+              "total": 0
+            }
+          },
+          "scenarios": {
+            "$ref": "#/components/schemas/CalibrationSummary",
+            "default": {
+              "passed": 0,
+              "warned": 0,
+              "failed": 0,
+              "inconclusive": 0,
+              "total": 0
+            }
+          },
+          "methodology_note": {
+            "type": "string",
+            "title": "Methodology Note"
+          },
+          "pilot_coverage_limitation": {
+            "type": "string",
+            "title": "Pilot Coverage Limitation"
+          },
+          "config_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Config Hash"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "methodology_note",
+          "pilot_coverage_limitation"
+        ],
+        "title": "CalibrationMeta",
+        "description": "Compact, evidence-honest calibration status for the Methodology surface.\n\nWhen calibration cannot be evaluated in this environment, ``available`` is False and\n``status`` is ``inconclusive`` \u2014 totals stay zero and ``config_hash`` is null rather than\nfabricating a successful result or hiding the section."
+      },
+      "CalibrationSummary": {
+        "properties": {
+          "passed": {
+            "type": "integer",
+            "title": "Passed",
+            "default": 0
+          },
+          "warned": {
+            "type": "integer",
+            "title": "Warned",
+            "default": 0
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed",
+            "default": 0
+          },
+          "inconclusive": {
+            "type": "integer",
+            "title": "Inconclusive",
+            "default": 0
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "CalibrationSummary"
+      },
       "CompareResponse": {
         "properties": {
           "season": {
@@ -2327,6 +2468,16 @@
             "type": "array",
             "title": "Limitations",
             "default": []
+          },
+          "calibration": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CalibrationMeta"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "last_updated": {
             "anyOf": [
