@@ -18,8 +18,12 @@ function ComparePageInner() {
   useEffect(() => {
     const initA = params.get("a");
     const initB = params.get("b");
+    /* eslint-disable react-hooks/set-state-in-effect --
+     * URL search params are external navigation state and intentionally update
+     * the controlled selectors when the active URL changes. */
     if (initA) setA(Number(initA));
     if (initB) setB(Number(initB));
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [params]);
 
   const { data, isLoading, isError, error } = useCompare(a, b, role || undefined);

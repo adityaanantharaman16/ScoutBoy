@@ -59,9 +59,13 @@ export function ScoutingStateProvider({ children }: { children: React.ReactNode 
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect --
+     * Browser storage must hydrate after mount to keep the server and initial
+     * client render deterministic. */
     setMounted(true);
     setShortlistIds(readNumberList(SHORTLIST_KEY));
     setCompareQueue(readPlayerRefs(COMPARE_KEY));
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   useEffect(() => {
