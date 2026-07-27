@@ -3,6 +3,7 @@
 import { ErrorState, Loading, ScopeBanner, Section } from "@/components/common";
 import { CalibrationPanel } from "@/components/methodology/CalibrationPanel";
 import { useMethodology } from "@/lib/api/hooks";
+import { titleCase } from "@/lib/formatters";
 
 export default function MethodologyPage() {
   const { data, isLoading, isError, error } = useMethodology();
@@ -62,7 +63,7 @@ export default function MethodologyPage() {
               <div className="mt-2 flex flex-wrap gap-1">
                 {r.groups.map((g) => (
                   <span key={g.key} className="chip border-line bg-paper-muted text-[11px] text-ink-muted">
-                    {g.key.replace(/_/g, " ")} {Math.round(g.weight * 100)}%
+                    {titleCase(g.key)} {Math.round(g.weight * 100)}%
                   </span>
                 ))}
               </div>

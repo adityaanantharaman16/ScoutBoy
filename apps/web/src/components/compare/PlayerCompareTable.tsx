@@ -1,5 +1,5 @@
 import type { CompareResponse, CompareSide, CompareStatRow } from "@/lib/api/types";
-import { formatEurRange, formatScore, scoreColor } from "@/lib/formatters";
+import { formatEurRange, formatScore, marketLabelText, scoreColor } from "@/lib/formatters";
 
 function SideHead({ side }: { side: CompareSide }) {
   return (
@@ -78,7 +78,7 @@ export function PlayerCompareTable({ data }: { data: CompareResponse }) {
           <div key={i} className="card">
             <div className="label mb-1">{side.identity.canonical_name} — market</div>
             <div className="text-sm text-ink-muted">
-              {side.market?.label ?? "unknown"} ·{" "}
+              {marketLabelText(side.market?.label)} ·{" "}
               {formatEurRange(side.market?.expected_asking_low_eur, side.market?.expected_asking_high_eur)}
             </div>
             <div className="mt-2 flex flex-wrap gap-1">

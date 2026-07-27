@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { confidenceColor, confidenceLabel } from "@/lib/formatters";
+import { confidenceColor, confidenceLabel, confidenceText, scoreBarClass } from "@/lib/formatters";
 
 export function ScopeBanner({ text }: { text: string }) {
   return (
@@ -16,8 +16,12 @@ export function ScopeBanner({ text }: { text: string }) {
 
 export function ConfidenceBadge({ confidence }: { confidence: string | null | undefined }) {
   return (
-    <span className={`chip ${confidenceColor(confidence)}`} title={confidenceLabel(confidence)}>
-      {confidence ?? "unknown"}
+    <span
+      className={`chip ${confidenceColor(confidence)}`}
+      title={confidenceLabel(confidence)}
+      aria-label={confidenceLabel(confidence)}
+    >
+      {confidenceText(confidence)}
     </span>
   );
 }
@@ -53,15 +57,18 @@ export function DossierSection({
   eyebrow,
   children,
   action,
+  fill,
 }: {
   number: string;
   title: string;
   eyebrow?: string;
   children: React.ReactNode;
   action?: React.ReactNode;
+  /** When true, the section fills its container height so its card can stretch. */
+  fill?: boolean;
 }) {
   return (
-    <section className="mb-8">
+    <section className={`mb-8 ${fill ? "flex h-full flex-col" : ""}`}>
       <div className="section-rule mb-3 flex items-end justify-between gap-3 pb-2">
         <div>
           <div className="label mb-1">{number} / {eyebrow ?? "ScoutBoy dossier"}</div>
@@ -69,7 +76,7 @@ export function DossierSection({
         </div>
         {action}
       </div>
-      {children}
+      {fill ? <div className="flex flex-1 flex-col">{children}</div> : children}
     </section>
   );
 }
@@ -80,8 +87,8 @@ export function StatBar({ score }: { score: number | null | undefined }) {
   }
   const pct = Math.max(0, Math.min(100, score));
   return (
-    <div className="h-2 w-full overflow-hidden rounded-full bg-track">
-      <div className="h-full rounded-full bg-pitch" style={{ width: `${pct}%` }} />
+    <div className="h-2 w-full overflow-hidden bg-track">
+      <div className={`h-full ${scoreBarClass(score)}`} style={{ width: `${pct}%` }} />
     </div>
   );
 }

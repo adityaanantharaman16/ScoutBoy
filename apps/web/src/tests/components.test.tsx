@@ -79,7 +79,7 @@ describe("MarketValuePanel", () => {
     expect(screen.getByText("Public market value")).toBeInTheDocument();
     expect(screen.getByText("Model value range")).toBeInTheDocument();
     expect(screen.getByText("Expected asking price")).toBeInTheDocument();
-    expect(screen.getByText("inflated")).toBeInTheDocument();
+    expect(screen.getByText("Inflated")).toBeInTheDocument();
   });
 
   it("renders an honest fallback when market data is missing", () => {
@@ -157,11 +157,14 @@ describe("Discover cards", () => {
     );
   }
 
-  it("renders rated scores, confidence, and high-coverage evidence", () => {
+  it("renders rated scores, confidence, and high-coverage evidence with explicit labels", () => {
     renderResultCard(baseCard);
     expect(screen.getByText("81.2")).toBeInTheDocument();
-    expect(screen.getByText("High coverage")).toBeInTheDocument();
-    expect(screen.getByText("high")).toBeInTheDocument();
+    // coverage and RoleFit confidence are labelled distinctly, capitalized
+    expect(screen.getByTestId("card-evidence")).toHaveTextContent("Evidence:");
+    expect(screen.getByText("High Coverage")).toBeInTheDocument();
+    expect(screen.getByTestId("card-confidence")).toHaveTextContent("RoleFit confidence:");
+    expect(screen.getByText("High")).toBeInTheDocument();
   });
 
   it("renders profile-only players without fake scores or empty playstyles", () => {
@@ -178,11 +181,12 @@ describe("Discover cards", () => {
       top_playstyles: [],
       age: null,
     });
-    expect(screen.getAllByText("Profile only").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Profile Only").length).toBeGreaterThan(0);
     expect(screen.getByTestId("profile-only-card")).toBeInTheDocument();
     expect(screen.queryByText("0.0")).not.toBeInTheDocument();
     expect(screen.queryByText(/No qualifying playstyles/)).not.toBeInTheDocument();
-    expect(screen.getByText(/unknown/)).toBeInTheDocument();
+    // age is honestly "unknown" (missing), not fabricated
+    expect(screen.getByText(/unknown yrs/i)).toBeInTheDocument();
   });
 });
 
@@ -203,11 +207,17 @@ describe("CalibrationPanel", () => {
     import("@/lib/api/types").Methodology["calibration"]
   >;
 
-  it("renders the available calibration summary", () => {
+  it("renders the available calibration summary with capitalized chips", () => {
     render(<CalibrationPanel calibration={available} />);
     expect(screen.getByTestId("calibration-available")).toBeInTheDocument();
-    expect(screen.getByText(/benchmarks 9\/9 pass/)).toBeInTheDocument();
-    expect(screen.getByText(/guardrails 9\/9 pass/)).toBeInTheDocument();
+    // chips are Title-Cased; technical identifiers/versions preserved
+    expect(screen.getByText("Suite rolefit_calibration v1")).toBeInTheDocument();
+    expect(screen.getByText("Status: Pass")).toBeInTheDocument();
+    expect(screen.getByText(/Benchmarks 9\/9 Pass/)).toBeInTheDocument();
+    expect(screen.getByText(/Guardrails 9\/9 Pass/)).toBeInTheDocument();
+    // no lowercase raw chip labels remain
+    expect(screen.queryByText(/^status: pass$/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/benchmarks 9\/9 pass/)).not.toBeInTheDocument();
     expect(screen.getByText(/Real-pilot limitation/)).toBeInTheDocument();
   });
 
@@ -222,9 +232,11 @@ describe("CalibrationPanel", () => {
     } as unknown as NonNullable<import("@/lib/api/types").Methodology["calibration"]>;
     render(<CalibrationPanel calibration={unavailable} />);
     expect(screen.getByTestId("calibration-unavailable")).toBeInTheDocument();
-    expect(screen.getByText(/evidence unavailable/)).toBeInTheDocument();
-    expect(screen.getByText(/inconclusive/)).toBeInTheDocument();
-    expect(screen.queryByText(/9\/9 pass/)).not.toBeInTheDocument();
+    expect(screen.getByText("Evidence Unavailable")).toBeInTheDocument();
+    expect(screen.getByText("Status: Inconclusive")).toBeInTheDocument();
+    // no lowercase raw chip labels, no fabricated totals
+    expect(screen.queryByText(/evidence unavailable/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/9\/9/)).not.toBeInTheDocument();
     expect(screen.getByText(/Real-pilot limitation/)).toBeInTheDocument();
   });
 

@@ -33,6 +33,26 @@ test("main scouting flow", async ({ page }) => {
   await expect(page.getByTestId("role-ratings")).toBeVisible();
   await expect(page.getByTestId("market-panel")).toBeVisible();
 
+  // 2b) Recruitment Desk: best role active, role switch updates score + territory
+  const selector = page.getByTestId("role-selector");
+  await expect(selector).toBeVisible();
+  const tabs = selector.getByRole("tab");
+  await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByTestId("territory-disclosure")).toContainText(
+    "Not tracking or event-location data.",
+  );
+  // no unsupported tracking-data claim anywhere on the page
+  await expect(page.locator("body")).not.toContainText(/heatmap|gps|tracked position/i);
+
+  const summaryBefore = await page.getByTestId("selected-role-summary").textContent();
+  await tabs.nth(1).click();
+  await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
+  const summaryAfter = await page.getByTestId("selected-role-summary").textContent();
+  expect(summaryAfter).not.toEqual(summaryBefore);
+  // the territory + its supporting evidence updated with the role
+  await expect(page.getByTestId("role-territory")).toBeVisible();
+  await expect(page.getByTestId("role-evidence-list")).toBeVisible();
+
   // 3) View the rating explanation (audit)
   const audit = page.getByTestId("audit-accordion");
   await expect(audit).toBeVisible();

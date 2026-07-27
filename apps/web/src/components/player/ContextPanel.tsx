@@ -27,7 +27,7 @@ export function ContextPanel({ context }: { context: ContextPanelType | null | u
       ? "Selective"
       : `${Math.round(context.competition_coverage_pct * 100)}%`;
   return (
-    <div className="card space-y-3" data-testid="context-panel">
+    <div className="card h-full space-y-3" data-testid="context-panel">
       <div className="space-y-1.5">
         <Value label="Source" value={context.data_source} />
         <Value label="Data type" value={context.data_type} />

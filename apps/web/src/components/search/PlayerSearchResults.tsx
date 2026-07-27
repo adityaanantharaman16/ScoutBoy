@@ -7,16 +7,10 @@ import { PlayerActionRow } from "@/components/common/PlayerActions";
 import type { SearchFilters } from "@/lib/api/hooks";
 import { usePlayerSearch } from "@/lib/api/hooks";
 import type { PlayerSearchCard } from "@/lib/api/types";
-import { formatAge, formatEurRange, formatScore, marketLabelColor, scoreColor } from "@/lib/formatters";
-
-const EVIDENCE_LABELS: Record<string, string> = {
-  high_coverage: "High coverage",
-  analyzed_limited: "Analyzed, limited coverage",
-  profile_only: "Profile only",
-};
+import { evidenceStatusText, formatAge, formatScore, marketLabelColor, marketLabelText, scoreColor } from "@/lib/formatters";
+import { marketRangeText } from "@/lib/market/marketChart";
 
 export function ResultCard({ p }: { p: PlayerSearchCard }) {
-  const evidenceLabel = EVIDENCE_LABELS[p.evidence_status] ?? p.evidence_status;
   return (
     <article className="card grid gap-3 transition hover:border-line-strong lg:grid-cols-[1.25fr_0.7fr_0.9fr_auto] lg:items-center">
       <Link href={`/players/${p.id}`} data-testid="player-result" className="block no-underline hover:underline">
@@ -40,18 +34,31 @@ export function ResultCard({ p }: { p: PlayerSearchCard }) {
           </div>
         ) : (
           <div className="mt-1 inline-flex border border-line-strong px-2 py-1 text-xs font-semibold text-ink-muted" style={{ borderRadius: 4 }}>
-            Profile only
+            Profile Only
           </div>
         )}
       </div>
 
       <div>
-        <div className="flex flex-wrap gap-1">
-          <span className="chip border-line-strong bg-paper-muted text-ink-muted">{evidenceLabel}</span>
-          {p.has_rolefit_analysis && <ConfidenceBadge confidence={p.confidence} />}
+        {/* Coverage and RoleFit confidence are distinct concepts — label each. */}
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-ink-muted">
+          <span className="inline-flex items-center gap-1.5" data-testid="card-evidence">
+            Evidence:
+            <span className="chip border-line-strong bg-paper-muted text-ink-muted">
+              {evidenceStatusText(p.evidence_status)}
+            </span>
+          </span>
+          {p.has_rolefit_analysis && (
+            <span className="inline-flex items-center gap-1.5" data-testid="card-confidence">
+              RoleFit confidence:
+              <ConfidenceBadge confidence={p.confidence} />
+            </span>
+          )}
+        </div>
+        <div className="mt-1.5 flex flex-wrap gap-1">
           <span className={`chip ${marketLabelColor(p.market_label)}`}>
-            {p.market_label ?? "unknown"} ·{" "}
-            {formatEurRange(p.expected_asking_low_eur, p.expected_asking_high_eur)}
+            {marketLabelText(p.market_label)} ·{" "}
+            {marketRangeText(p.expected_asking_low_eur, p.expected_asking_high_eur)}
           </span>
         </div>
         {p.top_playstyles.length > 0 ? (

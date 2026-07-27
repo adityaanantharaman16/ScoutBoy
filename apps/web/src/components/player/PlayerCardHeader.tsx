@@ -1,7 +1,7 @@
 import { ConfidenceBadge } from "@/components/common";
 import { PlayerActionRow } from "@/components/common/PlayerActions";
 import type { PlayerCard } from "@/lib/api/types";
-import { formatAge, formatScore, scoreColor } from "@/lib/formatters";
+import { evidenceStatusText, formatAge, formatScore, scoreColor } from "@/lib/formatters";
 
 export function PlayerCardHeader({ card }: { card: PlayerCard }) {
   const best = card.role_ratings.find((r) => r.is_best);
@@ -41,7 +41,7 @@ export function PlayerCardHeader({ card }: { card: PlayerCard }) {
         </div>
         <div className="bg-paper-panel px-4 py-3">
           <dt className="label">Evidence</dt>
-          <dd className="mt-1 text-sm font-semibold text-ink">{card.evidence_status.replaceAll("_", " ")}</dd>
+          <dd className="mt-1 text-sm font-semibold text-ink">{evidenceStatusText(card.evidence_status)}</dd>
         </div>
         <div className="bg-paper-panel px-4 py-3">
           <dt className="label">Confidence</dt>
@@ -49,7 +49,7 @@ export function PlayerCardHeader({ card }: { card: PlayerCard }) {
             {card.has_rolefit_analysis ? (
               <ConfidenceBadge confidence={card.confidence} />
             ) : (
-              <span className="chip border-line-strong bg-paper-muted text-ink-muted">profile only</span>
+              <span className="chip border-line-strong bg-paper-muted text-ink-muted">Profile Only</span>
             )}
           </dd>
         </div>

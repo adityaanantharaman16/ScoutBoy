@@ -19,6 +19,17 @@
   --rust: #8d3f24;
   --red: #9c2e22;
   --track: #e4dfce;
+  /* 80–89 score green — chromatic emerald between the 70s green and the 90+ blue. */
+  --pitch-mid: #0f7a5f;
+  /* Elite (90+) score accent — canonical blue + darker companion for small text. */
+  --elite: #2e74e6;
+  --elite-ink: #1f57b0;
+  /* Illustrative pitch field + markings (presentation only). */
+  --pitch-field: #285a3f;
+  --pitch-field-alt: #2d6446;
+  --pitch-line: rgba(244, 242, 234, 0.72);
+  /* The single sanctioned elevation in the app, reserved for Role Territory. */
+  --elevation-territory: 0 1px 2px rgba(24, 34, 25, 0.06), 0 10px 24px -14px rgba(24, 34, 25, 0.35);
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
@@ -180,6 +191,49 @@ a {
 
 .data-table tbody tr:last-child td {
   border-bottom: 0;
+}
+
+/* Recruitment Desk analysis grid. Mobile: a simple stacked flow. Desktop: a
+   three-column layout where the evidence rail (railtop) bottom-aligns with the
+   pitch, the trait list spans both rows, and "Why This Score" fills the space
+   beneath the rail + pitch down to the trait list's bottom. */
+.desk-analysis {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .desk-analysis {
+    display: grid;
+    grid-template-columns: minmax(300px, 340px) minmax(220px, 320px) minmax(0, 1fr);
+    grid-template-areas:
+      "railtop pitch traits"
+      "why     why   traits";
+    gap: 1.5rem;
+    align-items: stretch;
+  }
+  .desk-railtop {
+    grid-area: railtop;
+  }
+  .desk-pitch {
+    grid-area: pitch;
+  }
+  .desk-traits {
+    grid-area: traits;
+  }
+  .desk-why {
+    grid-area: why;
+  }
+}
+
+/* Role Territory is the ONE elevated surface in ScoutBoy. Everything else keeps
+   the flat, hairline-bordered treatment. */
+.territory-surface {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--elevation-territory);
 }
 
 .skip-link {

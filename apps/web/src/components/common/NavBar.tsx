@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 import { useScoutingState } from "@/lib/state/scouting-state";
 
@@ -16,6 +17,7 @@ const LINKS = [
 export function NavBar() {
   const pathname = usePathname();
   const { shortlistIds } = useScoutingState();
+  const [open, setOpen] = useState(false);
 
   return (
     <header className="border-b border-line bg-paper-panel">
@@ -23,7 +25,23 @@ export function NavBar() {
         <Link href="/" className="font-serif text-xl font-bold tracking-tight text-ink no-underline">
           ScoutBoy <span className="ml-1 font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">Recruitment</span>
         </Link>
-        <div className="flex flex-wrap gap-1 text-sm">
+        {/* Mobile-only menu toggle. Desktop keeps the links always visible. */}
+        <button
+          type="button"
+          className="btn ml-auto px-2.5 py-1.5 text-xs md:hidden"
+          aria-expanded={open}
+          aria-controls="primary-nav-links"
+          aria-label={open ? "Close navigation menu" : "Open navigation menu"}
+          data-testid="nav-menu-toggle"
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span aria-hidden="true">{open ? "✕" : "☰"}</span>
+          <span>Menu</span>
+        </button>
+        <div
+          id="primary-nav-links"
+          className={`${open ? "flex" : "hidden"} order-last w-full flex-wrap gap-1 text-sm md:order-none md:flex md:w-auto`}
+        >
           {LINKS.map((l) => {
             const active =
               l.href === "/"
@@ -38,13 +56,14 @@ export function NavBar() {
                 }`}
                 data-testid={`nav-${l.label.toLowerCase()}`}
                 aria-current={active ? "page" : undefined}
+                onClick={() => setOpen(false)}
               >
                 {l.label}
               </Link>
             );
           })}
         </div>
-        <div className="ml-auto border border-line bg-paper px-3 py-1 text-xs font-semibold text-ink-muted" style={{ borderRadius: 999 }}>
+        <div className="ml-auto border border-line bg-paper px-3 py-1 text-xs font-semibold text-ink-muted md:ml-auto" style={{ borderRadius: 999 }}>
           Shortlist <span className="font-mono text-pitch-dark">{shortlistIds.length}</span> · saved on this device
         </div>
       </nav>

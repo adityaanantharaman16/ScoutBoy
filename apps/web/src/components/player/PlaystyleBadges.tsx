@@ -1,5 +1,5 @@
 import type { PlaystyleBadge } from "@/lib/api/types";
-import { tierBadge, whyText } from "@/lib/formatters";
+import { tierBadge, tierText, whyText } from "@/lib/formatters";
 
 export function PlaystyleBadges({
   playstyles,
@@ -23,7 +23,7 @@ export function PlaystyleBadges({
               title={whyText(b)}
             >
               {b.display_name}
-              {b.tier && b.tier !== "base" ? ` · ${b.tier}` : ""}
+              {tierText(b.tier) ? ` · ${tierText(b.tier)}` : ""}
             </span>
           ))}
         </div>

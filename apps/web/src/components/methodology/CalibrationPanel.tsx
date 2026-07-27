@@ -1,4 +1,5 @@
 import type { Methodology } from "@/lib/api/types";
+import { titleCase } from "@/lib/formatters";
 
 type Calibration = Methodology["calibration"];
 
@@ -13,10 +14,10 @@ export function CalibrationPanel({ calibration }: { calibration: Calibration }) 
       <div className="card" data-testid="calibration-unavailable">
         <div className="flex flex-wrap items-center gap-2">
           <span className="chip border-line bg-paper-muted text-[11px] text-ink-muted">
-            status: inconclusive
+            Status: Inconclusive
           </span>
           <span className="chip border-line bg-paper-muted text-[11px] text-ink-muted">
-            evidence unavailable
+            Evidence Unavailable
           </span>
         </div>
         <p className="mt-2 text-sm text-ink-muted">
@@ -36,16 +37,16 @@ export function CalibrationPanel({ calibration }: { calibration: Calibration }) 
     <div className="card" data-testid="calibration-available">
       <div className="flex flex-wrap items-center gap-2">
         <span className="chip border-pitch bg-[#e9f0ea] text-pitch-dark">
-          suite {calibration.suite_id} {calibration.suite_version}
+          Suite {calibration.suite_id} {calibration.suite_version}
         </span>
         <span className="chip border-line bg-paper-muted text-[11px] text-ink-muted">
-          status: {calibration.status}
+          Status: {titleCase(calibration.status)}
         </span>
         <span className="chip border-line bg-paper-muted text-[11px] text-ink-muted">
-          benchmarks {calibration.benchmarks.passed}/{calibration.benchmarks.total} pass
+          Benchmarks {calibration.benchmarks.passed}/{calibration.benchmarks.total} Pass
         </span>
         <span className="chip border-line bg-paper-muted text-[11px] text-ink-muted">
-          guardrails {calibration.scenarios.passed}/{calibration.scenarios.total} pass
+          Guardrails {calibration.scenarios.passed}/{calibration.scenarios.total} Pass
         </span>
       </div>
       <p className="mt-2 text-sm text-ink-muted">{calibration.methodology_note}</p>

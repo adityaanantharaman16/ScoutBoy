@@ -7,7 +7,7 @@ import type {
   AuditMetricBreakdownView,
   AuditPenaltiesView,
 } from "@/lib/api/types";
-import { scoreColor } from "@/lib/formatters";
+import { scoreColor, titleCase } from "@/lib/formatters";
 
 export function AuditAccordion({ audits }: { audits: AuditBreakdown[] }) {
   const [open, setOpen] = useState<string | null>(null);
@@ -26,8 +26,8 @@ export function AuditAccordion({ audits }: { audits: AuditBreakdown[] }) {
               onClick={() => setOpen(isOpen ? null : a.role_key)}
               aria-expanded={isOpen}
             >
-              <span className="font-semibold text-ink">{a.role_key.replace(/_/g, " ")}</span>
-              <span className="text-xs font-semibold text-pitch-dark">{isOpen ? "hide" : "why this score"}</span>
+              <span className="font-semibold text-ink">{titleCase(a.role_key)}</span>
+              <span className="text-xs font-semibold text-pitch-dark">{isOpen ? "Hide" : "Why This Score"}</span>
             </button>
             {isOpen && (
               <div className="mt-3 space-y-3">
@@ -38,7 +38,7 @@ export function AuditAccordion({ audits }: { audits: AuditBreakdown[] }) {
                     {groups.map((g) => (
                       <div key={g.key} className="flex items-center justify-between text-sm">
                         <span className="text-ink-muted">
-                          {g.key.replace(/_/g, " ")}{" "}
+                          {titleCase(g.key)}{" "}
                           <span className="text-ink-soft">({Math.round(g.weight * 100)}%)</span>
                         </span>
                         <span className={`font-medium ${scoreColor(g.group_score)}`}>
