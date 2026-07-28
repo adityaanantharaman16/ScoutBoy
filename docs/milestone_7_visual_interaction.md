@@ -1,10 +1,14 @@
 # Milestone 7 — Visual & Interaction Design (Recruitment Desk)
 
-**Status: Cadence 2 vertical slice — NOT the completion of Milestone 7.**
-This cadence implements the approved visual direction on the **player dossier only**
-(`apps/web/src/app/players/[playerId]/page.tsx`). Discovery, leaderboards, compare,
-shortlist, and methodology are intentionally unchanged and remain out of scope until a
-later cadence.
+**Status: Cadence 2 (dossier) complete; Cadence 3 (Cross-Surface Extension) implemented
+and self-verified — still NOT the completion of Milestone 7.**
+Cadence 2 implemented the approved visual direction on the **player dossier**
+(`apps/web/src/app/players/[playerId]/page.tsx`). Cadence 3 (documented in
+[Cross-Surface Extension](#cross-surface-extension-cadence-3) below) extends the same
+visual and information grammar across discovery, the role leaderboard, comparison, the
+shortlist, methodology, navigation, and the shared loading/empty/missing/error states.
+The dedicated motion pass and a comprehensive accessibility/visual-regression audit
+remain out of scope, so Milestone 7 is not yet fully complete.
 
 ## Approved thesis
 
@@ -167,11 +171,13 @@ Playwright API-route interception that lightly edits the real response shapes.
 
 ## Current exclusions / deferred (Cadence 3+)
 
-- Applying the desk language and confidence primitive to discovery, leaderboards, compare,
-  shortlist, and methodology.
+- ~~Applying the desk language and confidence primitive to discovery, leaderboards, compare,
+  shortlist, and methodology.~~ **Done in Cadence 3 — see
+  [Cross-Surface Extension](#cross-surface-extension-cadence-3).**
 - Deciding whether the public demo cohort should include deliberately varied synthetic
   profiles so these honesty states are demonstrable without mocking.
 - Any lateral (left/right) territory nuance, richer motion, or territory tuning.
+- The dedicated motion pass and a comprehensive WCAG / cross-platform visual-regression audit.
 
 ## Phase 2 corrections
 
@@ -273,11 +279,143 @@ pass. Unit tests cover every score-band boundary and the market chart's axis/gap
   + `h-full` cards). Market Value is elongated with a taller, thicker box-plot and an inline
   "Why This Valuation" (no dropdown), with the disclaimer anchored to the card's bottom.
 
+## Cross-Surface Extension (Cadence 3)
+
+**Status: implemented and self-verified; NOT the completion of Milestone 7.** This cadence
+extends the approved visual and information grammar from the dossier across discovery, the
+role leaderboard, comparison, the shortlist, methodology, navigation, and the shared
+loading/empty/missing/error states. It is the **static** cross-surface hierarchy and
+responsive extension — the dedicated motion pass and a comprehensive WCAG /
+visual-regression audit remain out of scope (see remaining work below).
+
+The dossier and Role Territory are unchanged; **Role Territory remains the only elevated
+surface** (every new component is flat + hairline). No backend, schema, YAML, calibration,
+or sample-data changes were made.
+
+### Shared presentation layer
+
+A few narrow, semantic primitives (in `components/common/index.tsx`) — deliberately **not**
+one universal card, so surfaces stay unified in treatment while remaining structurally
+distinct:
+
+- `PageHeader` — the shared page introduction (eyebrow + serif title + lead + a
+  dot-separated metadata line + an optional right-aligned control).
+- `ScoreReadout` — band-coloured score magnitude via the centralized `scoreBand`; renders
+  the `—` sentinel for missing, never zero.
+- `ConfidenceReadout` — RoleFit confidence in its own monochrome `ConfidenceMeter` channel
+  with an explicit "RoleFit confidence" label.
+- `EvidenceTag` — the evidence-coverage label (`evidenceStatusText`), a channel distinct
+  from confidence.
+- `MarketReadout` — an honest market label chip + expected-asking range that preserves
+  partial ranges (`From €X` / `Up to €Y`) and never renders €0.
+- `LedgerSkeleton` — a structural loading placeholder that preserves layout with neutral
+  bars (no fabricated values) inside a polite `role="status"` live region.
+- Status semantics: `Loading` / `LedgerSkeleton` / `EmptyState` are `role="status"`;
+  `ErrorState` and a critical `Notice` are `role="alert"`.
+
+Evidence rules preserved on every surface: score magnitude, RoleFit confidence, evidence
+coverage, and market uncertainty stay **separate channels**; missing data is neutral and
+explicitly labelled, never zero or weak performance; confidence never uses the score
+palette; every state communicates through text/symbol as well as colour.
+
+### Per-surface job & structure
+
+- **Discovery — filter rail + results ledger.** A subordinate hairline filter rail (query
+  field leading; dimensionally-stable scope/age controls) beside a compact scouting ledger
+  on desktop; stacked above the ledger on tablet/mobile. Rows follow the fixed reading
+  order: identity → best RoleFit role/score → evidence coverage → RoleFit confidence →
+  market → playstyles → actions. Profile-only rows never receive a fabricated
+  score/confidence or empty analytical badges. URL-synced filters unchanged.
+- **Leaderboard — role masthead + ranked ledger.** A restrained masthead (role selector +
+  cohort context from the previously-underused `display_name`, `description`,
+  `position_group`, `season`, `total`, `rating_version`) over a genuine desktop ranking
+  table — rank, identity, score, explicit **"RoleFit Confidence"** via `ConfidenceMeter`,
+  playstyles, expected asking, actions — that becomes a linear ranked ledger on mobile.
+  Evidence coverage is deliberately **not** shown here: the ranking-row contract does not
+  provide it.
+- **Compare — two-sided balance sheet.** A full-width role spine over two equal player
+  columns divided by a central rule; each side's stored RoleFit score + role-level
+  confidence, with an explicit "Not rated in this role" state when a side lacks the
+  selected role; `why_higher` as the main editorial conclusion; confidence warnings as
+  labelled caution notices (not bare amber text); parallel market/playstyles; a compact,
+  parallel **evidence-context summary** per side; and the stored normalized metrics
+  re-presented as an aligned three-column ledger (mobile: label + both values) with
+  `Unknown` for null scores. The default role option is the honest **"Automatic role"**
+  (renamed from "Best shared"); its helper text now states the real backend fallback —
+  *the explicitly requested role, else Player A's `best_role`, else Player B's* — so an
+  automatic selection may honestly leave one side "Not rated in this role" without
+  contradictory copy (it is **not** a "most comparable" or shared-role search). The
+  evidence-context summary reports only fields each side's `CompareSide.context` actually
+  supplies (minutes, appearances/starts, matches/competition coverage, sample confidence,
+  coverage/overall-evidence confidence, data source/type, translation risk/limitations);
+  nothing is recomputed, combined, or graded, a genuine numeric zero is preserved, missing
+  fields are omitted, long source/limitation/translation-risk text wraps, and an absent
+  context object shows an explicit "Evidence context unavailable" fallback (flat + hairline,
+  no new elevated surface). No RoleFit is recomputed and no metric categories are invented.
+- **Shortlist — saved-decision ledger.** A distinct flat **card grid** (not a ranking
+  table) of retained decisions: resolved count + "saved on this device" disclosure, best
+  stored score/role when available, RoleFit confidence, evidence status, expected asking, a
+  few playstyles, and compare/remove actions. Profile-only and missing market stay
+  explicit; stale saved ids keep their removal path; the empty state links back to
+  discovery. Browser-backed order preserved.
+- **Methodology — verification document.** A static **"Verify"** contents index beside the
+  document on desktop (anchor links, no accordion/animation), stacked on mobile. Distinct
+  areas for the formula + version ledger (formula contained in an internally-scrolling
+  block), calibration + evidence (textual, non-colour-dependent pass/warn/fail/inconclusive;
+  synthetic-fixture + real-pilot limitations kept prominent), context adjustments, a **flat
+  role registry grouped by position family** (descriptions + stored group weights kept),
+  playstyles/concerns, data sources, and limitations. `last_updated` is shown with an honest
+  fallback. Technical identifiers/hashes/versions are untouched, and sources/limitations are
+  never hidden behind a disclosure.
+- **Navigation & global states.** IA and destinations preserved; the inline links switch to
+  the existing hamburger at `lg` so labels + the shortlist counter never wrap awkwardly;
+  active/hover/pressed/focus/disabled stay distinguishable without dimension changes (a
+  colour-only `.btn:active` was added). Every surface keeps its identity while its data
+  loads or fails — the header/filters/selector stay put and only the data pane swaps
+  (methodology no longer blanks the whole page on load/error).
+
+### Responsive behaviour
+
+Desktop uses side-by-side structures (discovery rail + ledger, methodology contents + doc,
+compare spine, leaderboard table); tablet/mobile stack. Verified with **no page-level
+horizontal overflow at 1440, 1024, 390, and 320**; the one piece of intentional local
+scrolling (the methodology formula) is contained within its own block.
+
+### Test coverage added
+
+- **Component (Vitest, `cross-surface.test.tsx`, `leaderboard.test.tsx`, extended
+  `methodology.test.tsx`):** discovery rows (low-confidence, missing/partial market, empty
+  playstyles) + results-pane loading/empty/error; leaderboard masthead metadata, the
+  "RoleFit Confidence" label, missing asking range, empty rows, loading identity; compare
+  shared role, missing selected-role rating, confidence-warning notices, null metric scores,
+  missing market, long names; shortlist empty/resolved/profile-only/missing-market/stale
+  ids; methodology calibration available + inconclusive, the flat role registry, contained
+  formula, sources/limitations visibility, `last_updated` fallback; and the shared
+  readout/status primitives' semantics + honest copy. (Web unit suite: 87 tests.)
+- **E2E (Playwright, `cross-surface.spec.ts`):** the main scouting flow is preserved; new
+  coverage of discovery filter/result behaviour, desktop-table + mobile-ledger leaderboard,
+  the populated balance sheet and an **intercepted** missing-role comparison, the shortlist
+  add/revisit/remove flow, the methodology calibration disclosure, mobile navigation,
+  visible keyboard focus, and 320/390 page-overflow assertions. Rare honesty states use
+  API-response interception; the production sample data was not changed. (E2E suite: 25
+  tests.)
+
+### Remaining (deferred) work
+
+- The dedicated **motion pass** (intentional entrances/emphasis, reduced-motion tuning).
+- A comprehensive **WCAG audit** and any resilience hardening beyond this baseline.
+- Final cross-platform **visual-regression** coverage (kept out of CI as brittle snapshots).
+- Whether the public demo cohort should include deliberately varied synthetic profiles so
+  the honesty states are demonstrable without mocking (open since Cadence 2).
+
 ## Known limitations
 
 - The territory is illustrative and coarse (thirds + box) with no lateral placement; it is
   not, and must never be presented as, positional/tracking data.
 - Because the sample dataset contains only analyzed, high-coverage, mostly high-confidence
-  players, the honesty states are currently only visible via tests/mocks in this cadence.
-- This is a vertical-slice correction on the player dossier; it is not the completion of all
-  Milestone 7 surfaces.
+  players, several honesty states (profile-only, low/unknown confidence, missing/partial
+  market, missing shared role) are currently only visible via component fixtures and
+  Playwright response-interception across every surface — not in the live demo cohort.
+- Cadence 3 delivers the **static** cross-surface hierarchy and responsive extension. The
+  dedicated motion pass and a comprehensive accessibility/visual-regression audit are still
+  outstanding, so this is **not** the completion of Milestone 7.

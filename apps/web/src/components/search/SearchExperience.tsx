@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { ScopeBanner } from "@/components/common";
+import { PageHeader, ScopeBanner } from "@/components/common";
 import { AGE_BANDS, SCOPE_BANNER, SEARCH_SCOPES } from "@/lib/constants";
 import type { SearchFilters } from "@/lib/api/hooks";
 
@@ -70,23 +70,26 @@ export function SearchExperience() {
   return (
     <div>
       <ScopeBanner text={SCOPE_BANNER} />
-      <div className="mb-5 max-w-3xl">
-        <p className="label mb-1">Player discovery</p>
-        <h1 className="font-serif text-4xl font-bold leading-tight text-ink">Discover players</h1>
-        <p className="mt-2 text-sm text-ink-muted">
-          Explore player profiles across the available dataset, with detailed RoleFit analysis
-          shown only where evidence supports it.
-        </p>
-      </div>
-      <div className="mb-4">
-        <PlayerSearchFilters filters={filters} onChange={setFilters} />
-      </div>
-      <PlayerSearchResults
-        filters={filters}
-        selectedScope={selectedScope.label}
-        selectedAgeBand={selectedAge.label}
-        onPage={(page) => setFilters({ ...filters, page })}
+      <PageHeader
+        eyebrow="Player discovery"
+        title="Discover players"
+        lead="Scan the available player pool and narrow it down. Detailed RoleFit analysis is shown only where evidence supports it."
       />
+      {/* Filter rail (subordinate) beside the results ledger on desktop; stacked
+          above the ledger on tablet/mobile. */}
+      <div className="grid gap-5 lg:grid-cols-[minmax(240px,280px)_minmax(0,1fr)] lg:items-start">
+        <aside className="lg:sticky lg:top-4" aria-label="Discovery filters">
+          <PlayerSearchFilters filters={filters} onChange={setFilters} />
+        </aside>
+        <section aria-label="Results" className="min-w-0">
+          <PlayerSearchResults
+            filters={filters}
+            selectedScope={selectedScope.label}
+            selectedAgeBand={selectedAge.label}
+            onPage={(page) => setFilters({ ...filters, page })}
+          />
+        </section>
+      </div>
     </div>
   );
 }

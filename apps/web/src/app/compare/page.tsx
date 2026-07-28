@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
-import { EmptyState, ErrorState, Loading, ScopeBanner } from "@/components/common";
+import { EmptyState, ErrorState, Loading, PageHeader, ScopeBanner } from "@/components/common";
 import { PlayerCompareTable } from "@/components/compare/PlayerCompareTable";
 import { ROLES, SCOPE_BANNER } from "@/lib/constants";
 import { useAllPlayersLite, useCompare } from "@/lib/api/hooks";
@@ -33,14 +33,11 @@ function ComparePageInner() {
   return (
     <div>
       <ScopeBanner text={SCOPE_BANNER} />
-      <div className="mb-5 max-w-3xl">
-        <p className="label mb-1">Analytical decision surface</p>
-        <h1 className="font-serif text-4xl font-bold leading-tight text-ink">Compare players</h1>
-        <p className="mt-2 text-sm text-ink-muted">
-          Select two players and an optional role. The comparison below is rendered from the real
-          ScoutBoy compare API and preserves confidence warnings where shared-role evidence is thin.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Analytical decision surface"
+        title="Compare players"
+        lead="Select two players and a role to weigh them side by side. The conclusion, per-side confidence, and any confidence warnings come straight from the ScoutBoy compare API — nothing is recomputed here."
+      />
 
       <div className="card mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <label className="flex flex-col gap-1">
@@ -78,17 +75,21 @@ function ComparePageInner() {
         <label className="flex flex-col gap-1">
           <span className="label">Role</span>
           <select
+            data-testid="compare-role-select"
             className="input"
             value={role}
             onChange={(e) => setRole(e.target.value)}
           >
-            <option value="">Best shared</option>
+            <option value="">Automatic role</option>
             {ROLES.map((r) => (
               <option key={r.key} value={r.key}>
                 {r.label}
               </option>
             ))}
           </select>
+          <span className="text-[11px] text-ink-soft">
+            Uses Player A’s best-rated role, falling back to Player B’s.
+          </span>
         </label>
       </div>
 

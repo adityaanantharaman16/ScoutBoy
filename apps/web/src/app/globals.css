@@ -147,6 +147,16 @@ a {
   background: var(--panel-muted);
 }
 
+/* Distinct pressed feedback (colour only — never a size/inset change that would
+   shift layout). */
+.btn:active {
+  background: var(--track);
+}
+
+.btn-primary:active {
+  background: var(--pitch-dark);
+}
+
 .btn-primary {
   background: var(--pitch);
   border-color: var(--pitch);

@@ -1,119 +1,237 @@
 "use client";
 
-import { ErrorState, Loading, ScopeBanner, Section } from "@/components/common";
+import { ErrorState, LedgerSkeleton, PageHeader, ScopeBanner } from "@/components/common";
 import { CalibrationPanel } from "@/components/methodology/CalibrationPanel";
 import { useMethodology } from "@/lib/api/hooks";
+import type { Methodology } from "@/lib/api/types";
 import { titleCase } from "@/lib/formatters";
+
+const SECTIONS = [
+  { id: "formula", title: "Formula & versions" },
+  { id: "calibration", title: "Calibration & evidence" },
+  { id: "context", title: "Context adjustments" },
+  { id: "roles", title: "Role registry" },
+  { id: "playstyles", title: "Playstyles & concerns" },
+  { id: "sources", title: "Data sources" },
+  { id: "limitations", title: "Limitations" },
+];
+
+const FAMILIES = [
+  { key: "ATT", label: "Attackers" },
+  { key: "MID", label: "Midfielders" },
+  { key: "DEF", label: "Defenders" },
+  { key: "GK", label: "Goalkeepers" },
+];
+
+function DocSection({
+  id,
+  eyebrow,
+  title,
+  children,
+}: {
+  id: string;
+  eyebrow: string;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section id={id} className="scroll-mt-20">
+      <div className="section-rule mb-3 pb-2">
+        <div className="label mb-1">{eyebrow}</div>
+        <h2 className="font-serif text-2xl font-bold leading-tight text-ink">{title}</h2>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** Flat, scannable role registry grouped by position family (replaces the
+ *  repetitive role-card grid). Descriptions and stored group weights are kept. */
+function RoleRegistry({ roles }: { roles: Methodology["roles"] }) {
+  const seen = new Set<string>();
+  const families = FAMILIES.map((fam) => ({
+    ...fam,
+    roles: roles.filter((r) => r.position_group === fam.key),
+  })).filter((f) => f.roles.length > 0);
+  families.forEach((f) => f.roles.forEach((r) => seen.add(r.role_key)));
+  const others = roles.filter((r) => !seen.has(r.role_key));
+  const groups = [...families, ...(others.length ? [{ key: "OTHER", label: "Other", roles: others }] : [])];
+
+  return (
+    <div className="space-y-5">
+      {groups.map((fam) => (
+        <div key={fam.key}>
+          <div className="label mb-2">
+            {fam.label} · {fam.roles.length}
+          </div>
+          <div
+            className="divide-y divide-line overflow-hidden border border-line bg-paper-panel"
+            style={{ borderRadius: 6 }}
+          >
+            {fam.roles.map((r) => (
+              <div key={r.role_key} className="px-3.5 py-3" data-testid={`role-registry-${r.role_key}`}>
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="font-serif text-lg font-bold text-ink">{r.display_name}</span>
+                  <span className="shrink-0 text-[11px] text-ink-soft">{r.position_group}</span>
+                </div>
+                {r.description && <p className="mt-0.5 text-xs text-ink-muted">{r.description}</p>}
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {r.groups.map((g) => (
+                    <span
+                      key={g.key}
+                      className="chip border-line bg-paper-muted text-[11px] text-ink-muted"
+                    >
+                      {titleCase(g.key)} {Math.round(g.weight * 100)}%
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function MethodologyPage() {
   const { data, isLoading, isError, error } = useMethodology();
-  if (isLoading) return <Loading />;
-  if (isError || !data) return <ErrorState message={(error as Error)?.message ?? "Failed to load"} />;
 
   return (
     <div>
-      <ScopeBanner text={data.scope} />
-      <div className="mb-5 max-w-3xl">
-        <p className="label mb-1">Technical note</p>
-        <h1 className="font-serif text-4xl font-bold leading-tight text-ink">Methodology</h1>
-        <p className="mt-2 text-sm text-ink-muted">
-          How ScoutBoy scores RoleFit, labels playstyles, models market ranges, and communicates
-          limitations.
-        </p>
-      </div>
+      <ScopeBanner text={data?.scope ?? "Prototype scope — see limitations below."} />
+      <PageHeader
+        eyebrow="Technical note"
+        title="Methodology"
+        lead="How ScoutBoy scores RoleFit, labels playstyles, models market ranges, and — just as important — where it is uncertain or unproven."
+        meta={data ? (data.last_updated ? `Last updated ${data.last_updated}` : "Last updated: not provided") : undefined}
+      />
 
-      <Section title="RoleFit rating" eyebrow="Formula and versions">
-        <div className="card">
-          <p className="text-sm text-ink-muted">
-            Each role is scored from peer-group percentiles of weighted metric groups, then adjusted
-            for context and confidence. The formula:
-          </p>
-          <pre className="mt-2 overflow-x-auto border border-line bg-paper-muted p-3 font-mono text-xs text-pitch-dark" style={{ borderRadius: 5 }}>
-            {data.formula}
-          </pre>
-          <p className="mt-2 text-xs text-ink-soft">
-            Versions — rating: {data.rating_version}, playstyles: {data.playstyle_version}, market:{" "}
-            {data.market_version}
-          </p>
-        </div>
-      </Section>
+      {isLoading && <LedgerSkeleton rows={7} label="Loading methodology…" />}
+      {isError && <ErrorState message={(error as Error)?.message ?? "Failed to load methodology."} />}
 
-      <Section title="Calibration & evidence" eyebrow="Model evaluation">
-        <CalibrationPanel calibration={data.calibration} />
-      </Section>
+      {data && (
+        <div className="grid gap-6 lg:grid-cols-[minmax(190px,220px)_minmax(0,1fr)] lg:items-start">
+          {/* Static verification index (anchors only, no accordion/animation). */}
+          <nav
+            aria-label="Contents"
+            className="border border-line bg-paper-panel p-3 lg:sticky lg:top-4"
+            style={{ borderRadius: 6 }}
+            data-testid="methodology-contents"
+          >
+            <div className="label mb-2">Verify</div>
+            <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm lg:flex-col lg:gap-y-2">
+              {SECTIONS.map((s) => (
+                <li key={s.id}>
+                  <a href={`#${s.id}`} className="font-semibold text-pitch-dark hover:underline">
+                    {s.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
 
-      <Section title="Context adjustments" eyebrow="Multipliers">
-        <div className="card space-y-1.5">
-          {data.context_dimensions.map((c) => (
-            <div key={c.key} className="text-sm">
-              <span className="font-semibold text-pitch-dark">{c.key.replace(/_/g, " ")}</span>
-              <span className="text-ink-muted"> — {c.explanation}</span>
-            </div>
-          ))}
-        </div>
-      </Section>
+          <div className="min-w-0 space-y-8">
+            <DocSection id="formula" eyebrow="Formula & versions" title="RoleFit rating">
+              <div className="card">
+                <p className="text-sm text-ink-muted">
+                  Each role is scored from peer-group percentiles of weighted metric groups, then
+                  adjusted for context and confidence. The authoritative formula (contained here, not
+                  reconstructed in the browser):
+                </p>
+                <pre className="mono mt-2 max-w-full overflow-x-auto border border-line bg-paper-muted p-3 text-xs text-pitch-dark" style={{ borderRadius: 5 }}>
+                  {data.formula}
+                </pre>
+                <dl className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">
+                  <dt className="text-ink-soft">Rating</dt>
+                  <dd className="mono text-ink">{data.rating_version}</dd>
+                  <dt className="text-ink-soft">Playstyles</dt>
+                  <dd className="mono text-ink">{data.playstyle_version}</dd>
+                  <dt className="text-ink-soft">Market</dt>
+                  <dd className="mono text-ink">{data.market_version}</dd>
+                </dl>
+              </div>
+            </DocSection>
 
-      <Section title={`Roles (${data.roles.length})`} eyebrow="Config-driven weights">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {data.roles.map((r) => (
-            <div key={r.role_key} className="card">
-              <div className="font-serif text-xl font-bold text-ink">{r.display_name}</div>
-              <div className="text-xs text-ink-soft">{r.position_group}</div>
-              <p className="mt-1 text-xs text-ink-muted">{r.description}</p>
-              <div className="mt-2 flex flex-wrap gap-1">
-                {r.groups.map((g) => (
-                  <span key={g.key} className="chip border-line bg-paper-muted text-[11px] text-ink-muted">
-                    {titleCase(g.key)} {Math.round(g.weight * 100)}%
-                  </span>
+            <DocSection id="calibration" eyebrow="Model evaluation" title="Calibration & evidence">
+              <CalibrationPanel calibration={data.calibration} />
+            </DocSection>
+
+            <DocSection id="context" eyebrow="Multipliers" title="Context adjustments">
+              <div className="card space-y-1.5">
+                {data.context_dimensions.map((c) => (
+                  <div key={c.key} className="text-sm">
+                    <span className="font-semibold text-pitch-dark">{titleCase(c.key)}</span>
+                    <span className="text-ink-muted"> — {c.explanation}</span>
+                  </div>
                 ))}
               </div>
-            </div>
-          ))}
-        </div>
-      </Section>
+            </DocSection>
 
-      <Section title="Playstyles & concerns" eyebrow="Observed labels">
-        <div className="card">
-          <div className="mb-2 flex flex-wrap gap-1">
-            {data.playstyles.map((p) => (
-              <span key={p.key} className="chip border-pitch bg-[#e9f0ea] text-pitch-dark">
-                {p.display_name}
-              </span>
-            ))}
+            <DocSection
+              id="roles"
+              eyebrow="Config-driven weights"
+              title={`Role registry (${data.roles.length})`}
+            >
+              <RoleRegistry roles={data.roles} />
+            </DocSection>
+
+            <DocSection id="playstyles" eyebrow="Observed labels" title="Playstyles & concerns">
+              <div className="card space-y-3">
+                <div>
+                  <div className="label mb-1.5">Playstyles</div>
+                  <div className="flex flex-wrap gap-1">
+                    {data.playstyles.map((p) => (
+                      <span key={p.key} className="chip border-pitch bg-[#e9f0ea] text-pitch-dark">
+                        {p.display_name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <div className="label mb-1.5">Concerns</div>
+                  <div className="flex flex-wrap gap-1">
+                    {data.concerns.map((c) => (
+                      <span key={c.key} className="chip border-accent-red bg-[#f4e8e3] text-accent-red">
+                        {c.display_name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </DocSection>
+
+            <DocSection id="sources" eyebrow="Provenance" title="Data sources">
+              <div className="card space-y-2">
+                {data.data_sources.map((s) => (
+                  <div key={s.name} className="text-sm">
+                    <span className="font-semibold text-ink">{s.name}</span>
+                    <span className="text-ink-muted"> — {s.role}. {s.note}</span>
+                    {s.url && (
+                      <a
+                        href={s.url}
+                        className="ml-1 font-semibold text-pitch-dark hover:underline"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        link
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </DocSection>
+
+            <DocSection id="limitations" eyebrow="Analytical honesty" title="Limitations">
+              <ul className="card list-disc space-y-1 pl-6 text-sm text-ink-muted">
+                {data.limitations.map((l, i) => (
+                  <li key={i}>{l}</li>
+                ))}
+              </ul>
+            </DocSection>
           </div>
-          <div className="flex flex-wrap gap-1">
-            {data.concerns.map((c) => (
-              <span key={c.key} className="chip border-accent-red bg-[#f4e8e3] text-accent-red">
-                {c.display_name}
-              </span>
-            ))}
-          </div>
         </div>
-      </Section>
-
-      <Section title="Data sources" eyebrow="Provenance">
-        <div className="card space-y-2">
-          {data.data_sources.map((s) => (
-            <div key={s.name} className="text-sm">
-              <span className="font-semibold text-ink">{s.name}</span>
-              <span className="text-ink-muted"> — {s.role}. {s.note}</span>
-              {s.url && (
-                <a href={s.url} className="ml-1 font-semibold text-pitch-dark hover:underline" target="_blank" rel="noreferrer">
-                  link
-                </a>
-              )}
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      <Section title="Limitations" eyebrow="Analytical honesty">
-        <ul className="card list-disc space-y-1 pl-6 text-sm text-ink-muted">
-          {data.limitations.map((l, i) => (
-            <li key={i}>{l}</li>
-          ))}
-        </ul>
-      </Section>
+      )}
     </div>
   );
 }

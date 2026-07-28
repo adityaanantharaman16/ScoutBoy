@@ -2,12 +2,102 @@
 
 import Link from "next/link";
 
-import { EmptyState, ErrorState, Loading, ScopeBanner } from "@/components/common";
+import {
+  ConfidenceReadout,
+  EmptyState,
+  ErrorState,
+  EvidenceTag,
+  LedgerSkeleton,
+  LinkButton,
+  MarketReadout,
+  PageHeader,
+  ScopeBanner,
+  ScoreReadout,
+} from "@/components/common";
 import { CompareQueueButton } from "@/components/common/PlayerActions";
 import { SCOPE_BANNER } from "@/lib/constants";
 import { usePlayersByIds } from "@/lib/api/hooks";
 import { useScoutingState } from "@/lib/state/scouting-state";
-import { formatAge, formatEurRange, formatScore, scoreColor } from "@/lib/formatters";
+import type { PlayerCard } from "@/lib/api/types";
+import { formatAge } from "@/lib/formatters";
+
+function SavedRecord({
+  card,
+  onRemove,
+}: {
+  card: PlayerCard;
+  onRemove: (id: number) => void;
+}) {
+  const id = card.identity;
+  const best = card.role_ratings.find((r) => r.is_best) ?? card.role_ratings[0];
+  const analyzed = card.has_rolefit_analysis && !!best;
+
+  return (
+    <article className="card flex flex-col gap-2.5" data-testid="shortlist-record">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <Link
+            href={`/players/${id.id}`}
+            data-testid="shortlist-player"
+            className="font-serif text-xl font-bold leading-tight text-ink no-underline hover:underline"
+          >
+            {id.canonical_name}
+          </Link>
+          <div className="mt-0.5 text-xs text-ink-muted">
+            {id.primary_position ?? "—"} · {card.season}
+          </div>
+          <div className="text-xs text-ink-soft">
+            {formatAge(id.age)} yrs · {id.club ?? "—"} · {id.league ?? "—"}
+          </div>
+        </div>
+        <div className="shrink-0 text-right">
+          <div className="label mb-0.5">RoleFit</div>
+          {analyzed ? (
+            <ScoreReadout score={best.final_score} caption={best.display_name} size="md" />
+          ) : (
+            <span
+              className="inline-flex border border-line-strong px-2 py-1 text-xs font-semibold text-ink-muted"
+              style={{ borderRadius: 4 }}
+            >
+              Profile only
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        {analyzed && <ConfidenceReadout level={best.confidence} />}
+        <EvidenceTag status={card.evidence_status} />
+        <MarketReadout
+          label={card.market?.label}
+          low={card.market?.expected_asking_low_eur}
+          high={card.market?.expected_asking_high_eur}
+        />
+      </div>
+
+      {card.playstyles.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {card.playstyles.slice(0, 3).map((b) => (
+            <span key={b.playstyle_key} className="chip border-line bg-paper-panel text-ink-muted">
+              {b.display_name}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-1 flex flex-wrap gap-2 border-t border-line pt-2.5">
+        <CompareQueueButton player={{ id: id.id, name: id.canonical_name }} size="sm" />
+        <button
+          type="button"
+          className="btn px-2 py-1 text-xs"
+          onClick={() => onRemove(id.id)}
+        >
+          Remove
+        </button>
+      </div>
+    </article>
+  );
+}
 
 export default function ShortlistPage() {
   const { shortlistIds, removeShortlist } = useScoutingState();
@@ -19,27 +109,41 @@ export default function ShortlistPage() {
   return (
     <div>
       <ScopeBanner text={SCOPE_BANNER} />
-      <div className="mb-5 max-w-3xl">
-        <p className="label mb-1">Shortlist</p>
-        <h1 className="font-serif text-4xl font-bold leading-tight text-ink">Saved players</h1>
-        <p className="mt-2 text-sm text-ink-muted">
-          Saved on this device. These selections are stored in local browser storage and are not
-          synced to an account.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Shortlist"
+        title="Saved decisions"
+        lead="Players you have set aside to revisit. These are stored in this browser only — saved on this device, not synced to an account."
+        meta={
+          cards.length > 0
+            ? `${cards.length} resolved player${cards.length === 1 ? "" : "s"} · saved on this device`
+            : undefined
+        }
+      />
 
       {shortlistIds.length === 0 && (
-        <EmptyState label="No players saved yet. Add players from discovery, profiles, similar players, or leaderboards." />
+        <EmptyState
+          label="No players saved yet. Save players from discovery, profiles, similar players, or leaderboards to revisit them here."
+          action={<LinkButton href="/">Go to discovery</LinkButton>}
+        />
       )}
 
-      {loading && <Loading label="Resolving shortlisted players..." />}
+      {loading && shortlistIds.length > 0 && (
+        <LedgerSkeleton rows={Math.min(shortlistIds.length, 4)} label="Resolving shortlisted players…" />
+      )}
 
       {staleIds.length > 0 && (
         <div className="mb-4">
-          <ErrorState message={`${staleIds.length} saved player id${staleIds.length === 1 ? "" : "s"} could not be resolved and may be stale.`} />
+          <ErrorState
+            message={`${staleIds.length} saved player id${staleIds.length === 1 ? "" : "s"} could not be resolved and may be stale.`}
+          />
           <div className="mt-2 flex flex-wrap gap-2">
             {staleIds.map((id) => (
-              <button key={id} type="button" className="btn px-2 py-1 text-xs" onClick={() => removeShortlist(id)}>
+              <button
+                key={id}
+                type="button"
+                className="btn px-2 py-1 text-xs"
+                onClick={() => removeShortlist(id)}
+              >
                 Remove stale id {id}
               </button>
             ))}
@@ -48,89 +152,11 @@ export default function ShortlistPage() {
       )}
 
       {cards.length > 0 && (
-        <>
-          <div className="mb-3 text-xs text-ink-soft">
-            {cards.length} resolved player{cards.length === 1 ? "" : "s"} · saved on this device
-          </div>
-          <div className="table-shell hidden md:block">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Player</th>
-                  <th>Age</th>
-                  <th>Club</th>
-                  <th>RoleFit</th>
-                  <th>Evidence</th>
-                  <th className="text-right">Asking</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cards.map((card) => {
-                  const best = card.role_ratings.find((r) => r.is_best);
-                  const id = card.identity;
-                  return (
-                    <tr key={id.id}>
-                      <td>
-                        <Link href={`/players/${id.id}`} className="font-semibold hover:underline">
-                          {id.canonical_name}
-                        </Link>
-                        <div className="text-xs text-ink-soft">{id.primary_position ?? "—"} · {card.season}</div>
-                      </td>
-                      <td>{formatAge(id.age)}</td>
-                      <td>{id.club ?? "—"}</td>
-                      <td className={`font-mono font-bold ${scoreColor(best?.final_score)}`}>
-                        {best ? `${formatScore(best.final_score)} · ${best.display_name}` : "Profile only"}
-                      </td>
-                      <td className="text-xs text-ink-muted">{card.evidence_status.replaceAll("_", " ")}</td>
-                      <td className="text-right text-xs">
-                        {formatEurRange(card.market?.expected_asking_low_eur, card.market?.expected_asking_high_eur)}
-                      </td>
-                      <td>
-                        <div className="flex flex-wrap gap-2">
-                          <CompareQueueButton player={{ id: id.id, name: id.canonical_name }} />
-                          <button type="button" className="btn px-2 py-1 text-xs" onClick={() => removeShortlist(id.id)}>
-                            Remove
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          <div className="grid gap-3 md:hidden">
-            {cards.map((card) => {
-              const best = card.role_ratings.find((r) => r.is_best);
-              const id = card.identity;
-              return (
-                <article key={id.id} className="card">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <Link href={`/players/${id.id}`} className="font-serif text-xl font-bold hover:underline">
-                        {id.canonical_name}
-                      </Link>
-                      <div className="text-xs text-ink-soft">{formatAge(id.age)} yrs · {id.club ?? "—"} · {id.primary_position ?? "—"}</div>
-                    </div>
-                    <div className={`font-serif text-2xl font-bold ${scoreColor(best?.final_score)}`}>
-                      {best ? formatScore(best.final_score) : "Profile only"}
-                    </div>
-                  </div>
-                  <div className="mt-2 text-xs text-ink-muted">
-                    {card.evidence_status.replaceAll("_", " ")} · {formatEurRange(card.market?.expected_asking_low_eur, card.market?.expected_asking_high_eur)}
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <CompareQueueButton player={{ id: id.id, name: id.canonical_name }} />
-                    <button type="button" className="btn px-2 py-1 text-xs" onClick={() => removeShortlist(id.id)}>
-                      Remove
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2" data-testid="shortlist-grid">
+          {cards.map((card) => (
+            <SavedRecord key={card.identity.id} card={card} onRemove={removeShortlist} />
+          ))}
+        </div>
       )}
     </div>
   );
