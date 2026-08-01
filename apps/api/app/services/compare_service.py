@@ -4,13 +4,61 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from app.models.schemas import CompareResponse, CompareSide
+from app.models.schemas import CompareResponse, CompareSide, RoleRatingSummary
 from app.repositories import players_repo as repo
 
 from . import _common as C
 from .players_service import build_player_card
 
 _CONF_ORDER = {"unknown": 0, "low": 1, "medium": 2, "high": 3}
+
+NO_SHARED_ROLE_MESSAGE = (
+    "No shared rated role is available for these players. "
+    "Select a role to inspect the available analysis."
+)
+
+
+def _select_automatic_shared_role(
+    a_ratings: Optional[list[RoleRatingSummary]],
+    b_ratings: Optional[list[RoleRatingSummary]],
+) -> Optional[str]:
+    """Pick the strongest role both players are *already* rated in.
+
+    This is a presentation/comparison choice over stored ratings — it reads each
+    side's persisted ``final_score`` and ``confidence`` as-is and never derives,
+    blends, or recomputes a RoleFit rating. Only roles present for both players
+    are candidates, so an automatic selection can never leave one side unrated.
+
+    The ordering is symmetric (swapping the players cannot change the result):
+
+    1. highest ``min(a_score, b_score)`` — maximise the weaker side's role fit;
+    2. highest ``a_score + b_score`` — stronger joint fit when the floor ties;
+    3. highest minimum stored confidence — tie-break only;
+    4. lexicographically ascending ``role_key`` — final deterministic tie-break.
+
+    Deliberately *not* "smallest score difference": that could pick a role both
+    players fit poorly. Returns ``None`` when there is no shared rated role.
+    """
+    by_a = {r.role_key: r for r in (a_ratings or [])}
+    by_b = {r.role_key: r for r in (b_ratings or [])}
+    shared = set(by_a) & set(by_b)
+    if not shared:
+        return None
+
+    def order(role_key: str) -> tuple:
+        ra, rb = by_a[role_key], by_b[role_key]
+        floor_conf = min(
+            _CONF_ORDER.get(ra.confidence, 0),
+            _CONF_ORDER.get(rb.confidence, 0),
+        )
+        return (
+            -min(ra.final_score, rb.final_score),
+            -(ra.final_score + rb.final_score),
+            -floor_conf,
+            role_key,
+        )
+
+    return min(shared, key=order)
 
 
 def _side_from_card(card) -> CompareSide:
@@ -54,18 +102,27 @@ def compare_players(
             }
         )
 
-    # choose the comparison role
-    chosen = role_key or card_a.best_role or card_b.best_role
+    # Choose the comparison role. An explicit request always wins (and may
+    # honestly leave one side unrated); otherwise select symmetrically from the
+    # roles both players already have a stored rating for.
+    automatic = not role_key
+    chosen = (
+        _select_automatic_shared_role(card_a.role_ratings, card_b.role_ratings)
+        if automatic
+        else role_key
+    )
     ra = next((r for r in card_a.role_ratings if r.role_key == chosen), None)
     rb = next((r for r in card_b.role_ratings if r.role_key == chosen), None)
     role_display = C.role_display_map().get(chosen, chosen) if chosen else None
 
     why, role_comparison = _why_higher(
-        session, season, chosen, player_a, player_b, card_a, card_b, ra, rb
+        session, season, chosen, player_a, player_b, card_a, card_b, ra, rb, automatic=automatic
     )
 
     warnings = []
-    for card, label in [(card_a, "Player A"), (card_b, "Player B")]:
+    # Presentation terminology only. The API fields stay `player_a` / `player_b`;
+    # the warning text users read says Player 1 / Player 2.
+    for card, label in [(card_a, "Player 1"), (card_b, "Player 2")]:
         if _CONF_ORDER.get(card.confidence, 0) <= 1:
             warnings.append(
                 f"{label} ({card.identity.canonical_name}) has "
@@ -86,8 +143,13 @@ def compare_players(
 
 
 def _why_higher(
-    session, season, role_key, pid_a, pid_b, card_a, card_b, ra, rb
+    session, season, role_key, pid_a, pid_b, card_a, card_b, ra, rb, *, automatic: bool = False
 ) -> tuple[str, dict]:
+    # Three distinct outcomes: (1) an automatic request with no shared rated
+    # role, (2) an explicit role one side is not rated in, (3) a real shared-role
+    # comparison. Only (3) produces a role_comparison payload.
+    if automatic and not role_key:
+        return (NO_SHARED_ROLE_MESSAGE, {})
     if not role_key or ra is None or rb is None or season is None:
         return ("Not enough data to compare in a shared role.", {})
     name_a, name_b = card_a.identity.canonical_name, card_b.identity.canonical_name

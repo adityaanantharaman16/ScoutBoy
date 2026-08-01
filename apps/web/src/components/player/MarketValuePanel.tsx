@@ -1,6 +1,7 @@
+import { DisplayTag } from "@/components/common/DisplayTag";
 import { ConfidenceMeter } from "@/components/player/ConfidenceMeter";
 import type { MarketPanel } from "@/lib/api/types";
-import { formatEur, marketLabelColor, marketLabelText } from "@/lib/formatters";
+import { formatEur, marketLabelText } from "@/lib/formatters";
 import {
   askingVsModelGap,
   axisEurLabel,
@@ -25,15 +26,15 @@ const AXIS_Y = 206;
 
 function LegendSwatch({ kind }: { kind: "public" | "model" | "ask" }) {
   if (kind === "public") {
-    return <span aria-hidden="true" className="inline-block h-3 w-1.5 rounded-sm bg-ink align-middle" />;
+    return <span aria-hidden="true" className="inline-block h-3 w-1.5 bg-ink align-middle" />;
   }
   if (kind === "model") {
-    return <span aria-hidden="true" className="inline-block h-3 w-4 rounded-sm bg-pitch align-middle" />;
+    return <span aria-hidden="true" className="inline-block h-3 w-4 bg-pitch align-middle" />;
   }
   return (
     <span
       aria-hidden="true"
-      className="inline-block h-3 w-4 rounded-sm border border-accent-amber align-middle"
+      className="inline-block h-3 w-4 border border-accent-amber align-middle"
       style={{ background: "#e0cfa4" }}
     />
   );
@@ -164,7 +165,7 @@ export function MarketValuePanel({ market }: { market: MarketPanel | null | unde
 
       {/* label + confidence + interpretation */}
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-3 text-sm">
-        <span className={`chip ${marketLabelColor(market.label)}`}>{marketLabelText(market.label)}</span>
+        <DisplayTag variant="market" value={market.label}>{marketLabelText(market.label)}</DisplayTag>
         <span className="inline-flex items-center gap-1.5 text-ink-muted">
           Valuation confidence <ConfidenceMeter level={market.confidence} />
         </span>
@@ -174,7 +175,6 @@ export function MarketValuePanel({ market }: { market: MarketPanel | null | unde
       {market.manual_review_required && (
         <div
           className="mt-2 border border-accent-amber/60 bg-[#f6ecd7] px-3 py-2 text-xs font-semibold text-accent-amber"
-          style={{ borderRadius: 6 }}
           data-testid="market-review"
         >
           Flagged for manual review (outlier guardrail).

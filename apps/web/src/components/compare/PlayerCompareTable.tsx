@@ -1,5 +1,6 @@
 import {
   ConfidenceReadout,
+  DisplayTag,
   MarketReadout,
   Notice,
   ScoreReadout,
@@ -114,8 +115,10 @@ function roleRatingFor(side: CompareSide, roleKey: string | null | undefined): R
 /**
  * One side of the balance sheet. Renders the player's stored RoleFit score and
  * role-level confidence for the selected role — or an explicit "not rated in
- * this role" state when that role rating is absent. Market and playstyles are
- * shown in parallel with the other side. Nothing here is recomputed.
+ * this role" state when a role *is* selected and that rating is absent. When no
+ * role was selected at all (no shared rated role) the role slot stays empty
+ * rather than blaming either side. Market and playstyles are shown in parallel
+ * with the other side. Nothing here is recomputed.
  */
 function BalanceColumn({
   side,
@@ -131,7 +134,7 @@ function BalanceColumn({
   return (
     <div className={`flex min-w-0 flex-col gap-2 ${alignCls}`} data-testid={`compare-side-${align}`}>
       <div className="min-w-0">
-        <div className="font-serif text-xl font-bold leading-tight text-ink">
+        <div className="tracking-tight text-xl font-bold leading-tight text-ink">
           {side.identity.canonical_name}
         </div>
         <div className="text-xs text-ink-soft">
@@ -146,27 +149,28 @@ function BalanceColumn({
           />
           <ConfidenceReadout level={rating.confidence} />
         </>
-      ) : (
+      ) : roleKey ? (
         <div
           className="inline-flex w-fit border border-line-strong bg-paper-muted px-2 py-1 text-xs font-semibold text-ink-muted"
-          style={{ borderRadius: 4 }}
           data-testid={`compare-unavailable-${align}`}
         >
           Not rated in this role
         </div>
-      )}
+      ) : null}
+      {/* The right column mirrors the left: its risk tag hugs the outer (right)
+          edge with the range reading inward. */}
       <MarketReadout
         label={side.market?.label}
         low={side.market?.expected_asking_low_eur}
         high={side.market?.expected_asking_high_eur}
-        className={align === "right" ? "sm:justify-end" : ""}
+        align={align === "right" ? "end" : "start"}
       />
       {side.playstyles.length > 0 && (
         <div className={`flex flex-wrap gap-1 ${align === "right" ? "sm:justify-end" : ""}`}>
           {side.playstyles.slice(0, 4).map((b) => (
-            <span key={b.playstyle_key} className="chip border-line bg-paper-panel text-ink-muted">
+            <DisplayTag key={b.playstyle_key} variant="playstyle">
               {b.display_name}
-            </span>
+            </DisplayTag>
           ))}
         </div>
       )}
@@ -179,6 +183,10 @@ export function PlayerCompareTable({ data }: { data: CompareResponse }) {
   const rows = data.stat_rows as unknown as CompareStatRow[];
   const aName = firstName(data.player_a.identity.canonical_name);
   const bName = firstName(data.player_b.identity.canonical_name);
+  // A null role_key means the API found no role both players are rated in. No
+  // score or confidence is invented for either side; the rest of the evidence
+  // (market, context, normalized metrics) stays usable.
+  const hasRole = data.role_key != null;
 
   const value = (v: number | null) => (v == null ? "Unknown" : String(Math.round(v)));
   const leads = (a: number | null, b: number | null, side: "a" | "b") => {
@@ -193,12 +201,19 @@ export function PlayerCompareTable({ data }: { data: CompareResponse }) {
           it, and the API's `why_higher` is the main editorial conclusion. */}
       <div className="card">
         <div className="text-center">
-          <div className="label">Comparing as</div>
-          <div className="font-serif text-2xl font-bold text-ink" data-testid="compare-role">
-            {data.role_display ?? "Automatic role"}
+          <div className="label">{hasRole ? "Comparing as" : "Role comparison"}</div>
+          {/* Title case for the visible heading only — the API's explanatory
+              sentence keeps its sentence case and is not restyled here. */}
+          <div className="text-2xl font-bold tracking-tight text-ink" data-testid="compare-role">
+            {data.role_display ?? "No Shared Rated Role"}
           </div>
-          <div className="mt-0.5 text-[11px] text-ink-soft">
-            RoleFit score and confidence shown per side · {data.season}
+          <div
+            className="mt-0.5 text-[11px] text-ink-soft"
+            data-testid={hasRole ? "compare-role-note" : "compare-no-shared-role"}
+          >
+            {hasRole
+              ? `RoleFit score and confidence shown per side · ${data.season}`
+              : `Market, evidence context and normalized metrics below are unaffected · ${data.season}`}
           </div>
         </div>
 
@@ -213,7 +228,6 @@ export function PlayerCompareTable({ data }: { data: CompareResponse }) {
 
         <p
           className="mt-5 border border-line bg-paper-muted p-3 text-sm leading-relaxed text-ink"
-          style={{ borderRadius: 5 }}
           data-testid="why-higher"
         >
           {data.why_higher}
@@ -273,7 +287,6 @@ export function PlayerCompareTable({ data }: { data: CompareResponse }) {
         {/* Mobile: metric label plus both player values, no horizontal overflow. */}
         <div
           className="divide-y divide-line overflow-hidden border border-line bg-paper-panel md:hidden"
-          style={{ borderRadius: 6 }}
         >
           <div className="grid grid-cols-[minmax(0,1fr)_3.5rem_3.5rem] gap-2 bg-paper-muted px-3 py-2">
             <span className="label">Metric</span>

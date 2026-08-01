@@ -1,0 +1,1227 @@
+/*
+ * ScoutBoy — Dark Mode Pilot stylesheet (APPROVAL ARTIFACT, NOT A PRODUCTION THEME).
+ *
+ * Scope contract
+ * --------------
+ * EVERY rule in this file is nested beneath `.dark-pilot`. Nothing here declares
+ * a `:root` variable, touches an element selector globally, redefines a
+ * production token (`--paper`, `--ink`, `--pitch`, …), or responds to
+ * `prefers-color-scheme`. Loading this stylesheet on a production route would
+ * therefore have no effect: without a `.dark-pilot` ancestor, not one
+ * declaration matches. Production routes keep the warm-paper light theme
+ * verbatim.
+ *
+ * There is deliberately no theme switch, no persisted preference, and no media
+ * query. The pilot exists to be looked at and approved, not to be turned on.
+ *
+ * The `--pilot-*` names below are the PROPOSED semantic vocabulary. They mirror
+ * the production light tokens one-for-one so a future migration is a value swap
+ * rather than a re-architecture. Contrast ratios for every text/background pair
+ * are recorded in docs/design_pilots/dark_mode.md.
+ */
+
+.dark-pilot {
+  /* ---- surfaces: warm charcoal, never pure black ----------------------
+     The hue is not invented. ScoutBoy's light ink (#182219) is already a warm,
+     green-cast near-black — L* 12.0, chroma 8.3. The dark canvas is built on
+     that same hue so the dark theme reads as ScoutBoy's own darkest colour
+     grown into a surface, rather than as a generic charcoal. Measured:
+     canvas L* 11.4 / chroma 6.0, versus a neutral #191b18 at chroma 2.5,
+     which is below the just-noticeable threshold at this lightness and would
+     read as plain near-black. */
+  --pilot-canvas: #1a2019; /* page background   (light: --paper       #f4f2ea) */
+  --pilot-panel: #222a21; /* primary panel     (light: --panel       #fcfbf6) */
+  --pilot-panel-muted: #2b342a; /* subordinate fill  (light: --panel-muted #efede2) */
+  --pilot-track: #3a4438; /* neutral bar track (light: --track       #e4dfce) */
+
+  /* ---- hairlines ------------------------------------------------------ */
+  /* `line` separates content (decorative); `line-strong` bounds real
+     controls and is held to the 3:1 non-text contrast floor. */
+  --pilot-line: #414c40; /*                   (light: --line        #d8d3c2) */
+  --pilot-line-strong: #6e7a64; /*             (light: --line-strong #b9b29d) */
+
+  /* ---- text: off-white, warmed to sit on a warm canvas ---------------- */
+  --pilot-text: #eef0e6; /*                    (light: --ink        #182219) */
+  --pilot-text-muted: #bcc2b4; /*               (light: --ink-muted  #49564c) */
+  --pilot-text-soft: #98a08f; /*                (light: --ink-soft   #6e7a6f) */
+
+  /* ---- football / action green ---------------------------------------- */
+  --pilot-green: #4eb083; /* fills, bars, markers   (light: --pitch      #1c5a3c) */
+  --pilot-green-text: #82d4a8; /* green text + links (light: --pitch-dark #13402b) */
+  --pilot-green-fill: #2c7454; /* primary action fill */
+  --pilot-green-selected: #223a2b; /* selected-control background */
+
+  /* ---- status accents -------------------------------------------------- */
+  --pilot-elite: #7cabf5; /*                   (light: --elite  #2e74e6) */
+  --pilot-amber: #e2a951; /*                   (light: --amber  #9a5a0b) */
+  --pilot-amber-bg: #3a2f1e;
+  --pilot-rust: #dd8f63; /*                    (light: --rust   #8d3f24) */
+  --pilot-red: #f08a7d; /*                     (light: --red    #9c2e22) */
+  --pilot-red-bg: #3a2622;
+
+  /* ---- score bands (0–100), mirroring the production band function ----- */
+  --pilot-band-red: #f08a7d; /* < 40   */
+  --pilot-band-rust: #dd8f63; /* 40–54  */
+  --pilot-band-amber: #e2a951; /* 55–69  */
+  --pilot-band-green: #86c9a2; /* 70–79  */
+  --pilot-band-emerald: #3fca8f; /* 80–89  */
+  --pilot-band-elite: #7cabf5; /* 90+    */
+  --pilot-band-unknown: #98a08f; /* null   */
+
+  /* ---- playstyle label: the dark analogue of the light theme's solid
+     ink-on-paper block (a filled tag, not a hairline chip) --------------- */
+  --pilot-tag-bg: #39432f;
+
+  /* ---- Role Territory: the ONE elevated signature surface -------------- */
+  /* On a dark canvas a drop shadow is effectively invisible, so elevation is
+     expressed as surface luminance + a brighter hairline instead of a shadow.
+     The field stays recognisably greener AND lighter than everything around
+     it. No glow, no gradient. */
+  --pilot-pitch-field: #27704f;
+  --pilot-pitch-field-alt: #29734f; /* solid mowing band, not a gradient */
+  --pilot-pitch-line: #e2eae0;
+  /* Solid plate behind each zone's label, so the text contrast never depends
+     on how bright the zone underneath happens to be. */
+  --pilot-pitch-tab: #16281d;
+  --pilot-territory-surface: #2b342a;
+
+  /* ---- focus ---------------------------------------------------------- */
+  --pilot-focus: #86d6ab;
+
+  background: var(--pilot-canvas);
+  color: var(--pilot-text);
+  font-family: var(--sans);
+  font-variant-numeric: tabular-nums;
+
+  /* The pilot owns the viewport.
+     The root layout wraps every route in the production navigation, a
+     max-width `main`, and the footer. Rendering a dark artifact inside that
+     warm-paper frame would make it unjudgeable — it would read as a dark card
+     in a light app rather than as a dark theme. Taking over the viewport from
+     inside the pilot's own scope is what lets this page be evaluated WITHOUT
+     editing the shared root layout, which the brief rules out.
+
+     Deliberately no `overflow-x: hidden`: hiding horizontal overflow would mask
+     exactly the responsive defect the pilot is supposed to prove absent. The
+     Playwright check asserts this scroller's scrollWidth never exceeds its
+     clientWidth at 1280 / 640 / 390 / 320. */
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  z-index: 40;
+}
+
+/* ---------------------------------------------------------------------------
+   Base element treatment — scoped, never global
+   --------------------------------------------------------------------------- */
+
+.dark-pilot ::selection {
+  background: var(--pilot-green-fill);
+  color: var(--pilot-text);
+}
+
+.dark-pilot a {
+  color: var(--pilot-green-text);
+  text-underline-offset: 2px;
+}
+
+.dark-pilot :focus-visible {
+  outline: 2px solid var(--pilot-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.dark-pilot h1,
+.dark-pilot h2,
+.dark-pilot h3 {
+  color: var(--pilot-text);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.dark-pilot p {
+  margin: 0;
+}
+
+.dark-pilot button {
+  font: inherit;
+}
+
+/* ---------------------------------------------------------------------------
+   Page frame
+   --------------------------------------------------------------------------- */
+
+.dark-pilot .pilot-shell {
+  margin: 0 auto;
+  max-width: 72rem;
+  padding: 0 1rem 5rem;
+}
+
+/* The approval banner. Deliberately the loudest thing on the page: this artifact
+   must never be mistaken for a shipped theme or for live data. */
+.dark-pilot .pilot-banner {
+  background: var(--pilot-amber-bg);
+  border-bottom: 1px solid var(--pilot-amber);
+  color: var(--pilot-amber);
+  padding: 0.75rem 1rem;
+}
+
+.dark-pilot .pilot-banner-inner {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin: 0 auto;
+  max-width: 72rem;
+}
+
+.dark-pilot .pilot-banner-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.dark-pilot .pilot-banner-note {
+  color: var(--pilot-text-muted);
+  font-size: 0.8125rem;
+}
+
+.dark-pilot .pilot-intro {
+  border-bottom: 1px solid var(--pilot-line);
+  padding: 2.5rem 0 2rem;
+}
+
+.dark-pilot .pilot-intro h1 {
+  font-size: clamp(1.875rem, 1.2rem + 2.6vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.dark-pilot .pilot-lead {
+  color: var(--pilot-text-muted);
+  font-size: 0.9375rem;
+  margin-top: 0.75rem;
+  max-width: 46rem;
+}
+
+.dark-pilot .pilot-facts {
+  display: grid;
+  gap: 0.5rem 2rem;
+  grid-template-columns: 1fr;
+  margin-top: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .dark-pilot .pilot-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.dark-pilot .pilot-fact {
+  border-top: 1px solid var(--pilot-line);
+  color: var(--pilot-text-muted);
+  font-size: 0.8125rem;
+  padding-top: 0.5rem;
+}
+
+.dark-pilot .pilot-fact strong {
+  color: var(--pilot-text);
+  display: block;
+  font-weight: 600;
+}
+
+/* Specimen framing. The index is real reference information — a reviewer says
+   "specimen 03 reads too dim" — not decoration. */
+.dark-pilot .specimen {
+  padding-top: 3rem;
+}
+
+.dark-pilot .specimen-head {
+  border-bottom: 1px solid var(--pilot-line);
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.625rem;
+}
+
+.dark-pilot .specimen-index {
+  color: var(--pilot-text-soft);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dark-pilot .specimen-head h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-top: 0.25rem;
+}
+
+.dark-pilot .specimen-note {
+  color: var(--pilot-text-muted);
+  font-size: 0.8125rem;
+  margin-top: 0.5rem;
+  max-width: 46rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Shared primitives (pilot copies — production components are untouched)
+   --------------------------------------------------------------------------- */
+
+.dark-pilot .pilot-label {
+  color: var(--pilot-text-soft);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dark-pilot .pilot-card {
+  background: var(--pilot-panel);
+  border: 1px solid var(--pilot-line);
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.dark-pilot .pilot-mono {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.dark-pilot .pilot-muted {
+  color: var(--pilot-text-muted);
+}
+
+.dark-pilot .pilot-soft {
+  color: var(--pilot-text-soft);
+}
+
+.dark-pilot .pilot-input {
+  background: var(--pilot-canvas);
+  border: 1px solid var(--pilot-line-strong);
+  border-radius: 4px;
+  color: var(--pilot-text);
+  padding: 0.5rem 0.625rem;
+  font-size: 0.875rem;
+  width: 100%;
+}
+
+.dark-pilot .pilot-input::placeholder {
+  color: var(--pilot-text-soft);
+}
+
+.dark-pilot .pilot-btn {
+  align-items: center;
+  background: var(--pilot-panel);
+  border: 1px solid var(--pilot-line-strong);
+  border-radius: 5px;
+  color: var(--pilot-text);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.875rem;
+  font-weight: 600;
+  gap: 0.5rem;
+  justify-content: center;
+  padding: 0.5rem 0.75rem;
+}
+
+.dark-pilot .pilot-btn:hover {
+  background: var(--pilot-panel-muted);
+}
+
+/* The restrained action green: a muted fill carrying a lighter green border, so
+   the control clears 3:1 at its boundary without the fill itself getting loud. */
+.dark-pilot .pilot-btn-primary {
+  background: var(--pilot-green-fill);
+  border-color: var(--pilot-green);
+  color: var(--pilot-text);
+}
+
+.dark-pilot .pilot-btn-primary:hover {
+  background: #2f7d59;
+}
+
+/* Sharp-edged ledger status units, matching the production ledger's square
+   corners. */
+.dark-pilot .pilot-status {
+  align-items: center;
+  border: 1px solid var(--pilot-line-strong);
+  border-radius: 2px;
+  background: var(--pilot-panel-muted);
+  color: var(--pilot-text-muted);
+  column-gap: 0.5rem;
+  display: inline-flex;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  row-gap: 0.25rem;
+}
+
+/* The confidence half carries its own left rule instead of a separate divider
+   element. A standalone divider strands itself at the end of the first line
+   whenever the unit wraps; as a border it always stays attached to the segment
+   it introduces. */
+.dark-pilot .pilot-status-confidence {
+  align-items: center;
+  border-left: 1px solid var(--pilot-line-strong);
+  display: inline-flex;
+  gap: 0.375rem;
+  padding-left: 0.5rem;
+}
+
+/* Market states. Each carries a WORD as well as a colour, so the state never
+   depends on hue alone. */
+.dark-pilot .pilot-market-inflated {
+  background: var(--pilot-amber-bg);
+  border-color: var(--pilot-amber);
+  color: var(--pilot-amber);
+}
+
+.dark-pilot .pilot-market-high-risk {
+  background: var(--pilot-red-bg);
+  border-color: var(--pilot-red);
+  color: var(--pilot-red);
+}
+
+.dark-pilot .pilot-market-fair,
+.dark-pilot .pilot-market-unknown {
+  background: var(--pilot-panel-muted);
+  border-color: var(--pilot-line-strong);
+  color: var(--pilot-text-muted);
+}
+
+/* Playstyle tags: a SOLID filled block — the dark counterpart of the light
+   theme's inverted ink-on-paper label. It carries no border, which is what
+   keeps it readable as a different kind of object from the hairline-outlined
+   status boxes above it. A neutral market state ("Fair") and a playstyle must
+   not look like the same thing. */
+.dark-pilot .pilot-playstyle {
+  align-items: center;
+  background: var(--pilot-tag-bg);
+  border-radius: 2px;
+  color: var(--pilot-text);
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.1875rem 0.5rem;
+}
+
+/* Score band colours. Text colour only — the number is always the signal. */
+.dark-pilot .band-red { color: var(--pilot-band-red); }
+.dark-pilot .band-rust { color: var(--pilot-band-rust); }
+.dark-pilot .band-amber { color: var(--pilot-band-amber); }
+.dark-pilot .band-green { color: var(--pilot-band-green); }
+.dark-pilot .band-emerald { color: var(--pilot-band-emerald); }
+.dark-pilot .band-elite { color: var(--pilot-band-elite); }
+.dark-pilot .band-unknown { color: var(--pilot-band-unknown); }
+
+.dark-pilot .bar-red { background: var(--pilot-band-red); }
+.dark-pilot .bar-rust { background: var(--pilot-band-rust); }
+.dark-pilot .bar-amber { background: var(--pilot-band-amber); }
+.dark-pilot .bar-green { background: var(--pilot-band-green); }
+.dark-pilot .bar-emerald { background: var(--pilot-band-emerald); }
+.dark-pilot .bar-elite { background: var(--pilot-band-elite); }
+.dark-pilot .bar-unknown { background: var(--pilot-line-strong); }
+
+.dark-pilot .pilot-bar-track {
+  background: var(--pilot-track);
+  height: 0.375rem;
+  overflow: hidden;
+  width: 100%;
+}
+
+.dark-pilot .pilot-bar-fill {
+  height: 100%;
+}
+
+/* Confidence keeps its own monochrome channel — never the score palette. */
+.dark-pilot .pilot-confidence {
+  align-items: flex-end;
+  display: inline-flex;
+  gap: 0.125rem;
+  height: 12px;
+}
+
+.dark-pilot .pilot-confidence span {
+  border-radius: 1px;
+  width: 3px;
+}
+
+.dark-pilot .pilot-confidence .on {
+  background: var(--pilot-text);
+}
+
+.dark-pilot .pilot-confidence .off {
+  background: var(--pilot-line-strong);
+}
+
+/* Unknown confidence: a hatch, never an empty meter. "No reading" must not be
+   mistaken for "a reading of zero". */
+.dark-pilot .pilot-confidence-unknown {
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--pilot-line-strong) 0 1.5px,
+    transparent 1.5px 4px
+  );
+  border: 1px dashed var(--pilot-line-strong);
+  border-radius: 2px;
+  display: inline-block;
+  height: 12px;
+  width: 12px;
+}
+
+/* The honesty-state strip in the token specimen. */
+.dark-pilot .pilot-honesty {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+}
+
+.dark-pilot .pilot-honesty-item {
+  background: var(--pilot-panel);
+  border: 1px solid var(--pilot-line);
+  border-radius: 6px;
+  padding: 0.75rem;
+}
+
+.dark-pilot .pilot-honesty-caption {
+  color: var(--pilot-text-soft);
+  font-size: 0.6875rem;
+  margin-top: 0.5rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Specimen 01 — navigation
+   --------------------------------------------------------------------------- */
+
+.dark-pilot .pilot-nav {
+  background: var(--pilot-panel);
+  border: 1px solid var(--pilot-line);
+  border-radius: 6px;
+}
+
+.dark-pilot .pilot-nav-inner {
+  align-items: center;
+  column-gap: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0.75rem 1rem;
+  row-gap: 0.5rem;
+}
+
+.dark-pilot .pilot-wordmark {
+  color: var(--pilot-text);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+}
+
+.dark-pilot .pilot-wordmark-eyebrow {
+  color: var(--pilot-text-soft);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin-left: 0.25rem;
+  text-transform: uppercase;
+}
+
+.dark-pilot .pilot-nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.875rem;
+  gap: 0.25rem;
+}
+
+.dark-pilot .pilot-nav-link {
+  border-radius: 4px;
+  color: var(--pilot-text-muted);
+  font-weight: 600;
+  padding: 0.375rem 0.625rem;
+  text-decoration: none;
+}
+
+.dark-pilot .pilot-nav-link:hover {
+  background: var(--pilot-panel-muted);
+  color: var(--pilot-text);
+}
+
+/* The active destination is marked by an underline rule as well as colour. */
+.dark-pilot .pilot-nav-link-active {
+  box-shadow: inset 0 -2px 0 var(--pilot-green);
+  color: var(--pilot-green-text);
+}
+
+.dark-pilot .pilot-counter {
+  background: var(--pilot-canvas);
+  border: 1px solid var(--pilot-line-strong);
+  border-radius: 999px;
+  color: var(--pilot-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: auto;
+  padding: 0.25rem 0.75rem;
+  white-space: nowrap;
+}
+
+.dark-pilot .pilot-counter-value {
+  color: var(--pilot-green-text);
+  font-family: var(--mono);
+}
+
+/* ---------------------------------------------------------------------------
+   Specimen 02/03 — discovery: filter rail + ledger
+   --------------------------------------------------------------------------- */
+
+.dark-pilot .pilot-discovery {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 1024px) {
+  .dark-pilot .pilot-discovery {
+    grid-template-columns: 17rem minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.dark-pilot .pilot-filter-group {
+  margin-top: 1.25rem;
+}
+
+.dark-pilot .pilot-scope {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 0.375rem;
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .dark-pilot .pilot-scope {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* An unselected control is still a control: its boundary uses `line-strong`,
+   which clears the 3:1 non-text floor. The decorative `line` is reserved for
+   panel edges and row separators. (Production's light equivalents currently
+   sit below 3:1 here; treating this as a proposed improvement rather than a
+   like-for-like translation is deliberate.) */
+.dark-pilot .pilot-scope-option {
+  background: var(--pilot-canvas);
+  border: 1px solid var(--pilot-line-strong);
+  border-radius: 5px;
+  color: var(--pilot-text-muted);
+  cursor: pointer;
+  display: block;
+  height: 100%;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  width: 100%;
+}
+
+.dark-pilot .pilot-scope-option:hover {
+  border-color: var(--pilot-line-strong);
+}
+
+/* Selected controls change colour AND gain a left marker rule, so selection is
+   never carried by colour alone. Dimensions never change. */
+.dark-pilot .pilot-scope-option[aria-pressed="true"] {
+  background: var(--pilot-green-selected);
+  border-color: var(--pilot-green);
+  box-shadow: inset 3px 0 0 var(--pilot-green);
+  color: var(--pilot-green-text);
+}
+
+.dark-pilot .pilot-scope-name {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.dark-pilot .pilot-scope-desc {
+  color: var(--pilot-text-soft);
+  display: block;
+  font-size: 0.75rem;
+  margin-top: 0.125rem;
+}
+
+.dark-pilot .pilot-age-band {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.375rem;
+}
+
+.dark-pilot .pilot-pill {
+  background: var(--pilot-canvas);
+  border: 1px solid var(--pilot-line-strong);
+  border-radius: 999px;
+  color: var(--pilot-text-muted);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.375rem 0.75rem;
+}
+
+.dark-pilot .pilot-pill[aria-pressed="true"] {
+  background: var(--pilot-green-selected);
+  border-color: var(--pilot-green);
+  color: var(--pilot-green-text);
+}
+
+.dark-pilot .pilot-field {
+  display: block;
+  margin-top: 0.75rem;
+}
+
+.dark-pilot .pilot-field .pilot-label {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.dark-pilot .pilot-ledger {
+  background: var(--pilot-panel);
+  border: 1px solid var(--pilot-line);
+  border-radius: 6px;
+}
+
+.dark-pilot .pilot-ledger-meta {
+  align-items: baseline;
+  color: var(--pilot-text-soft);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.8125rem;
+  gap: 0.25rem 1rem;
+  justify-content: space-between;
+  margin-bottom: 0.625rem;
+}
+
+.dark-pilot .pilot-row + .pilot-row {
+  border-top: 1px solid var(--pilot-line);
+}
+
+.dark-pilot .pilot-row {
+  padding: 0.875rem 1rem;
+}
+
+/* Mirrors the production `.ledger-row` geometry: three structural regions with
+   FIXED hero and rail tracks, so every RoleFit divider and action rail lines up
+   down the ledger whatever the role name's length. */
+@media (min-width: 1024px) {
+  .dark-pilot .pilot-row {
+    align-items: start;
+    column-gap: 1.25rem;
+    display: grid;
+    grid-template-areas:
+      "identity hero rail"
+      "status   hero rail";
+    grid-template-columns: minmax(0, 1fr) 8rem 9.5rem;
+    grid-template-rows: auto 1fr;
+  }
+  .dark-pilot .pilot-row-header {
+    display: contents;
+  }
+  .dark-pilot .pilot-identity {
+    grid-area: identity;
+  }
+  .dark-pilot .pilot-hero {
+    align-self: center;
+    border-left: 1px solid var(--pilot-line);
+    grid-area: hero;
+    padding-left: 1.25rem;
+    text-align: left;
+  }
+  .dark-pilot .pilot-statuses {
+    grid-area: status;
+  }
+  .dark-pilot .pilot-rail {
+    align-self: stretch;
+    grid-area: rail;
+    margin-top: 0;
+  }
+}
+
+.dark-pilot .pilot-row-header {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  justify-content: space-between;
+}
+
+.dark-pilot .pilot-identity {
+  flex: 1 1 11rem;
+  min-width: 0;
+}
+
+.dark-pilot .pilot-player-name {
+  color: var(--pilot-text);
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  text-decoration: none;
+}
+
+.dark-pilot .pilot-player-name:hover {
+  text-decoration: underline;
+}
+
+.dark-pilot .pilot-context {
+  color: var(--pilot-text-muted);
+  font-size: 0.8125rem;
+  margin-top: 0.125rem;
+}
+
+.dark-pilot .pilot-hero {
+  flex-shrink: 0;
+  min-width: 0;
+  text-align: right;
+}
+
+.dark-pilot .pilot-score {
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.dark-pilot .pilot-score-caption {
+  color: var(--pilot-text-soft);
+  font-size: 0.6875rem;
+  margin-top: 0.25rem;
+}
+
+/* Role captions may only break between words, so hyphenated role names
+   ("Deep-Lying", "Ball-Winning") stay intact and nothing is truncated. */
+.dark-pilot .pilot-word {
+  white-space: nowrap;
+}
+
+.dark-pilot .pilot-statuses {
+  margin-top: 0.625rem;
+  min-width: 0;
+}
+
+.dark-pilot .pilot-statuses > * + * {
+  margin-top: 0.375rem;
+}
+
+/* Two equal action regions in one hairline box: two columns below lg, two rows
+   at lg+. 44px minimum target either way. */
+.dark-pilot .pilot-rail {
+  margin-top: 0.75rem;
+}
+
+.dark-pilot .pilot-rail-box {
+  border: 1px solid var(--pilot-line-strong);
+  border-radius: 2px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  height: 100%;
+  overflow: hidden;
+}
+
+.dark-pilot .pilot-rail-box > :first-child {
+  border-right: 1px solid var(--pilot-line-strong);
+}
+
+@media (min-width: 1024px) {
+  .dark-pilot .pilot-rail-box {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+  .dark-pilot .pilot-rail-box > :first-child {
+    border-bottom: 1px solid var(--pilot-line-strong);
+    border-right: 0;
+  }
+}
+
+.dark-pilot .pilot-rail-action {
+  align-items: center;
+  background: var(--pilot-panel);
+  color: var(--pilot-text);
+  cursor: pointer;
+  display: flex;
+  font-size: 0.875rem;
+  font-weight: 600;
+  gap: 0.5rem;
+  height: 100%;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 0.5rem;
+  width: 100%;
+}
+
+.dark-pilot .pilot-rail-action:hover {
+  background: var(--pilot-panel-muted);
+}
+
+/* Selected state changes background plus an inset marker only — never a
+   dimension — so toggling cannot reflow the rail. */
+.dark-pilot .pilot-rail-action[aria-pressed="true"] {
+  background: var(--pilot-green-selected);
+  box-shadow: inset 3px 0 0 var(--pilot-green);
+  color: var(--pilot-green-text);
+}
+
+/* ---------------------------------------------------------------------------
+   Specimen 04 — Recruitment Desk excerpt
+   --------------------------------------------------------------------------- */
+
+.dark-pilot .pilot-desk {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 1024px) {
+  .dark-pilot .pilot-desk {
+    grid-template-columns: 19rem minmax(0, 20rem) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.dark-pilot .pilot-role-tabs {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 640px) {
+  .dark-pilot .pilot-role-tabs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.dark-pilot .pilot-role-tab {
+  background: var(--pilot-panel);
+  border: 1px solid var(--pilot-line-strong);
+  border-radius: 4px;
+  color: var(--pilot-text-muted);
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  min-height: 44px;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.dark-pilot .pilot-role-tab[aria-selected="true"] {
+  background: var(--pilot-green-selected);
+  border-color: var(--pilot-green);
+  box-shadow: inset 0 -3px 0 var(--pilot-green);
+  color: var(--pilot-green-text);
+}
+
+/* THE signature surface. Elevation on dark = a lighter surface and a brighter
+   hairline, not a shadow. Nothing else in the pilot gets this treatment. */
+.dark-pilot .pilot-territory {
+  background: var(--pilot-territory-surface);
+  border: 1px solid var(--pilot-line-strong);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.dark-pilot .pilot-pitch {
+  aspect-ratio: 300 / 430;
+  margin: 0 auto;
+  max-width: 20rem;
+  position: relative;
+  width: 100%;
+}
+
+.dark-pilot .pilot-pitch svg {
+  height: 100%;
+  inset: 0;
+  position: absolute;
+  width: 100%;
+}
+
+/* A zone is a square-cornered territory whose FILL BRIGHTNESS is the magnitude
+   channel, quantised to ScoutBoy's own six score bands. Discrete steps sit
+   ~5 L* apart, versus ~1 L* for the mowing stripes, so the data is roughly
+   4.6x louder than the decoration — a continuous ramp made a 13-point score gap
+   quieter than the lawn texture. Square corners so the overlay speaks the same
+   geometric language as the pitch markings underneath it. */
+.dark-pilot .pilot-zone {
+  align-items: center;
+  border: 1px solid rgba(226, 234, 224, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  justify-content: center;
+  padding: 2px;
+  position: absolute;
+  text-align: center;
+}
+
+/* The label rides on its own solid plate, so its contrast is fixed at 13.5:1
+   regardless of the zone brightness behind it. */
+.dark-pilot .pilot-zone-tab {
+  background: var(--pilot-pitch-tab);
+  max-width: 100%;
+  padding: 2px 4px;
+}
+
+.dark-pilot .pilot-zone-label {
+  color: var(--pilot-text);
+  display: block;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.dark-pilot .pilot-zone-score {
+  color: var(--pilot-text);
+  display: block;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.dark-pilot .pilot-zone-unknown {
+  color: var(--pilot-text);
+  display: block;
+  font-size: 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Evidence rows are hairline-separated rows on ONE panel, not seven nested
+   cards. Stacked bordered boxes read as elevation on a dark canvas, and
+   elevation is reserved for Role Territory. */
+.dark-pilot .pilot-evidence-list {
+  background: var(--pilot-panel);
+  border: 1px solid var(--pilot-line);
+  border-radius: 6px;
+}
+
+.dark-pilot .pilot-evidence-row {
+  display: block;
+  padding: 0.625rem 0.75rem;
+  text-align: left;
+  width: 100%;
+}
+
+.dark-pilot .pilot-evidence-row + .pilot-evidence-row {
+  border-top: 1px solid var(--pilot-line);
+}
+
+.dark-pilot .pilot-evidence-head {
+  align-items: baseline;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.dark-pilot .pilot-evidence-name {
+  color: var(--pilot-text);
+  font-weight: 600;
+}
+
+.dark-pilot .pilot-evidence-score {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.dark-pilot .pilot-evidence-meta {
+  color: var(--pilot-text-soft);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.6875rem;
+  gap: 0.125rem 0.75rem;
+  margin-top: 0.125rem;
+}
+
+.dark-pilot .pilot-evidence-detail {
+  color: var(--pilot-text-muted);
+  font-size: 0.6875rem;
+  margin-top: 0.375rem;
+}
+
+/* Notices carry a title word as well as a colour. */
+.dark-pilot .pilot-notice {
+  border: 1px solid;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  padding: 0.75rem 1rem;
+}
+
+.dark-pilot .pilot-notice-title {
+  font-weight: 600;
+}
+
+.dark-pilot .pilot-notice-body {
+  color: var(--pilot-text-muted);
+  margin-top: 0.25rem;
+}
+
+.dark-pilot .pilot-notice-neutral {
+  background: var(--pilot-panel);
+  border-color: var(--pilot-line-strong);
+}
+
+.dark-pilot .pilot-notice-neutral .pilot-notice-title {
+  color: var(--pilot-text);
+}
+
+/* ---------------------------------------------------------------------------
+   Specimen 05 — comparison excerpt
+   --------------------------------------------------------------------------- */
+
+.dark-pilot .pilot-compare {
+  display: grid;
+  gap: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 640px) {
+  .dark-pilot .pilot-compare {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* The central rule: two equal columns divided, never a card each. */
+  .dark-pilot .pilot-compare-side + .pilot-compare-side {
+    border-left: 1px solid var(--pilot-line);
+    border-top: 0;
+  }
+}
+
+.dark-pilot .pilot-compare-side {
+  min-width: 0;
+  padding: 1rem;
+}
+
+.dark-pilot .pilot-compare-side + .pilot-compare-side {
+  border-top: 1px solid var(--pilot-line);
+}
+
+.dark-pilot .pilot-compare-spine {
+  border-bottom: 1px solid var(--pilot-line);
+  padding: 1.25rem 1rem;
+  text-align: center;
+}
+
+/* The absence of a shared role is an honest finding, not a headline. It is set
+   in the muted ink so it does not become the loudest type on the page. */
+.dark-pilot .pilot-compare-spine h3 {
+  color: var(--pilot-text-muted);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.dark-pilot .pilot-compare-name {
+  color: var(--pilot-text);
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.dark-pilot .pilot-metric-row {
+  align-items: baseline;
+  border-top: 1px solid var(--pilot-line);
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: minmax(0, 1fr) 3.5rem 3.5rem;
+  padding: 0.375rem 0;
+}
+
+.dark-pilot .pilot-metric-label {
+  color: var(--pilot-text-muted);
+  font-size: 0.8125rem;
+  min-width: 0;
+}
+
+.dark-pilot .pilot-metric-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: right;
+}
+
+/* ---------------------------------------------------------------------------
+   Specimen 06 — token swatches
+   --------------------------------------------------------------------------- */
+
+.dark-pilot .pilot-swatches {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+}
+
+.dark-pilot .pilot-swatch {
+  background: var(--pilot-panel);
+  border: 1px solid var(--pilot-line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.dark-pilot .pilot-swatch-chip {
+  border-bottom: 1px solid var(--pilot-line);
+  height: 3rem;
+}
+
+.dark-pilot .pilot-swatch-body {
+  padding: 0.5rem 0.625rem;
+}
+
+.dark-pilot .pilot-swatch-name {
+  color: var(--pilot-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.dark-pilot .pilot-swatch-hex {
+  color: var(--pilot-text-soft);
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  margin-top: 0.125rem;
+}
+
+.dark-pilot .pilot-swatch-role {
+  color: var(--pilot-text-muted);
+  font-size: 0.6875rem;
+  margin-top: 0.25rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Decision ledger (closing section)
+   --------------------------------------------------------------------------- */
+
+.dark-pilot .pilot-decisions {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 900px) {
+  .dark-pilot .pilot-decisions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.dark-pilot .pilot-decisions h3 {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.dark-pilot .pilot-decisions ul {
+  color: var(--pilot-text-muted);
+  font-size: 0.8125rem;
+  list-style: none;
+  margin: 0.625rem 0 0;
+  padding: 0;
+}
+
+.dark-pilot .pilot-decisions li {
+  border-top: 1px solid var(--pilot-line);
+  padding: 0.5rem 0;
+}

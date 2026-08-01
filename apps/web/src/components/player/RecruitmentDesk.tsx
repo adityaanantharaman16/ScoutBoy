@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { Notice } from "@/components/common";
+import { DisplayTag, Notice } from "@/components/common";
 import { PlayerActionRow } from "@/components/common/PlayerActions";
 import { ConfidenceMeter } from "@/components/player/ConfidenceMeter";
 import { RoleSelector } from "@/components/player/RoleSelector";
@@ -18,7 +18,6 @@ import {
   evidenceStatusText,
   formatAge,
   formatScore,
-  marketLabelColor,
   marketLabelText,
   scoreColor,
 } from "@/lib/formatters";
@@ -47,7 +46,7 @@ function IdentityBlock({ card }: { card: PlayerCard }) {
         {card.season} / {id.club ?? "Club unknown"} / {id.league ?? "League unknown"}
       </p>
       <h1
-        className="font-serif text-3xl font-bold leading-tight text-ink sm:text-4xl"
+        className="tracking-tight text-3xl font-bold leading-tight text-ink sm:text-4xl"
         data-testid="player-name"
       >
         {id.canonical_name}
@@ -80,19 +79,18 @@ function SelectedRoleSummary({
   return (
     <div
       className="border border-line bg-paper-panel p-4"
-      style={{ borderRadius: 6 }}
       data-testid="selected-role-summary"
     >
       <div className="label">Selected Role RoleFit</div>
       <div className="mt-1 flex items-baseline gap-3">
-        <span className={`font-serif text-4xl font-bold leading-none ${scoreColor(summary?.final_score)}`}>
+        <span className={`tracking-tight text-4xl font-bold leading-none ${scoreColor(summary?.final_score)}`}>
           {formatScore(summary?.final_score)}
         </span>
         <span className="text-sm font-semibold text-ink">{summary?.display_name ?? "Unavailable"}</span>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
         {summary?.is_best ? (
-          <span className="chip border-pitch bg-[#e9f0ea] text-pitch-dark">Best-Rated Role</span>
+          <DisplayTag variant="role-status">Best-Rated Role</DisplayTag>
         ) : (
           <span className="text-ink-soft">Not this player&apos;s best-rated role</span>
         )}
@@ -129,7 +127,6 @@ function EvidenceContextRail({ card }: { card: PlayerCard }) {
     <details
       open
       className="h-full border border-line bg-paper-panel p-4"
-      style={{ borderRadius: 6 }}
       data-testid="evidence-context-rail"
     >
       <summary className="label cursor-pointer select-none">Evidence &amp; Context</summary>
@@ -150,7 +147,7 @@ function EvidenceContextRail({ card }: { card: PlayerCard }) {
         <div className="flex items-center justify-between gap-2">
           <span className="text-sm text-ink-muted">Market</span>
           {market ? (
-            <span className={`chip ${marketLabelColor(market.label)}`}>{marketLabelText(market.label)}</span>
+            <DisplayTag variant="market" value={market.label}>{marketLabelText(market.label)}</DisplayTag>
           ) : (
             <span className="text-sm text-ink-soft">No market data</span>
           )}
@@ -207,8 +204,8 @@ function TerritoryLoading() {
   return (
     <div className="territory-surface p-4" aria-hidden="true" data-testid="territory-loading">
       <div className="label mb-3">Role Territory</div>
-      <div className="mx-auto h-[300px] w-full max-w-[320px] rounded bg-paper-muted" style={{ borderRadius: 6 }} />
-      <div className="mt-3 h-3 w-3/4 rounded bg-paper-muted" />
+      <div className="mx-auto h-[300px] w-full max-w-[320px] bg-paper-muted" />
+      <div className="mt-3 h-3 w-3/4 bg-paper-muted" />
     </div>
   );
 }
@@ -298,7 +295,7 @@ export function RecruitmentDesk({
         role="tabpanel"
         aria-labelledby={`role-tab-${selectedKey}`}
         tabIndex={0}
-        className="scroll-mt-24 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pitch"
+        className="scroll-mt-24 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pitch"
       >
         {hasAnalysis ? (
           <div className="desk-analysis">

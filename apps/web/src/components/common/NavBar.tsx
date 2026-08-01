@@ -6,12 +6,14 @@ import { useState } from "react";
 
 import { useScoutingState } from "@/lib/state/scouting-state";
 
+// Test ids are declared, not derived from the label: the presentation copy is
+// "My Favorites" while the route, storage keys and stable id stay `shortlist`.
 const LINKS = [
-  { href: "/", label: "Discover" },
-  { href: "/roles/touchline_winger", label: "Leaderboards" },
-  { href: "/compare", label: "Compare" },
-  { href: "/shortlist", label: "Shortlist" },
-  { href: "/methodology", label: "Methodology" },
+  { href: "/", label: "Discover", testId: "nav-discover" },
+  { href: "/roles/touchline_winger", label: "Leaderboards", testId: "nav-leaderboards" },
+  { href: "/compare", label: "Compare", testId: "nav-compare" },
+  { href: "/shortlist", label: "My Favorites", testId: "nav-shortlist" },
+  { href: "/methodology", label: "Methodology", testId: "nav-methodology" },
 ];
 
 export function NavBar() {
@@ -25,9 +27,13 @@ export function NavBar() {
         className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3"
         aria-label="Primary"
       >
-        <Link href="/" className="font-serif text-xl font-bold tracking-tight text-ink no-underline">
+        {/* Typographic wordmark: weight + tight tracking carry it, no logo asset. */}
+        <Link
+          href="/"
+          className="text-xl font-extrabold tracking-[-0.03em] text-ink no-underline"
+        >
           ScoutBoy{" "}
-          <span className="ml-1 font-sans text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">
+          <span className="ml-1 text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">
             Recruitment
           </span>
         </Link>
@@ -60,10 +66,10 @@ export function NavBar() {
               <Link
                 key={l.href}
                 href={l.href}
-                className={`rounded px-2.5 py-1.5 font-semibold no-underline hover:bg-paper-muted hover:text-ink ${
+                className={`px-2.5 py-1.5 font-semibold no-underline hover:bg-paper-muted hover:text-ink ${
                   active ? "text-pitch-dark shadow-[inset_0_-2px_0_var(--pitch)]" : "text-ink-muted"
                 }`}
-                data-testid={`nav-${l.label.toLowerCase()}`}
+                data-testid={l.testId}
                 aria-current={active ? "page" : undefined}
                 onClick={() => setOpen(false)}
               >
@@ -73,14 +79,14 @@ export function NavBar() {
           })}
         </div>
 
-        {/* Shortlist counter — always visible, never wraps internally, keeps the
-            "saved on this device" wording. */}
+        {/* My Favorites counter — always visible, never wraps internally, keeps
+            the "saved on this device" wording. */}
         <div
           className="ml-auto whitespace-nowrap border border-line bg-paper px-3 py-1 text-xs font-semibold text-ink-muted"
-          style={{ borderRadius: 999 }}
+          data-testid="favorites-counter"
         >
-          Shortlist <span className="font-mono text-pitch-dark">{shortlistIds.length}</span> · saved on
-          this device
+          My Favorites <span className="font-mono text-pitch-dark">{shortlistIds.length}</span> ·
+          saved on this device
         </div>
       </nav>
     </header>

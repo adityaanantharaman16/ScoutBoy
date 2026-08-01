@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { ConfidenceBadge, StatBar } from "@/components/common";
+import { ConfidenceBadge, DisplayTag, StatBar } from "@/components/common";
 import type { RoleRatingSummary } from "@/lib/api/types";
 import { formatScore, scoreColor } from "@/lib/formatters";
 
@@ -12,7 +12,7 @@ export function RoleRatingsPanel({ ratings }: { ratings: RoleRatingSummary[] }) 
           <div>
             <div className="flex flex-wrap items-center gap-2 font-semibold text-ink">
               {r.display_name}
-              {r.is_best && <span className="chip border-pitch bg-[#e9f0ea] text-pitch-dark">Best</span>}
+              {r.is_best && <DisplayTag variant="role-status">Best</DisplayTag>}
             </div>
             <div className="text-[11px] text-ink-soft">
               {r.rank_in_peer_group ? `rank #${r.rank_in_peer_group} in peer group` : ""}
@@ -21,7 +21,7 @@ export function RoleRatingsPanel({ ratings }: { ratings: RoleRatingSummary[] }) 
           <div>
             <StatBar score={r.final_score} />
           </div>
-          <div className={`font-serif text-2xl font-bold ${scoreColor(r.final_score)}`}>
+          <div className={`tracking-tight text-2xl font-bold ${scoreColor(r.final_score)}`}>
             {formatScore(r.final_score)}
           </div>
           <div className="flex flex-wrap items-center gap-2">

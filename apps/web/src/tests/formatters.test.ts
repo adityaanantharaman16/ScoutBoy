@@ -7,7 +7,6 @@ import {
   formatEurRange,
   formatScore,
   marketLabelColor,
-  tierBadge,
   titleCase,
 } from "@/lib/formatters";
 
@@ -35,9 +34,9 @@ describe("formatters", () => {
     expect(confidenceLabel("unknown")).toMatch(/insufficient/i);
   });
 
-  it("maps market labels and tiers to distinct classes", () => {
+  it("maps market labels to distinct classes", () => {
     expect(marketLabelColor("inflated")).not.toBe(marketLabelColor("fair"));
-    expect(tierBadge("elite")).not.toBe(tierBadge("base"));
+    expect(marketLabelColor("high-risk")).not.toBe(marketLabelColor("inflated"));
   });
 
   it("title-cases keys", () => {

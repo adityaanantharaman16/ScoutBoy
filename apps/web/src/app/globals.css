@@ -30,8 +30,15 @@
   --pitch-line: rgba(244, 242, 234, 0.72);
   /* The single sanctioned elevation in the app, reserved for Role Territory. */
   --elevation-territory: 0 1px 2px rgba(24, 34, 25, 0.06), 0 10px 24px -14px rgba(24, 34, 25, 0.35);
-  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
-  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Scouting-ledger row geometry. Both tracks are explicit so the RoleFit
+     divider and the action rail sit at the same horizontal position on every
+     row, whatever the role name's length. */
+  --ledger-hero-w: 8rem;
+  --ledger-rail-w: 9.5rem;
+  /* One proportional family across the product: self-hosted Inter Variable, with
+     system faces behind it so a font-file failure degrades cleanly. */
+  --sans: "InterVariable", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
 }
 
@@ -81,31 +88,59 @@ a {
   outline: none;
 }
 
+/* ---------------------------------------------------------------------------
+   Sharp-corner production system
+   ---------------------------------------------------------------------------
+   Every rectangular UI box in the production app is literally 90 degrees: cards,
+   panels, bordered containers, ledgers, table shells, inputs, selects, buttons,
+   tabs, tags, banners, trays, skeletons and rectangular data-viz marks all
+   compute to `border-radius: 0`. This is expressed by giving the shared
+   primitives below a zero radius and by carrying NO radius declaration anywhere
+   else in production source — not a blanket `* { border-radius: 0 !important }`,
+   which would also flatten meaningful illustration geometry and the deferred
+   dark-mode pilot.
+
+   Shapes whose meaning requires a curve are untouched, because they are not
+   rectangles and never had a `border-radius`: the heart SVG, the pitch centre
+   circle / penalty arcs / spots, and any circular chart geometry.
+
+   There is exactly ONE rectangular exception, `.rail-box-discovery` (see below).
+   `src/tests/sharp-corners.test.tsx` enforces all of the above at source level.
+   --------------------------------------------------------------------------- */
+
 :focus-visible {
   outline: 2px solid var(--pitch);
   outline-offset: 2px;
-  border-radius: 2px;
+  border-radius: 0;
 }
 
 .card {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 0;
   @apply p-4;
 }
 
-.chip {
-  @apply inline-flex items-center gap-1 whitespace-nowrap border px-2 py-0.5 text-xs font-semibold;
-  border-radius: 999px;
+/* Invariant geometry for every semantic display tag (see DisplayTag.tsx). Square
+   90-degree corners, never capsule ends. A tag wraps as a whole unit inside a
+   flex-wrapping parent and may wrap internally at spaces so long labels stay
+   readable at 320px and 200% zoom — but never mid-word. */
+.display-tag {
+  border-radius: 0;
+  overflow-wrap: normal;
+  word-break: normal;
+  @apply inline-flex items-center gap-1 border px-2 py-0.5 text-xs font-semibold;
+}
+
+/* Two adjacent facts inside one tag box (the ledger's coverage/confidence and
+   market units). Same geometry, roomier padding, wraps internally when narrow. */
+.display-tag-compound {
+  @apply flex-wrap gap-x-2 gap-y-1 px-2 py-1;
 }
 
 .label {
   color: var(--ink-soft);
   @apply text-[11px] font-bold uppercase tracking-[0.12em];
-}
-
-.serif {
-  font-family: var(--serif);
 }
 
 .mono {
@@ -124,9 +159,34 @@ a {
 .input {
   background: var(--panel);
   border: 1px solid var(--line-strong);
-  border-radius: 4px;
+  border-radius: 0;
   color: var(--ink);
   @apply px-2.5 py-2 text-sm;
+}
+
+/* A native <select> keeps its rounded bezel in Safari/WebKit unless its platform
+   appearance is neutralized, so the outer border is drawn by us and stays square
+   in every engine. The element is still a real <select>: native keyboard
+   handling, the OS option list and screen-reader semantics are untouched, and a
+   painted chevron replaces the platform one so the control still reads as a
+   dropdown. */
+select.input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1.2 5 5.4 9 1.2' fill='none' stroke='%236e7a6f' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-position: right 0.55rem center;
+  background-repeat: no-repeat;
+  background-size: 10px 7px;
+  padding-right: 1.85rem;
+}
+
+/* The chevron is decoration; it must not sit on top of the option list Safari
+   renders for a multi-line select. */
+select.input[multiple],
+select.input[size]:not([size="1"]) {
+  background-image: none;
+  padding-right: 0.625rem;
 }
 
 .input:focus-visible {
@@ -137,7 +197,7 @@ a {
   appearance: none;
   background: var(--panel);
   border: 1px solid var(--line-strong);
-  border-radius: 5px;
+  border-radius: 0;
   color: var(--ink);
   cursor: pointer;
   @apply inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold;
@@ -176,7 +236,7 @@ a {
 .table-shell {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 0;
   overflow-x: auto;
 }
 
@@ -237,12 +297,118 @@ a {
   }
 }
 
+/* Scouting-ledger row (discovery results, My Favorites saved players). Below lg
+   it is a stacked ledger entry whose identity/RoleFit header wraps to a clean
+   stack when the two no longer fit. At lg+ it becomes three structural regions —
+   player information, the RoleFit hero, and the action rail — while staying one
+   row of a continuous ledger (no card of its own). Named areas keep placement
+   independent of DOM order, which is what lets the mobile header wrapper dissolve
+   via `lg:contents`. */
+@media (min-width: 1024px) {
+  .ledger-row {
+    display: grid;
+    /* Fixed hero and rail tracks: a content-sized track would let a long role
+       name widen the column and shift its divider out of line with the rows
+       above and below it. */
+    grid-template-columns: minmax(0, 1fr) var(--ledger-hero-w) var(--ledger-rail-w);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "identity hero rail"
+      "status   hero rail";
+    column-gap: 1.25rem;
+    align-items: start;
+  }
+  .ledger-identity {
+    grid-area: identity;
+    min-width: 0;
+  }
+  .ledger-status-stack {
+    grid-area: status;
+    min-width: 0;
+  }
+  /* The hero spans both content rows, so centring it inside the grid centres the
+     whole RoleFit group against the row's useful height. The role caption wraps
+     inside this fixed track and can never resize it. */
+  .ledger-hero {
+    grid-area: hero;
+    align-self: center;
+    min-width: 0;
+  }
+  .ledger-rail {
+    grid-area: rail;
+    align-self: stretch;
+  }
+}
+
+/* Two equal action regions in one hairline box: two columns below lg (each half
+   of the row width), two rows at lg+ (each half of the full-height rail). */
+.rail-box {
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  height: 100%;
+  overflow: hidden;
+}
+
+/* THE ONE SANCTIONED RECTANGULAR RADIUS IN PRODUCTION.
+   The Discovery heart/Compare action box was signed off with its existing 2px
+   geometry and is explicitly carried forward unchanged by the square-corner
+   migration. The modifier is deliberately separate from `.rail-box` so the
+   exception stays narrow: the My Favorites Remove/Compare rail reuses the same
+   shared component and does NOT opt in, so it renders square like everything
+   else. Do not apply this class anywhere but `PlayerActionRail`. */
+.rail-box-discovery {
+  border-radius: 2px;
+}
+
+.rail-box > :first-child {
+  border-right: 1px solid var(--line-strong);
+}
+
+@media (min-width: 1024px) {
+  .rail-box {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+  .rail-box > :first-child {
+    border-right: 0;
+    border-bottom: 1px solid var(--line-strong);
+  }
+}
+
+/* An action fills its half of the rail. `color` is the player-name ink so the
+   heart icon inherits it through currentColor. The selected state changes the
+   background and adds an inset marker only — never a dimension — so toggling a
+   player cannot reflow the rail. */
+.rail-action {
+  appearance: none;
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+  min-height: 44px;
+  @apply flex h-full w-full items-center justify-center gap-2 px-2 text-sm font-semibold;
+}
+
+.rail-action:hover {
+  background: var(--panel-muted);
+}
+
+.rail-action:active {
+  background: var(--track);
+}
+
+.rail-action[aria-pressed="true"] {
+  background: #e9f0ea;
+  box-shadow: inset 3px 0 0 var(--pitch);
+}
+
 /* Role Territory is the ONE elevated surface in ScoutBoy. Everything else keeps
    the flat, hairline-bordered treatment. */
 .territory-surface {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 0;
   box-shadow: var(--elevation-territory);
 }
 

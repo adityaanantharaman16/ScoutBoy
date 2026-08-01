@@ -1,0 +1,265 @@
+import { expect, test, type Page } from "@playwright/test";
+
+// The literal 90-degree production system, audited against COMPUTED styles
+// rather than class names, plus the Discovery filter/ledger composition that
+// motivated the pass. Shapes whose meaning is a curve (the heart icon, the pitch
+// circles/arcs) are asserted to survive.
+
+/**
+ * Every rectangular box on the page whose computed radius is not 0, excluding
+ * the one sanctioned exception. SVG geometry is skipped: a `<circle>` has no
+ * border-radius, and squaring illustration paths is explicitly not the goal.
+ */
+async function roundedBoxes(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const offenders: string[] = [];
+    for (const el of Array.from(document.querySelectorAll<HTMLElement>("body *"))) {
+      if (el instanceof SVGElement) continue;
+      // the approved Discovery heart/Compare rail keeps its 2px geometry
+      if (el.closest(".rail-box-discovery")) continue;
+      const s = getComputedStyle(el);
+      const corners = [
+        s.borderTopLeftRadius,
+        s.borderTopRightRadius,
+        s.borderBottomRightRadius,
+        s.borderBottomLeftRadius,
+      ];
+      if (corners.some((c) => c !== "" && parseFloat(c) > 0)) {
+        const id = el.dataset.testid ? `[${el.dataset.testid}]` : "";
+        offenders.push(`${el.tagName.toLowerCase()}${id}.${el.className} → ${corners.join(" ")}`);
+      }
+    }
+    return offenders;
+  });
+}
+
+async function pageOverflow(page: Page): Promise<number> {
+  return page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+}
+
+const SURFACES: Array<{ name: string; path: string; ready: string }> = [
+  { name: "discovery", path: "/", ready: '[data-testid="results-ledger"]' },
+  { name: "leaderboard", path: "/roles/touchline_winger", ready: 'table[data-testid="leaderboard-table"]' },
+  { name: "compare", path: "/compare", ready: '[data-testid="compare-a"]' },
+  { name: "favorites", path: "/shortlist", ready: "text=No players saved yet" },
+  { name: "methodology", path: "/methodology", ready: '[data-testid="methodology-contents"]' },
+];
+
+test.describe("Sharp-corner production system", () => {
+  for (const { name, path, ready } of SURFACES) {
+    test(`${name}: every rectangular box computes to a 0px radius`, async ({ page }) => {
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await page.goto(path);
+      await page.locator(ready).first().waitFor();
+      expect(await roundedBoxes(page), `rounded boxes on ${path}`).toEqual([]);
+    });
+  }
+
+  test("player dossier: header, selector, territory, evidence and panels are square", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/");
+    await page.getByTestId("player-result").first().click();
+    await page.getByTestId("player-card").waitFor();
+    await page.getByTestId("role-selector").waitFor();
+
+    // the surfaces the pass specifically targets are present before we audit
+    for (const id of [
+      "role-selector",
+      "selected-role-summary",
+      "evidence-context-rail",
+      "role-territory",
+      "role-evidence-list",
+      "market-panel",
+    ]) {
+      await expect(page.getByTestId(id).first()).toBeVisible();
+    }
+    expect(await roundedBoxes(page)).toEqual([]);
+  });
+
+  test("shared primitives compute to 0px on a real page", async ({ page }) => {
+    await page.goto("/");
+    await page.getByTestId("results-ledger").waitFor();
+    const radii = await page.evaluate(() => {
+      const read = (sel: string) => {
+        const el = document.querySelector(sel);
+        return el ? getComputedStyle(el).borderRadius : null;
+      };
+      return {
+        card: read(".card"),
+        input: read(".input"),
+        select: read("select.input"),
+        button: read(".btn"),
+        tag: read(".display-tag"),
+        ledger: read('[data-testid="results-ledger"]'),
+      };
+    });
+    for (const [key, value] of Object.entries(radii)) {
+      expect(value, `${key} radius`).toBe("0px");
+    }
+  });
+
+  test("the Discovery heart/Compare rail keeps its approved geometry", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/");
+    const rail = page.getByTestId("result-row").first().getByTestId("action-rail-box");
+    await expect(rail).toBeVisible();
+    await expect(rail).toHaveClass(/rail-box-discovery/);
+    await expect(rail).toHaveCSS("border-radius", "2px");
+
+    // My Favorites reuses the component without the exception
+    await page.getByTestId("result-row").first().getByTestId("favorite-action").click();
+    await page.goto("/shortlist");
+    const saved = page.getByTestId("shortlist-record").first().getByTestId("action-rail-box");
+    await expect(saved).toBeVisible();
+    await expect(saved).not.toHaveClass(/rail-box-discovery/);
+    await expect(saved).toHaveCSS("border-radius", "0px");
+  });
+
+  test("meaningful curves survive: the heart icon and the pitch markings", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("favorite-heart").first()).toBeVisible();
+    const heartPath = await page
+      .getByTestId("favorite-heart")
+      .first()
+      .locator("path")
+      .getAttribute("d");
+    expect(heartPath).toMatch(/a4\.85 4\.85 0/);
+
+    await page.getByTestId("player-result").first().click();
+    await page.getByTestId("role-territory").waitFor();
+    const pitch = page.getByTestId("role-territory");
+    // centre circle, penalty spots and both penalty-area arcs are still drawn
+    expect(await pitch.locator("svg circle").count()).toBeGreaterThanOrEqual(4);
+    expect(await pitch.locator('svg path[d*="A 46 46"]').count()).toBe(2);
+  });
+});
+
+test.describe("Discovery filter rail & ledger alignment", () => {
+  test("the filter panel and the results ledger share a top edge on desktop", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    await page.getByTestId("results-ledger").waitFor();
+
+    const rail = (await page.getByTestId("filter-rail").boundingBox())!;
+    const ledger = (await page.getByTestId("results-ledger").boundingBox())!;
+    expect(Math.abs(rail.y - ledger.y)).toBeLessThanOrEqual(1);
+
+    // …and the summary is the ledger's own header row, inside the border
+    const summary = (await page.getByTestId("result-count").boundingBox())!;
+    expect(summary.y).toBeGreaterThanOrEqual(ledger.y);
+    const firstRow = (await page.getByTestId("result-row").first().boundingBox())!;
+    expect(summary.y + summary.height).toBeLessThanOrEqual(firstRow.y + 1);
+  });
+
+  test("the compact rail is sticky at desktop and stays inside a laptop viewport", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto("/");
+    await page.getByTestId("results-ledger").waitFor();
+
+    const column = page.getByTestId("filter-column");
+    await expect(column).toHaveCSS("position", "sticky");
+
+    // materially shorter than the viewport, so the sticky panel can be wholly
+    // visible once its offset engages — no nested scroller needed
+    const rail = page.getByTestId("filter-rail");
+    const before = (await rail.boundingBox())!;
+    expect(before.height).toBeLessThanOrEqual(720 - 16);
+
+    // it follows the page while the ledger scrolls, then pins…
+    await page.mouse.wheel(0, 1200);
+    await page.waitForTimeout(300);
+    const stuck = (await rail.boundingBox())!;
+    expect(stuck.y).toBeGreaterThan(before.y - 1200);
+    // …fully inside the viewport: no control is trapped below the fold
+    expect(stuck.y).toBeGreaterThanOrEqual(0);
+    expect(stuck.y + stuck.height).toBeLessThanOrEqual(720);
+    await expect(page.getByTestId("search-input")).toBeInViewport();
+    await expect(page.getByLabel("Sort")).toBeInViewport();
+  });
+
+  test("the rail is not sticky below the desktop breakpoint", async ({ page }) => {
+    for (const width of [390, 768]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto("/");
+      await page.getByTestId("results-ledger").waitFor();
+      await expect(page.getByTestId("filter-column")).toHaveCSS("position", "static");
+      // normal document flow: the rail sits above the ledger
+      const rail = (await page.getByTestId("filter-rail").boundingBox())!;
+      const ledger = (await page.getByTestId("results-ledger").boundingBox())!;
+      expect(rail.y + rail.height).toBeLessThanOrEqual(ledger.y + 1);
+    }
+  });
+
+  test("scope and age band are native selectors with URL-backed state", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/");
+    await page.getByTestId("results-ledger").waitFor();
+
+    const scope = page.getByTestId("scope-filter");
+    const age = page.getByTestId("age-band-filter");
+    for (const control of [scope, age]) {
+      await expect(control).toHaveJSProperty("tagName", "SELECT");
+    }
+    await expect(page.getByTestId("scope-description")).toBeVisible();
+
+    // page off the first page first, so the reset is actually observable
+    const next = page.getByRole("button", { name: "Next" });
+    if (await next.isEnabled()) {
+      await next.click();
+      await expect(page).toHaveURL(/page=2/);
+    }
+
+    await scope.selectOption("all_records");
+    await expect(page).toHaveURL(/scope=all_records/);
+    await expect(page).not.toHaveURL(/page=/);
+    await expect(page.getByTestId("scope-description")).toHaveText(
+      "Every player with a usable season profile.",
+    );
+
+    await age.selectOption("u23");
+    await expect(page).toHaveURL(/age_band=u23/);
+    await expect(age).toHaveValue("u23");
+  });
+
+  for (const [label, width] of [["320px", 320], ["390px", 390], ["tablet", 768], ["desktop", 1280]] as const) {
+    test(`no horizontal overflow and no rounded box at ${label}`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/");
+      await page.getByTestId("results-ledger").waitFor();
+      expect(await pageOverflow(page)).toBeLessThanOrEqual(1);
+      expect(await roundedBoxes(page)).toEqual([]);
+    });
+  }
+});
+
+test.describe("Comparison copy", () => {
+  test("shared compare actions read exactly Compare", async ({ page }) => {
+    await page.goto("/");
+    await page.getByTestId("results-ledger").waitFor();
+    const action = page.getByTestId("compare-action").first();
+    await expect(action).toHaveText("Compare");
+
+    await page.getByTestId("player-result").first().click();
+    await page.getByTestId("player-card").waitFor();
+    const profileCompare = page.getByRole("button", { name: /to compare queue$/ }).first();
+    await expect(profileCompare).toHaveText("Compare");
+    await expect(page.locator("body")).not.toContainText("vs Compare");
+  });
+
+  test("the compare surface reads Player 1 / Player 2 and keeps its a / b params", async ({ page }) => {
+    await page.goto("/compare");
+    await expect(page.getByText("Player 1")).toBeVisible();
+    await expect(page.getByText("Player 2")).toBeVisible();
+    await expect(page.locator("body")).not.toContainText(/Player [AB]\b/);
+    await expect(page.getByTestId("compare-a")).toBeVisible();
+    await expect(page.getByTestId("compare-b")).toBeVisible();
+
+    await page.getByTestId("compare-a").selectOption({ index: 1 });
+    await page.getByTestId("compare-b").selectOption({ index: 2 });
+    await page.getByTestId("compare-table").waitFor();
+    await expect(page.locator("body")).not.toContainText(/Player [AB]\b/);
+    expect(await roundedBoxes(page)).toEqual([]);
+  });
+});

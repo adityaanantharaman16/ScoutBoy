@@ -201,13 +201,12 @@ export function RoleTerritoryPitch({
               return (
                 <div
                   key={z.key}
-                  className="absolute flex flex-col items-center justify-center rounded text-center"
+                  className="absolute flex flex-col items-center justify-center text-center"
                   style={{
                     left: `${z.leftPct}%`,
                     top: `${z.topPct}%`,
                     width: `${z.widthPct}%`,
                     height: `${z.heightPct}%`,
-                    borderRadius: 7,
                     padding: "2px 4px",
                     background: z.unknown
                       ? "repeating-linear-gradient(45deg, rgba(244,242,234,0.34) 0 2px, transparent 2px 6px)"
@@ -257,7 +256,7 @@ export function RoleTerritoryPitch({
           data-testid="territory-legend"
         >
           <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden="true" className="inline-flex overflow-hidden rounded-sm border border-[rgba(244,242,234,0.4)]">
+            <span aria-hidden="true" className="inline-flex overflow-hidden border border-[rgba(244,242,234,0.4)]">
               <span className="inline-block h-3 w-3" style={{ background: "rgba(46,160,110,0.22)" }} />
               <span className="inline-block h-3 w-3" style={{ background: "rgba(46,160,110,0.55)" }} />
             </span>
@@ -266,7 +265,7 @@ export function RoleTerritoryPitch({
           <span className="inline-flex items-center gap-1.5">
             <span
               aria-hidden="true"
-              className="inline-block h-3 w-3 rounded-sm border border-dashed border-line-strong"
+              className="inline-block h-3 w-3 border border-dashed border-line-strong"
               style={{
                 backgroundImage:
                   "repeating-linear-gradient(45deg, var(--line-strong) 0 1.5px, transparent 1.5px 4px)",
@@ -309,10 +308,9 @@ export function RoleEvidenceList({
                 aria-label={`${titleCase(g.key)}: ${
                   unknown ? "unknown, no measured evidence" : `score ${Math.round(g.group_score as number)}`
                 }, role weight ${Math.round(g.normalized_weight * 100)} percent, ${territoryLabel(terr)}`}
-                className={`w-full scroll-mt-24 rounded border px-3 py-2 text-left transition ${
+                className={`w-full scroll-mt-24 border px-3 py-2 text-left transition ${
                   isActive ? "border-line-strong bg-paper-muted" : "border-line bg-paper-panel hover:border-line-strong"
                 }`}
-                style={{ borderRadius: 6 }}
                 onMouseEnter={() => onHover(g.key)}
                 onMouseLeave={() => onHover(null)}
                 onFocus={() => onHover(g.key)}
@@ -321,7 +319,7 @@ export function RoleEvidenceList({
               >
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="font-semibold text-ink">{titleCase(g.key)}</span>
-                  <span className={`font-serif text-xl font-bold ${scoreColor(g.group_score)}`}>
+                  <span className={`tracking-tight text-xl font-bold ${scoreColor(g.group_score)}`}>
                     {unknown ? "unknown" : Math.round(g.group_score as number)}
                   </span>
                 </div>

@@ -17,8 +17,9 @@ const config: Config = {
         track: "#e4dfce",
       },
       fontFamily: {
-        serif: ["Iowan Old Style", "Palatino Linotype", "Palatino", "Georgia", "Times New Roman", "serif"],
-        sans: ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif"],
+        // One proportional family (self-hosted Inter Variable) plus the existing
+        // mono stack for deliberately tabular/numeric presentation.
+        sans: ["InterVariable", "Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif"],
         mono: ["ui-monospace", "SF Mono", "Cascadia Mono", "Menlo", "Consolas", "monospace"],
       },
     },

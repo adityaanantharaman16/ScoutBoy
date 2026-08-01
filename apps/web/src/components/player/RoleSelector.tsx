@@ -79,18 +79,17 @@ export function RoleSelector({
             aria-selected={selected}
             aria-controls={panelId}
             tabIndex={selected ? 0 : -1}
-            className={`flex w-40 shrink-0 snap-start flex-col gap-1 rounded border px-3 py-2 text-left transition sm:w-auto ${
+            className={`flex w-40 shrink-0 snap-start flex-col gap-1 border px-3 py-2 text-left transition sm:w-auto ${
               selected
                 ? "border-pitch bg-[#e9f0ea] text-pitch-dark shadow-[inset_0_-2px_0_var(--pitch)]"
                 : "border-line bg-paper-panel text-ink-muted hover:border-line-strong"
             }`}
-            style={{ borderRadius: 6 }}
             onClick={() => onSelect(r.role_key)}
             onKeyDown={(e) => onKeyDown(e, i)}
           >
             <span className="truncate font-semibold text-ink">{r.display_name}</span>
             <span className="flex items-center justify-between gap-2">
-              <span className={`font-serif text-lg font-bold ${scoreColor(r.final_score)}`}>
+              <span className={`tracking-tight text-lg font-bold ${scoreColor(r.final_score)}`}>
                 {formatScore(r.final_score)}
               </span>
               <ConfidenceMeter level={r.confidence} showWord={false} />

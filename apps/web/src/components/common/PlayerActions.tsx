@@ -44,9 +44,122 @@ export function CompareQueueButton({
       aria-label={`${active ? "Remove" : "Add"} ${player.name} ${active ? "from" : "to"} compare queue`}
       onClick={() => toggleCompare(player)}
     >
-      <span aria-hidden="true">vs</span>
+      {/* Label only — the decorative "vs" glyph is gone; the accessible name
+          above still names the player and the queue action. */}
       <span>{active ? "Queued" : "Compare"}</span>
     </button>
+  );
+}
+
+/**
+ * Outlined vs filled heart at identical geometry — the selected state toggles the
+ * fill, never the icon's footprint. Inline and monochrome via `currentColor`.
+ */
+function HeartIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      aria-hidden="true"
+      focusable="false"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      data-testid="favorite-heart"
+      data-filled={filled ? "true" : "false"}
+    >
+      <path d="M12 20.6 4.7 13.3a4.85 4.85 0 0 1 0-6.9 4.75 4.75 0 0 1 6.6 0l.7.7.7-.7a4.75 4.75 0 0 1 6.6 0 4.85 4.85 0 0 1 0 6.9Z" />
+    </svg>
+  );
+}
+
+/**
+ * Discovery-rail favourite action: the same device-local shortlist state as
+ * {@link ShortlistButton}, presented as an icon-only region of the rail.
+ */
+export function FavoriteHeartButton({ player }: { player: PlayerRef }) {
+  const { isShortlisted, toggleShortlist } = useScoutingState();
+  const active = isShortlisted(player.id);
+  return (
+    <button
+      type="button"
+      className="rail-action"
+      aria-pressed={active}
+      aria-label={`${active ? "Remove" : "Add"} ${player.name} ${active ? "from" : "to"} My Favorites`}
+      data-testid="favorite-action"
+      onClick={() => toggleShortlist(player)}
+    >
+      <HeartIcon filled={active} />
+    </button>
+  );
+}
+
+/** Discovery-rail compare action: label only, same compare-queue behaviour. */
+export function CompareRailButton({ player }: { player: PlayerRef }) {
+  const { isQueuedForCompare, toggleCompare } = useScoutingState();
+  const active = isQueuedForCompare(player.id);
+  return (
+    <button
+      type="button"
+      className="rail-action"
+      aria-pressed={active}
+      aria-label={`${active ? "Remove" : "Add"} ${player.name} ${active ? "from" : "to"} compare queue`}
+      data-testid="compare-action"
+      onClick={() => toggleCompare(player)}
+    >
+      Compare
+    </button>
+  );
+}
+
+/**
+ * Discovery action rail — a presentation variant of {@link PlayerActionRow}, not
+ * a replacement: two equal action regions in one hairline box (a full-height
+ * two-row rail at lg+, two equal-width columns below it). Shared state and
+ * accessibility semantics are reused; only the composition differs.
+ *
+ * `rail-box-discovery` is the single sanctioned rectangular radius exception in
+ * production: this box was approved with its existing 2px geometry and keeps it.
+ * The modifier is applied HERE ONLY — {@link SavedPlayerActionRail} shares the
+ * component but not the exception, so My Favorites renders square.
+ */
+export function PlayerActionRail({ player }: { player: PlayerRef }) {
+  return (
+    <div className="rail-box rail-box-discovery" data-testid="action-rail-box">
+      <FavoriteHeartButton player={player} />
+      <CompareRailButton player={player} />
+    </div>
+  );
+}
+
+/**
+ * My Favorites rail: the player is already saved, so the direct action is Remove
+ * rather than a favourite toggle. Compare reuses the shared queue behaviour and
+ * keeps its pressed state, so toggling it cannot shift the row's layout.
+ */
+export function SavedPlayerActionRail({
+  player,
+  onRemove,
+}: {
+  player: PlayerRef;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="rail-box" data-testid="action-rail-box">
+      <button
+        type="button"
+        className="rail-action"
+        aria-label={`Remove ${player.name} from My Favorites`}
+        data-testid="remove-action"
+        onClick={onRemove}
+      >
+        Remove
+      </button>
+      <CompareRailButton player={player} />
+    </div>
   );
 }
 
@@ -77,7 +190,6 @@ export function CompareTray() {
   return (
     <aside
       className="fixed inset-x-3 bottom-3 z-40 mx-auto max-w-5xl border border-line-strong bg-ink px-3 py-3 text-paper shadow-sm sm:px-4"
-      style={{ borderRadius: 6 }}
       aria-label="Compare queue"
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -88,7 +200,6 @@ export function CompareTray() {
               <span
                 key={player.id}
                 className="inline-flex items-center gap-2 border border-paper/20 px-2 py-1 text-sm"
-                style={{ borderRadius: 4 }}
               >
                 {player.name}
                 <button

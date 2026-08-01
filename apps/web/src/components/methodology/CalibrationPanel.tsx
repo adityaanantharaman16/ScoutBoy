@@ -1,3 +1,4 @@
+import { DisplayTag } from "@/components/common/DisplayTag";
 import type { Methodology } from "@/lib/api/types";
 import { titleCase } from "@/lib/formatters";
 
@@ -13,12 +14,8 @@ export function CalibrationPanel({ calibration }: { calibration: Calibration }) 
     return (
       <div className="card" data-testid="calibration-unavailable">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="chip border-line bg-paper-muted text-[11px] text-ink-muted">
-            Status: Inconclusive
-          </span>
-          <span className="chip border-line bg-paper-muted text-[11px] text-ink-muted">
-            Evidence Unavailable
-          </span>
+          <DisplayTag variant="neutral">Status: Inconclusive</DisplayTag>
+          <DisplayTag variant="neutral">Evidence Unavailable</DisplayTag>
         </div>
         <p className="mt-2 text-sm text-ink-muted">
           {calibration?.methodology_note ??
@@ -36,18 +33,16 @@ export function CalibrationPanel({ calibration }: { calibration: Calibration }) 
   return (
     <div className="card" data-testid="calibration-available">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="chip border-pitch bg-[#e9f0ea] text-pitch-dark">
+        <DisplayTag variant="role-status">
           Suite {calibration.suite_id} {calibration.suite_version}
-        </span>
-        <span className="chip border-line bg-paper-muted text-[11px] text-ink-muted">
-          Status: {titleCase(calibration.status)}
-        </span>
-        <span className="chip border-line bg-paper-muted text-[11px] text-ink-muted">
+        </DisplayTag>
+        <DisplayTag variant="neutral">Status: {titleCase(calibration.status)}</DisplayTag>
+        <DisplayTag variant="neutral">
           Benchmarks {calibration.benchmarks.passed}/{calibration.benchmarks.total} Pass
-        </span>
-        <span className="chip border-line bg-paper-muted text-[11px] text-ink-muted">
+        </DisplayTag>
+        <DisplayTag variant="neutral">
           Guardrails {calibration.scenarios.passed}/{calibration.scenarios.total} Pass
-        </span>
+        </DisplayTag>
       </div>
       <p className="mt-2 text-sm text-ink-muted">{calibration.methodology_note}</p>
       <p className="mt-2 text-xs text-ink-soft">

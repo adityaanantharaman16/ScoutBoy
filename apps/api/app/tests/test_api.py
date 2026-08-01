@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from unittest.mock import patch
 
 import pytest
@@ -11,6 +12,16 @@ from app.core.config import Settings
 def _first_att_id(client):
     r = client.get("/api/players?position_group=ATT&page_size=5")
     return r.json()["items"][0]["id"]
+
+
+def _two_att_ids(client):
+    items = client.get("/api/players?position_group=ATT&page_size=2").json()["items"]
+    return [i["id"] for i in items]
+
+
+def _role_scores(side) -> dict:
+    """Stored role_key -> final_score for one comparison side."""
+    return {r["role_key"]: r["final_score"] for r in side["role_ratings"]}
 
 
 def _insert_profile_only_player(db_session, *, name="Profile Only Defender", birth_date=None):
@@ -306,9 +317,7 @@ def test_leaderboard_unknown_role_404(client):
 
 
 def test_compare_two_players(client):
-    ids = [
-        i["id"] for i in client.get("/api/players?position_group=ATT&page_size=2").json()["items"]
-    ]
+    ids = _two_att_ids(client)
     r = client.get(f"/api/compare?player_a={ids[0]}&player_b={ids[1]}&role_key=touchline_winger")
     assert r.status_code == 200
     body = r.json()
@@ -317,9 +326,135 @@ def test_compare_two_players(client):
     assert body["why_higher"]
 
 
+def test_compare_automatic_role_is_rated_for_both_players(client):
+    ids = _two_att_ids(client)
+    body = client.get(f"/api/compare?player_a={ids[0]}&player_b={ids[1]}").json()
+    role_key = body["role_key"]
+    assert role_key and body["role_display"]
+
+    a_scores = _role_scores(body["player_a"])
+    b_scores = _role_scores(body["player_b"])
+    assert role_key in a_scores and role_key in b_scores
+
+    # the weakest side's stored fit is maximised across the shared candidates
+    shared = set(a_scores) & set(b_scores)
+    assert min(a_scores[role_key], b_scores[role_key]) == max(
+        min(a_scores[k], b_scores[k]) for k in shared
+    )
+
+    # role_comparison echoes the stored ratings — nothing is recomputed
+    stored_a = next(r for r in body["player_a"]["role_ratings"] if r["role_key"] == role_key)
+    stored_b = next(r for r in body["player_b"]["role_ratings"] if r["role_key"] == role_key)
+    rc = body["role_comparison"]
+    assert rc["role_key"] == role_key
+    assert rc["a"] == {
+        "final_score": stored_a["final_score"],
+        "confidence": stored_a["confidence"],
+    }
+    assert rc["b"] == {
+        "final_score": stored_b["final_score"],
+        "confidence": stored_b["confidence"],
+    }
+
+    # surrounding evidence stays available
+    assert body["stat_rows"] and body["why_higher"]
+    assert body["player_a"]["context"] and body["player_b"]["context"]
+
+
+def test_compare_automatic_role_is_order_independent(client):
+    ids = _two_att_ids(client)
+    forward = client.get(f"/api/compare?player_a={ids[0]}&player_b={ids[1]}").json()
+    reverse = client.get(f"/api/compare?player_a={ids[1]}&player_b={ids[0]}").json()
+    assert forward["role_key"] is not None
+    assert forward["role_key"] == reverse["role_key"]
+    assert forward["role_display"] == reverse["role_display"]
+    # the two sides swap, so the stored scores swap with them
+    assert forward["role_comparison"]["a"] == reverse["role_comparison"]["b"]
+    assert forward["role_comparison"]["b"] == reverse["role_comparison"]["a"]
+
+
+def test_compare_explicit_role_overrides_automatic_selection(client):
+    ids = _two_att_ids(client)
+    auto = client.get(f"/api/compare?player_a={ids[0]}&player_b={ids[1]}").json()
+    shared = set(_role_scores(auto["player_a"])) & set(_role_scores(auto["player_b"]))
+    others = sorted(shared - {auto["role_key"]})
+    assert others, "sample attackers should share more than one rated role"
+    requested = others[0]
+    body = client.get(
+        f"/api/compare?player_a={ids[0]}&player_b={ids[1]}&role_key={requested}"
+    ).json()
+    assert body["role_key"] == requested
+    assert body["role_comparison"]["role_key"] == requested
+
+
+def test_compare_explicit_role_keeps_an_unrated_side_honest(client, db_session):
+    unrated = _insert_profile_only_player(db_session, name="Compare Explicit Unrated")
+    rated = _first_att_id(client)
+    body = client.get(
+        f"/api/compare?player_a={rated}&player_b={unrated}&role_key=touchline_winger"
+    ).json()
+    assert body["role_key"] == "touchline_winger"
+    assert body["role_display"]
+    assert body["role_comparison"] == {}
+    assert body["why_higher"] == "Not enough data to compare in a shared role."
+    assert body["player_b"]["role_ratings"] == []
+    # non-role evidence is untouched
+    assert body["stat_rows"]
+    assert body["player_b"]["context"]["minutes"] == 180
+
+
+def test_compare_without_a_shared_rated_role_stays_200_and_honest(client, db_session):
+    unrated = _insert_profile_only_player(db_session, name="Compare No Shared Role")
+    rated = _first_att_id(client)
+    r = client.get(f"/api/compare?player_a={rated}&player_b={unrated}")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["role_key"] is None
+    assert body["role_display"] is None
+    assert body["role_comparison"] == {}
+    assert body["why_higher"] == (
+        "No shared rated role is available for these players. "
+        "Select a role to inspect the available analysis."
+    )
+    # no fallback to either player's own best role
+    assert body["player_a"]["role_ratings"]
+    assert body["player_b"]["role_ratings"] == []
+    # everything that does not depend on a shared role remains usable
+    assert body["stat_rows"]
+    assert body["player_a"]["market"] is not None
+    assert body["player_a"]["context"]["minutes"] is not None
+    assert body["player_b"]["context"]["minutes"] == 180
+    assert body["confidence_warnings"]
+    # and the empty selection is order-independent too
+    assert (
+        client.get(f"/api/compare?player_a={unrated}&player_b={rated}").json()["role_key"] is None
+    )
+
+
+def test_compare_confidence_warnings_read_player_1_and_player_2(client, db_session):
+    """Presentation terminology only — the response fields stay player_a/player_b."""
+    unrated = _insert_profile_only_player(db_session, name="Compare Warning Copy")
+    rated = _first_att_id(client)
+    body = client.get(f"/api/compare?player_a={rated}&player_b={unrated}").json()
+
+    warnings = body["confidence_warnings"]
+    assert warnings
+    for warning in warnings:
+        assert "Player A" not in warning and "Player B" not in warning
+        assert re.match(r"^Player [12] \(", warning), warning
+
+    # the contract is untouched: request params and response keys are unchanged
+    assert "player_a" in body and "player_b" in body
+
+
 def test_compare_same_player_400(client):
     pid = _first_att_id(client)
     assert client.get(f"/api/compare?player_a={pid}&player_b={pid}").status_code == 400
+
+
+def test_compare_missing_player_404(client):
+    pid = _first_att_id(client)
+    assert client.get(f"/api/compare?player_a={pid}&player_b=99999999").status_code == 404
 
 
 def test_similar_players(client):

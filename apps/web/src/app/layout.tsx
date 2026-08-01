@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 
 import { NavBar } from "@/components/common/NavBar";
+// Self-hosted Inter Variable (woff2 bundled by the build, `font-display: swap`).
+// Imported before globals.css so the @font-face rules precede our own cascade.
+// Deliberately NOT next/font/google or any runtime CDN: the production build must
+// stay reproducible and offline.
+import "inter-ui/inter-variable.css";
 import "./globals.css";
 import { Providers } from "./providers";
 

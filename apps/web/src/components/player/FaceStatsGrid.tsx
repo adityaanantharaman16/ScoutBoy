@@ -8,7 +8,7 @@ export function FaceStatsGrid({ faceStats }: { faceStats: FaceStat[] }) {
       {faceStats.map((f) => (
         <div key={f.group_key} className="card">
           <div className="label">{f.group_label}</div>
-          <div className={`mt-1 font-serif text-3xl font-bold leading-none ${scoreColor(f.score)}`}>
+          <div className={`mt-1 tracking-tight text-3xl font-bold leading-none ${scoreColor(f.score)}`}>
             {f.score == null ? "unknown" : formatScore(f.score)}
           </div>
           <div className="mt-2">

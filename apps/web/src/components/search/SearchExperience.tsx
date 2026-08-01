@@ -78,7 +78,15 @@ export function SearchExperience() {
       {/* Filter rail (subordinate) beside the results ledger on desktop; stacked
           above the ledger on tablet/mobile. */}
       <div className="grid gap-5 lg:grid-cols-[minmax(240px,280px)_minmax(0,1fr)] lg:items-start">
-        <aside className="lg:sticky lg:top-4" aria-label="Discovery filters">
+        {/* Sticky only from lg up, at the existing restrained offset. Below lg the
+            column stays in normal document flow above the results ledger.
+            `lg:items-start` on the grid keeps this item content-height, which is
+            what makes `position: sticky` take effect at all. */}
+        <aside
+          className="lg:sticky lg:top-4"
+          aria-label="Discovery filters"
+          data-testid="filter-column"
+        >
           <PlayerSearchFilters filters={filters} onChange={setFilters} />
         </aside>
         <section aria-label="Results" className="min-w-0">

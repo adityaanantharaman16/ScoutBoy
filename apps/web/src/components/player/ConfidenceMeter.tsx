@@ -59,7 +59,6 @@ export function ConfidenceMeter({
           aria-hidden="true"
           className="inline-block h-3 w-3 border border-dashed border-ink-soft"
           style={{
-            borderRadius: 2,
             backgroundImage:
               "repeating-linear-gradient(45deg, var(--line-strong) 0 1.5px, transparent 1.5px 4px)",
           }}
@@ -70,7 +69,7 @@ export function ConfidenceMeter({
             <span
               key={i}
               className={i < filled ? "bg-ink" : "bg-line-strong"}
-              style={{ width: 3, height: 5 + i * 3, borderRadius: 1 }}
+              style={{ width: 3, height: 5 + i * 3 }}
             />
           ))}
         </span>

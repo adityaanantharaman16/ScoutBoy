@@ -5,10 +5,15 @@ import type { SearchFilters } from "@/lib/api/hooks";
 
 // Discovery filter rail. It is deliberately subordinate to the results ledger:
 // a quiet hairline panel that sits in a narrow left column on desktop and stacks
-// above the results on tablet/mobile. The query field leads (prominent), then
-// the scope and age controls (dimensionally symmetrical so switching never
-// reflows), then the remaining selects. All existing filters + URL sync and the
-// stable test hooks are preserved; no new disclosure animation is introduced.
+// above the results on tablet/mobile.
+//
+// Every control is the same compact, square selector box, so the rail is short
+// enough to stay wholly usable inside a normal laptop viewport while sticky —
+// no nested scroller, no accordion, no custom combobox. Analysis scope and age
+// band are native <select>s carrying exactly the options they always had; scope
+// keeps its per-option explanation as restrained helper text beneath the
+// selector rather than as three tall option cards. All existing filters, URL
+// sync and stable test hooks are preserved.
 export function PlayerSearchFilters({
   filters,
   onChange,
@@ -18,73 +23,77 @@ export function PlayerSearchFilters({
 }) {
   const set = (patch: Partial<SearchFilters>) => onChange({ ...filters, ...patch, page: 1 });
 
+  const scopeKey = filters.scope ?? "analyzed";
+  const selectedScope = SEARCH_SCOPES.find((s) => s.key === scopeKey) ?? SEARCH_SCOPES[0];
+
   return (
-    <div className="card space-y-5" data-testid="filter-rail">
+    <div className="card space-y-3" data-testid="filter-rail">
       <div className="flex items-center justify-between gap-2">
         <div className="label">Narrow results</div>
         <div className="text-[11px] text-ink-soft">URL-backed</div>
       </div>
 
-      <label className="flex flex-col gap-1">
-        <span className="label">Search</span>
-        <input
-          data-testid="search-input"
-          className="input text-base"
-          placeholder="Name, club, league…"
-          value={filters.q ?? ""}
-          onChange={(e) => set({ q: e.target.value })}
-        />
-      </label>
-
-      <div>
-        <div className="mb-1 label">Analysis scope</div>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-1" data-testid="scope-filter">
-          {SEARCH_SCOPES.map((scope) => (
-            <button
-              key={scope.key}
-              type="button"
-              className={`h-full border px-3 py-2 text-left text-sm ${
-                (filters.scope ?? "analyzed") === scope.key
-                  ? "border-pitch bg-[#e9f0ea] text-pitch-dark"
-                  : "border-line bg-paper-panel text-ink-muted hover:border-line-strong"
-              }`}
-              style={{ borderRadius: 5 }}
-              aria-pressed={(filters.scope ?? "analyzed") === scope.key}
-              onClick={() => set({ scope: scope.key })}
-            >
-              <span className="block font-medium">{scope.label}</span>
-              <span className="block text-xs text-ink-soft">{scope.description}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <div className="mb-1 label">Age band</div>
-        <div className="flex flex-wrap gap-2" data-testid="age-band-filter">
-          {AGE_BANDS.map((band) => (
-            <button
-              key={band.key}
-              type="button"
-              className={`border px-3 py-1.5 text-sm font-semibold ${
-                (filters.age_band ?? "all") === band.key
-                  ? "border-pitch bg-[#e9f0ea] text-pitch-dark"
-                  : "border-line bg-paper-panel text-ink-muted hover:border-line-strong"
-              }`}
-              style={{ borderRadius: 999 }}
-              aria-pressed={(filters.age_band ?? "all") === band.key}
-              onClick={() => set({ age_band: band.key })}
-            >
-              {band.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
+        <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-1">
+          <span className="label">Search</span>
+          <input
+            data-testid="search-input"
+            className="input text-base"
+            placeholder="Name, club, league…"
+            value={filters.q ?? ""}
+            onChange={(e) => set({ q: e.target.value })}
+          />
+        </label>
+
+        {/* Explicit label + description ids: the helper sentence describes the
+            control without being absorbed into its accessible name. */}
+        <div className="flex flex-col gap-1">
+          <label className="label" htmlFor="filter-scope">
+            Analysis scope
+          </label>
+          <select
+            id="filter-scope"
+            data-testid="scope-filter"
+            className="input"
+            aria-describedby="filter-scope-help"
+            value={scopeKey}
+            onChange={(e) => set({ scope: e.target.value })}
+          >
+            {SEARCH_SCOPES.map((scope) => (
+              <option key={scope.key} value={scope.key}>
+                {scope.label}
+              </option>
+            ))}
+          </select>
+          <p
+            id="filter-scope-help"
+            className="text-[11px] leading-snug text-ink-soft"
+            data-testid="scope-description"
+          >
+            {selectedScope.description}
+          </p>
+        </div>
+
+        <label className="flex flex-col gap-1">
+          <span className="label">Age band</span>
+          <select
+            data-testid="age-band-filter"
+            className="input"
+            value={filters.age_band ?? "all"}
+            onChange={(e) => set({ age_band: e.target.value })}
+          >
+            {AGE_BANDS.map((band) => (
+              <option key={band.key} value={band.key}>
+                {band.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <label className="flex flex-col gap-1">
           <span className="label">Position group</span>
           <select
+            data-testid="position-group-filter"
             className="input"
             value={filters.position_group ?? ""}
             onChange={(e) => set({ position_group: e.target.value || undefined })}
@@ -114,25 +123,30 @@ export function PlayerSearchFilters({
           </select>
         </label>
 
-        <label className="flex flex-col gap-1">
-          <span className="label">Min minutes</span>
-          <input
-            type="number"
-            className="input"
-            value={filters.min_minutes ?? ""}
-            onChange={(e) => set({ min_minutes: e.target.value ? Number(e.target.value) : undefined })}
-          />
-        </label>
+        {/* The two short numeric thresholds share a row at every breakpoint —
+            they are the narrowest controls in the rail and pairing them keeps
+            the sticky panel materially shorter. */}
+        <div className="grid grid-cols-2 gap-3">
+          <label className="flex flex-col gap-1">
+            <span className="label">Min minutes</span>
+            <input
+              type="number"
+              className="input"
+              value={filters.min_minutes ?? ""}
+              onChange={(e) => set({ min_minutes: e.target.value ? Number(e.target.value) : undefined })}
+            />
+          </label>
 
-        <label className="flex flex-col gap-1">
-          <span className="label">Min RoleFit</span>
-          <input
-            type="number"
-            className="input"
-            value={filters.rolefit_min ?? ""}
-            onChange={(e) => set({ rolefit_min: e.target.value ? Number(e.target.value) : undefined })}
-          />
-        </label>
+          <label className="flex flex-col gap-1">
+            <span className="label">Min RoleFit</span>
+            <input
+              type="number"
+              className="input"
+              value={filters.rolefit_min ?? ""}
+              onChange={(e) => set({ rolefit_min: e.target.value ? Number(e.target.value) : undefined })}
+            />
+          </label>
+        </div>
 
         <label className="flex flex-col gap-1">
           <span className="label">Sort</span>

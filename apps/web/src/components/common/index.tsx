@@ -1,13 +1,13 @@
 import Link from "next/link";
+import { Fragment } from "react";
 
+import { DisplayTag, displayTagClass } from "@/components/common/DisplayTag";
 import { ConfidenceMeter } from "@/components/player/ConfidenceMeter";
 import {
-  confidenceColor,
   confidenceLabel,
   confidenceText,
   evidenceStatusText,
   formatScore,
-  marketLabelColor,
   marketLabelText,
   scoreBarClass,
   scoreColor,
@@ -15,13 +15,13 @@ import {
 import { marketRangeText } from "@/lib/market/marketChart";
 
 export { ConfidenceMeter } from "@/components/player/ConfidenceMeter";
+export { DisplayTag, displayTagClass, type TagVariant } from "@/components/common/DisplayTag";
 
 export function ScopeBanner({ text }: { text: string }) {
   return (
     <div
       data-testid="scope-banner"
       className="mb-5 border border-line-strong bg-paper-panel px-3 py-2 text-sm text-ink-muted"
-      style={{ borderRadius: 5 }}
     >
       {text}
     </div>
@@ -30,13 +30,14 @@ export function ScopeBanner({ text }: { text: string }) {
 
 export function ConfidenceBadge({ confidence }: { confidence: string | null | undefined }) {
   return (
-    <span
-      className={`chip ${confidenceColor(confidence)}`}
+    <DisplayTag
+      variant="confidence"
+      value={confidence}
       title={confidenceLabel(confidence)}
-      aria-label={confidenceLabel(confidence)}
+      ariaLabel={confidenceLabel(confidence)}
     >
       {confidenceText(confidence)}
-    </span>
+    </DisplayTag>
   );
 }
 
@@ -56,7 +57,7 @@ export function Section({
       <div className="section-rule mb-3 flex items-end justify-between gap-3 pb-2">
         <div>
           {eyebrow && <div className="label mb-1">{eyebrow}</div>}
-          <h2 className="font-serif text-2xl font-bold leading-tight text-ink">{title}</h2>
+          <h2 className="text-2xl font-bold leading-tight tracking-tight text-ink">{title}</h2>
         </div>
         {action}
       </div>
@@ -86,7 +87,7 @@ export function DossierSection({
       <div className="section-rule mb-3 flex items-end justify-between gap-3 pb-2">
         <div>
           <div className="label mb-1">{number} / {eyebrow ?? "ScoutBoy dossier"}</div>
-          <h2 className="font-serif text-2xl font-bold leading-tight text-ink">{title}</h2>
+          <h2 className="text-2xl font-bold leading-tight tracking-tight text-ink">{title}</h2>
         </div>
         {action}
       </div>
@@ -120,7 +121,6 @@ export function EmptyState({ label, action }: { label: string; action?: React.Re
     <div
       role="status"
       className="flex flex-col items-center gap-3 border border-line bg-paper-panel px-4 py-10 text-center text-sm text-ink-soft"
-      style={{ borderRadius: 6 }}
     >
       <span>{label}</span>
       {action}
@@ -133,7 +133,6 @@ export function ErrorState({ message }: { message: string }) {
     <div
       role="alert"
       className="border border-accent-red/50 bg-[#f4e8e3] px-4 py-6 text-center text-sm font-semibold text-accent-red"
-      style={{ borderRadius: 6 }}
     >
       <span className="mr-1" aria-hidden="true">
         ⚠
@@ -161,7 +160,7 @@ export function LedgerSkeleton({
   return (
     <div role="status" aria-live="polite" data-testid={testId}>
       <span className="sr-only">{label}</span>
-      <div className="border border-line bg-paper-panel" style={{ borderRadius: 6 }}>
+      <div className="border border-line bg-paper-panel">
         {Array.from({ length: rows }).map((_, i) => (
           <div
             key={i}
@@ -210,7 +209,6 @@ export function Notice({
   return (
     <div
       className={`border px-4 py-3 text-sm ${toneClass}`}
-      style={{ borderRadius: 6 }}
       data-testid={testId}
       role={tone === "critical" ? "alert" : undefined}
     >
@@ -251,7 +249,7 @@ export function PageHeader({
     <header className={`mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between ${className}`}>
       <div className="max-w-3xl">
         <p className="label mb-1">{eyebrow}</p>
-        <h1 className="font-serif text-3xl font-bold leading-tight text-ink sm:text-4xl">{title}</h1>
+        <h1 className="text-3xl font-bold leading-tight tracking-tight text-ink sm:text-4xl">{title}</h1>
         {lead && <p className="mt-2 text-sm text-ink-muted">{lead}</p>}
         {meta && (
           <p className="mt-2 text-xs text-ink-soft" data-testid="page-meta">
@@ -265,31 +263,61 @@ export function PageHeader({
 }
 
 /**
+ * Renders text so a line break can only fall on a space: every space-delimited
+ * token is non-wrapping, which keeps hyphenated role names ("Deep-Lying",
+ * "Ball-Winning") intact — browsers otherwise treat a hyphen as a break
+ * opportunity. Nothing is truncated and the rendered text content is identical to
+ * the input, so the accessible name is preserved.
+ */
+function WordBoundaryText({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(" ").map((word, i) => (
+        <Fragment key={`${i}-${word}`}>
+          {i > 0 ? " " : null}
+          <span className="whitespace-nowrap">{word}</span>
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
+/**
  * Band-coloured score magnitude. The numeric value is the signal; colour only
  * emphasises it. Missing scores render the formatter sentinel ("—"), never zero.
+ *
+ * `variant="sans"` (the default) is the proportional Inter treatment, tightened so
+ * a large figure still reads as the row's hero; `variant="mono"` keeps the
+ * deliberately tabular presentation. `captionWrap="words"` is opt-in: it
+ * constrains the caption to word-boundary wrapping for the fixed-width ledger
+ * RoleFit track.
  */
 export function ScoreReadout({
   score,
   caption,
-  variant = "serif",
+  captionWrap = "normal",
+  variant = "sans",
   size = "lg",
   className = "",
 }: {
   score: number | null | undefined;
   caption?: string | null;
-  variant?: "serif" | "mono";
+  captionWrap?: "normal" | "words";
+  variant?: "sans" | "mono";
   size?: "sm" | "md" | "lg";
   className?: string;
 }) {
   const sizeCls = size === "lg" ? "text-3xl" : size === "md" ? "text-2xl" : "text-lg";
-  const fontCls = variant === "serif" ? "font-serif" : "mono";
+  const fontCls = variant === "sans" ? "tracking-tight" : "mono";
   return (
     <div className={className} data-testid="score-readout">
       <div className={`${fontCls} ${sizeCls} font-bold leading-none ${scoreColor(score)}`}>
         {formatScore(score)}
       </div>
       {caption != null && caption !== "" && (
-        <div className="mt-1 text-[11px] text-ink-soft">{caption}</div>
+        <div className="mt-1 text-[11px] text-ink-soft" data-testid="score-caption">
+          {captionWrap === "words" ? <WordBoundaryText text={caption} /> : caption}
+        </div>
       )}
     </div>
   );
@@ -344,9 +372,9 @@ export function EvidenceTag({
       data-testid="evidence-tag"
     >
       {showLabel && <span>Evidence:</span>}
-      <span className="chip border-line-strong bg-paper-muted text-ink-muted">
+      <DisplayTag variant="evidence" value={status}>
         {evidenceStatusText(status)}
-      </span>
+      </DisplayTag>
     </span>
   );
 }
@@ -355,36 +383,81 @@ export function EvidenceTag({
  * Honest market readout: a label chip plus the expected-asking range. Partial
  * ranges are preserved ("From €X" / "Up to €Y") and a missing endpoint is never
  * rendered as €0 (see {@link marketRangeText}).
+ *
+ * The `ledger` layout is the shared ledger-row variant used by discovery and My
+ * Favorites: risk label and price inside one sharp status box at equal weight.
+ * `inline`/`stacked` are unchanged, so comparison, the leaderboard and the dossier
+ * keep their own readouts.
+ *
+ * `align="end"` mirrors the `inline` layout for a right-aligned column, so the
+ * risk tag sits against the outer edge and the range reads inward — the mirror
+ * image of the left column rather than a repeat of it. Label and range never
+ * split across lines, however wide the figures get.
  */
 export function MarketReadout({
   label,
   low,
   high,
   layout = "inline",
+  align = "start",
   className = "",
 }: {
   label: string | null | undefined;
   low: number | null | undefined;
   high: number | null | undefined;
-  layout?: "inline" | "stacked";
+  layout?: "inline" | "stacked" | "ledger";
+  /** `inline` only: which edge the risk tag hugs once the columns sit side by side. */
+  align?: "start" | "end";
   className?: string;
 }) {
   const range = marketRangeText(low, high);
+  if (layout === "ledger") {
+    // Compound label-and-range box: one tag, two facts at equal weight. Uses the
+    // shared tag geometry/tone via the helper because it carries its own
+    // market-label data attribute.
+    return (
+      <span
+        className={`${displayTagClass("market", label, true)} ${className}`}
+        data-tag-variant="market"
+        data-testid="market-readout"
+        data-market-label={label ?? "unknown"}
+      >
+        <span>{marketLabelText(label)}</span>
+        <span aria-hidden="true">·</span>
+        {/* Monospace for figure alignment only — same size and weight as the label. */}
+        <span className="mono">{range}</span>
+      </span>
+    );
+  }
   if (layout === "stacked") {
     return (
       <div className={className} data-testid="market-readout">
         <div className="label mb-1">Expected asking</div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className={`chip ${marketLabelColor(label)}`}>{marketLabelText(label)}</span>
+          <DisplayTag variant="market" value={label}>
+            {marketLabelText(label)}
+          </DisplayTag>
           <span className="mono text-sm text-ink">{range}</span>
         </div>
       </div>
     );
   }
+  // No `flex-wrap` and a non-breaking range: the tag and the figures stay on one
+  // line together even for the widest asking ranges. `flex-row-reverse` mirrors
+  // the visual order for an end-aligned column while the DOM order (label, then
+  // range) stays the same on both sides and when the columns stack on mobile.
   return (
-    <span className={`inline-flex flex-wrap items-center gap-1.5 ${className}`} data-testid="market-readout">
-      <span className={`chip ${marketLabelColor(label)}`}>{marketLabelText(label)}</span>
-      <span className="mono text-xs text-ink-muted">{range}</span>
+    <span
+      className={`inline-flex items-center gap-1.5 ${
+        align === "end" ? "sm:flex-row-reverse" : ""
+      } ${className}`}
+      data-testid="market-readout"
+      data-market-align={align}
+    >
+      <DisplayTag variant="market" value={label}>
+        {marketLabelText(label)}
+      </DisplayTag>
+      <span className="mono whitespace-nowrap text-xs text-ink-muted">{range}</span>
     </span>
   );
 }

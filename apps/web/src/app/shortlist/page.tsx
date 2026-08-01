@@ -1,26 +1,25 @@
 "use client";
 
-import Link from "next/link";
-
+import { EmptyState, ErrorState, LedgerSkeleton, LinkButton, PageHeader, ScopeBanner } from "@/components/common";
 import {
-  ConfidenceReadout,
-  EmptyState,
-  ErrorState,
-  EvidenceTag,
-  LedgerSkeleton,
-  LinkButton,
-  MarketReadout,
-  PageHeader,
-  ScopeBanner,
-  ScoreReadout,
-} from "@/components/common";
-import { CompareQueueButton } from "@/components/common/PlayerActions";
+  LedgerActionRail,
+  LedgerHeader,
+  LedgerIdentity,
+  LedgerRoleFitHero,
+  LedgerRow,
+  LedgerStatusStack,
+} from "@/components/common/LedgerRow";
+import { SavedPlayerActionRail } from "@/components/common/PlayerActions";
 import { SCOPE_BANNER } from "@/lib/constants";
 import { usePlayersByIds } from "@/lib/api/hooks";
 import { useScoutingState } from "@/lib/state/scouting-state";
 import type { PlayerCard } from "@/lib/api/types";
 import { formatAge } from "@/lib/formatters";
 
+// A saved player uses the same ledger row geometry as a discovery result, so the
+// two surfaces stay aligned. `PlayerCard` carries less per-season context than a
+// search card (there is no represented-minutes field), so the second context line
+// reports only what the response actually supplies — nothing is invented.
 function SavedRecord({
   card,
   onRemove,
@@ -31,71 +30,48 @@ function SavedRecord({
   const id = card.identity;
   const best = card.role_ratings.find((r) => r.is_best) ?? card.role_ratings[0];
   const analyzed = card.has_rolefit_analysis && !!best;
+  const minutes = card.context?.minutes;
 
   return (
-    <article className="card flex flex-col gap-2.5" data-testid="shortlist-record">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <Link
-            href={`/players/${id.id}`}
-            data-testid="shortlist-player"
-            className="font-serif text-xl font-bold leading-tight text-ink no-underline hover:underline"
-          >
-            {id.canonical_name}
-          </Link>
+    <LedgerRow testId="shortlist-record">
+      <LedgerHeader>
+        <LedgerIdentity
+          href={`/players/${id.id}`}
+          name={id.canonical_name}
+          nameTestId="shortlist-player"
+        >
           <div className="mt-0.5 text-xs text-ink-muted">
-            {id.primary_position ?? "—"} · {card.season}
+            {formatAge(id.age)} yrs · {id.primary_position ?? "—"} · {id.club ?? "—"}
           </div>
           <div className="text-xs text-ink-soft">
-            {formatAge(id.age)} yrs · {id.club ?? "—"} · {id.league ?? "—"}
+            {id.league ?? "—"} · {card.season}
+            {minutes != null ? ` · ${minutes} min` : ""}
           </div>
-        </div>
-        <div className="shrink-0 text-right">
-          <div className="label mb-0.5">RoleFit</div>
-          {analyzed ? (
-            <ScoreReadout score={best.final_score} caption={best.display_name} size="md" />
-          ) : (
-            <span
-              className="inline-flex border border-line-strong px-2 py-1 text-xs font-semibold text-ink-muted"
-              style={{ borderRadius: 4 }}
-            >
-              Profile only
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-        {analyzed && <ConfidenceReadout level={best.confidence} />}
-        <EvidenceTag status={card.evidence_status} />
-        <MarketReadout
-          label={card.market?.label}
-          low={card.market?.expected_asking_low_eur}
-          high={card.market?.expected_asking_high_eur}
+        </LedgerIdentity>
+        <LedgerRoleFitHero
+          hasAnalysis={analyzed}
+          score={analyzed ? best.final_score : null}
+          role={analyzed ? best.display_name : null}
         />
-      </div>
+      </LedgerHeader>
 
-      {card.playstyles.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {card.playstyles.slice(0, 3).map((b) => (
-            <span key={b.playstyle_key} className="chip border-line bg-paper-panel text-ink-muted">
-              {b.display_name}
-            </span>
-          ))}
-        </div>
-      )}
+      <LedgerStatusStack
+        evidenceStatus={card.evidence_status}
+        confidence={analyzed ? best.confidence : card.confidence}
+        hasAnalysis={analyzed}
+        marketLabel={card.market?.label}
+        marketLow={card.market?.expected_asking_low_eur}
+        marketHigh={card.market?.expected_asking_high_eur}
+        playstyles={card.playstyles.slice(0, 3).map((b) => b.display_name)}
+      />
 
-      <div className="mt-1 flex flex-wrap gap-2 border-t border-line pt-2.5">
-        <CompareQueueButton player={{ id: id.id, name: id.canonical_name }} size="sm" />
-        <button
-          type="button"
-          className="btn px-2 py-1 text-xs"
-          onClick={() => onRemove(id.id)}
-        >
-          Remove
-        </button>
-      </div>
-    </article>
+      <LedgerActionRail>
+        <SavedPlayerActionRail
+          player={{ id: id.id, name: id.canonical_name }}
+          onRemove={() => onRemove(id.id)}
+        />
+      </LedgerActionRail>
+    </LedgerRow>
   );
 }
 
@@ -110,8 +86,8 @@ export default function ShortlistPage() {
     <div>
       <ScopeBanner text={SCOPE_BANNER} />
       <PageHeader
-        eyebrow="Shortlist"
-        title="Saved decisions"
+        eyebrow="My Favorites"
+        title="Saved Players"
         lead="Players you have set aside to revisit. These are stored in this browser only — saved on this device, not synced to an account."
         meta={
           cards.length > 0
@@ -152,7 +128,10 @@ export default function ShortlistPage() {
       )}
 
       {cards.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2" data-testid="shortlist-grid">
+        <div
+          className="divide-y divide-line overflow-hidden border border-line bg-paper-panel"
+          data-testid="shortlist-ledger"
+        >
           {cards.map((card) => (
             <SavedRecord key={card.identity.id} card={card} onRemove={removeShortlist} />
           ))}

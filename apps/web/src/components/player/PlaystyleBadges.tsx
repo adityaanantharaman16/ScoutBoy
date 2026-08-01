@@ -1,5 +1,11 @@
+import { DisplayTag } from "@/components/common/DisplayTag";
 import type { PlaystyleBadge } from "@/lib/api/types";
-import { tierBadge, tierText, whyText } from "@/lib/formatters";
+import { tierText, whyText } from "@/lib/formatters";
+
+// Playstyles and concerns are both display tags but deliberately NOT the same
+// one: a playstyle is a trait (ink-filled), a concern is a flagged risk (warning
+// styling). Tier stays in the label text; it never changes the colour, so a tier
+// can never be mistaken for a confidence or market status.
 
 export function PlaystyleBadges({
   playstyles,
@@ -17,14 +23,10 @@ export function PlaystyleBadges({
             <span className="text-xs text-ink-soft">No qualifying playstyles for this sample.</span>
           )}
           {playstyles.map((b) => (
-            <span
-              key={b.playstyle_key}
-              className={`chip ${tierBadge(b.tier)}`}
-              title={whyText(b)}
-            >
+            <DisplayTag key={b.playstyle_key} variant="playstyle" title={whyText(b)}>
               {b.display_name}
               {tierText(b.tier) ? ` · ${tierText(b.tier)}` : ""}
-            </span>
+            </DisplayTag>
           ))}
         </div>
       </div>
@@ -33,13 +35,9 @@ export function PlaystyleBadges({
         <div className="flex flex-wrap gap-2" data-testid="concerns">
           {concerns.length === 0 && <span className="text-xs text-ink-soft">None flagged.</span>}
           {concerns.map((b) => (
-            <span
-              key={b.playstyle_key}
-              className="chip border-accent-red bg-[#f4e8e3] text-accent-red"
-              title={whyText(b)}
-            >
+            <DisplayTag key={b.playstyle_key} variant="concern" title={whyText(b)}>
               {b.display_name}
-            </span>
+            </DisplayTag>
           ))}
         </div>
       </div>

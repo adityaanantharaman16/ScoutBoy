@@ -1,6 +1,6 @@
 "use client";
 
-import { ErrorState, LedgerSkeleton, PageHeader, ScopeBanner } from "@/components/common";
+import { DisplayTag, ErrorState, LedgerSkeleton, PageHeader, ScopeBanner } from "@/components/common";
 import { CalibrationPanel } from "@/components/methodology/CalibrationPanel";
 import { useMethodology } from "@/lib/api/hooks";
 import type { Methodology } from "@/lib/api/types";
@@ -38,7 +38,7 @@ function DocSection({
     <section id={id} className="scroll-mt-20">
       <div className="section-rule mb-3 pb-2">
         <div className="label mb-1">{eyebrow}</div>
-        <h2 className="font-serif text-2xl font-bold leading-tight text-ink">{title}</h2>
+        <h2 className="tracking-tight text-2xl font-bold leading-tight text-ink">{title}</h2>
       </div>
       {children}
     </section>
@@ -66,23 +66,19 @@ function RoleRegistry({ roles }: { roles: Methodology["roles"] }) {
           </div>
           <div
             className="divide-y divide-line overflow-hidden border border-line bg-paper-panel"
-            style={{ borderRadius: 6 }}
           >
             {fam.roles.map((r) => (
               <div key={r.role_key} className="px-3.5 py-3" data-testid={`role-registry-${r.role_key}`}>
                 <div className="flex items-baseline justify-between gap-3">
-                  <span className="font-serif text-lg font-bold text-ink">{r.display_name}</span>
+                  <span className="tracking-tight text-lg font-bold text-ink">{r.display_name}</span>
                   <span className="shrink-0 text-[11px] text-ink-soft">{r.position_group}</span>
                 </div>
                 {r.description && <p className="mt-0.5 text-xs text-ink-muted">{r.description}</p>}
                 <div className="mt-2 flex flex-wrap gap-1">
                   {r.groups.map((g) => (
-                    <span
-                      key={g.key}
-                      className="chip border-line bg-paper-muted text-[11px] text-ink-muted"
-                    >
+                    <DisplayTag key={g.key} variant="neutral">
                       {titleCase(g.key)} {Math.round(g.weight * 100)}%
-                    </span>
+                    </DisplayTag>
                   ))}
                 </div>
               </div>
@@ -116,7 +112,6 @@ export default function MethodologyPage() {
           <nav
             aria-label="Contents"
             className="border border-line bg-paper-panel p-3 lg:sticky lg:top-4"
-            style={{ borderRadius: 6 }}
             data-testid="methodology-contents"
           >
             <div className="label mb-2">Verify</div>
@@ -139,7 +134,7 @@ export default function MethodologyPage() {
                   adjusted for context and confidence. The authoritative formula (contained here, not
                   reconstructed in the browser):
                 </p>
-                <pre className="mono mt-2 max-w-full overflow-x-auto border border-line bg-paper-muted p-3 text-xs text-pitch-dark" style={{ borderRadius: 5 }}>
+                <pre className="mono mt-2 max-w-full overflow-x-auto border border-line bg-paper-muted p-3 text-xs text-pitch-dark">
                   {data.formula}
                 </pre>
                 <dl className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">
@@ -182,9 +177,9 @@ export default function MethodologyPage() {
                   <div className="label mb-1.5">Playstyles</div>
                   <div className="flex flex-wrap gap-1">
                     {data.playstyles.map((p) => (
-                      <span key={p.key} className="chip border-pitch bg-[#e9f0ea] text-pitch-dark">
+                      <DisplayTag key={p.key} variant="playstyle">
                         {p.display_name}
-                      </span>
+                      </DisplayTag>
                     ))}
                   </div>
                 </div>
@@ -192,9 +187,9 @@ export default function MethodologyPage() {
                   <div className="label mb-1.5">Concerns</div>
                   <div className="flex flex-wrap gap-1">
                     {data.concerns.map((c) => (
-                      <span key={c.key} className="chip border-accent-red bg-[#f4e8e3] text-accent-red">
+                      <DisplayTag key={c.key} variant="concern">
                         {c.display_name}
-                      </span>
+                      </DisplayTag>
                     ))}
                   </div>
                 </div>

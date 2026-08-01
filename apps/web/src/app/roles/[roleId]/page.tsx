@@ -140,7 +140,6 @@ export default function RoleLeaderboardPage() {
                 and every critical evidence channel are preserved. */}
             <div
               className="divide-y divide-line overflow-hidden border border-line bg-paper-panel md:hidden"
-              style={{ borderRadius: 6 }}
               data-testid="leaderboard-ledger"
             >
               {data.rows.map((r) => (
@@ -151,7 +150,7 @@ export default function RoleLeaderboardPage() {
                         <span className="mono text-sm font-bold text-ink-soft">#{r.rank}</span>
                         <Link
                           href={`/players/${r.player_id}`}
-                          className="truncate font-serif text-lg font-bold hover:underline"
+                          className="truncate tracking-tight text-lg font-bold hover:underline"
                         >
                           {r.canonical_name}
                         </Link>

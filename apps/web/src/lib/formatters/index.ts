@@ -126,17 +126,6 @@ export function marketLabelColor(label: MarketLabel | string | null | undefined)
   }
 }
 
-export function tierBadge(tier: string | null | undefined): string {
-  switch (tier) {
-    case "elite":
-      return "bg-[#e9f0ea] text-pitch-dark border-pitch";
-    case "plus":
-      return "bg-paper-panel text-pitch-dark border-pitch";
-    default:
-      return "bg-paper-muted text-ink-muted border-line-strong";
-  }
-}
-
 export function titleCase(s: string): string {
   return s.replace(/[_-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
@@ -157,7 +146,7 @@ export function confidenceText(c: Confidence | string | null | undefined): strin
   }
 }
 
-/** Market label for chips: Undervalued / Fair / Inflated / High-Risk / Unknown. */
+/** Market label for tags: Undervalued / Fair / Inflated / High-Risk / Unknown. */
 export function marketLabelText(label: MarketLabel | string | null | undefined): string {
   switch (label) {
     case "undervalued":
@@ -184,6 +173,41 @@ export function evidenceStatusText(status: string | null | undefined): string {
       return "Profile Only";
     default:
       return status ? titleCase(status) : "Unknown";
+  }
+}
+
+/**
+ * Discovery-row phrasing for evidence coverage. Same source as
+ * {@link evidenceStatusText} (`evidence_status`), worded to stand on its own
+ * inside the compound coverage/confidence unit, which carries no "Evidence:"
+ * prefix. Says nothing about RoleFit confidence.
+ */
+export function coverageStatusText(status: string | null | undefined): string {
+  switch (status) {
+    case "high_coverage":
+      return "High Data Coverage";
+    case "analyzed_limited":
+      return "Limited Data Coverage";
+    case "profile_only":
+      return "Profile Only";
+    case "unknown":
+      return "Unknown Data Coverage";
+    default:
+      return status ? evidenceStatusText(status) : "Unknown Data Coverage";
+  }
+}
+
+/** Lowercase coverage word for the compound unit's accessible description. */
+export function coverageSpokenText(status: string | null | undefined): string {
+  switch (status) {
+    case "high_coverage":
+      return "high";
+    case "analyzed_limited":
+      return "limited";
+    case "profile_only":
+      return "profile only";
+    default:
+      return status ? evidenceStatusText(status).toLowerCase() : "unknown";
   }
 }
 

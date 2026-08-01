@@ -97,8 +97,8 @@ describe("Discover filters", () => {
         onChange={onChange}
       />,
     );
-    expect(screen.getByText("Analyzed")).toBeInTheDocument();
-    fireEvent.click(screen.getByText("U23"));
+    expect(screen.getByTestId("scope-filter")).toHaveValue("analyzed");
+    fireEvent.change(screen.getByTestId("age-band-filter"), { target: { value: "u23" } });
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ scope: "analyzed", age_band: "u23", page: 1 }),
     );
@@ -112,9 +112,10 @@ describe("Discover filters", () => {
         onChange={onChange}
       />,
     );
-    fireEvent.click(screen.getByText("All records"));
+    const scope = screen.getByTestId("scope-filter");
+    fireEvent.change(scope, { target: { value: "all_records" } });
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ scope: "all_records" }));
-    fireEvent.click(screen.getByText("High-coverage U23"));
+    fireEvent.change(scope, { target: { value: "high_coverage_u23" } });
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ scope: "high_coverage_u23" }),
     );
@@ -157,14 +158,16 @@ describe("Discover cards", () => {
     );
   }
 
-  it("renders rated scores, confidence, and high-coverage evidence with explicit labels", () => {
+  it("renders rated scores plus coverage and confidence as two distinct facts", () => {
     renderResultCard(baseCard);
     expect(screen.getByText("81.2")).toBeInTheDocument();
-    // coverage and RoleFit confidence are labelled distinctly, capitalized
-    expect(screen.getByTestId("card-evidence")).toHaveTextContent("Evidence:");
-    expect(screen.getByText("High Coverage")).toBeInTheDocument();
-    expect(screen.getByTestId("card-confidence")).toHaveTextContent("RoleFit confidence:");
-    expect(screen.getByText("High")).toBeInTheDocument();
+    // one compound status unit, no colon-prefixed label/value pairs
+    const status = screen.getByTestId("card-status");
+    expect(status).toHaveTextContent("High Data Coverage");
+    expect(status).toHaveTextContent("High Confidence");
+    expect(status).toHaveAccessibleName("Evidence coverage: high. RoleFit confidence: high.");
+    expect(screen.getByTestId("result-row")).not.toHaveTextContent("Evidence:");
+    expect(screen.getByTestId("result-row")).not.toHaveTextContent("RoleFit confidence:");
   });
 
   it("renders profile-only players without fake scores or empty playstyles", () => {

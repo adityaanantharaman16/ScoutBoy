@@ -41,7 +41,7 @@ function ComparePageInner() {
 
       <div className="card mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <label className="flex flex-col gap-1">
-          <span className="label">Player A</span>
+          <span className="label">Player 1</span>
           <select
             data-testid="compare-a"
             className="input"
@@ -57,7 +57,7 @@ function ComparePageInner() {
           </select>
         </label>
         <label className="flex flex-col gap-1">
-          <span className="label">Player B</span>
+          <span className="label">Player 2</span>
           <select
             data-testid="compare-b"
             className="input"
@@ -88,7 +88,7 @@ function ComparePageInner() {
             ))}
           </select>
           <span className="text-[11px] text-ink-soft">
-            Uses Player A’s best-rated role, falling back to Player B’s.
+            Chooses the shared rated role where both players have the strongest joint fit.
           </span>
         </label>
       </div>

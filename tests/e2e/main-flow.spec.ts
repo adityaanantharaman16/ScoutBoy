@@ -6,21 +6,21 @@ test("main scouting flow", async ({ page }) => {
   // 1) Search / home
   await page.goto("/");
   await expect(page.getByTestId("scope-banner")).toContainText("RoleFit analysis");
-  await expect(page.getByTestId("scope-filter")).toContainText("Analyzed");
+  await expect(page.getByTestId("scope-filter")).toHaveValue("analyzed");
   await expect(page.getByTestId("player-result").first()).toBeVisible();
   const analyzedCountText = await page.getByTestId("result-count").textContent();
 
-  await page.getByRole("button", { name: /All records/i }).click();
+  await page.getByTestId("scope-filter").selectOption("all_records");
   await expect(page).toHaveURL(/scope=all_records/);
   await expect(page.getByTestId("player-result").first()).toBeVisible();
   const allCountText = await page.getByTestId("result-count").textContent();
   expect(allCountText).not.toBeNull();
   expect(analyzedCountText).not.toBeNull();
 
-  await page.getByRole("button", { name: /^U23$/ }).click();
+  await page.getByTestId("age-band-filter").selectOption("u23");
   await expect(page).toHaveURL(/age_band=u23/);
 
-  await page.getByRole("button", { name: /High-coverage U23/i }).click();
+  await page.getByTestId("scope-filter").selectOption("high_coverage_u23");
   await expect(page).toHaveURL(/scope=high_coverage_u23/);
   await expect(page.getByTestId("result-count")).toContainText("High-coverage U23");
 

@@ -82,6 +82,11 @@ def test_real_leaderboard_and_compare(real_client):
     ids = [i["id"] for i in real_client.get("/api/players?page_size=2").json()["items"]]
     cmp = real_client.get(f"/api/compare?player_a={ids[0]}&player_b={ids[1]}").json()
     assert cmp["why_higher"] and cmp["stat_rows"]
+    # the automatically selected role is shared: both sides carry a stored rating
+    role_key = cmp["role_key"]
+    assert role_key is not None
+    for key in ("player_a", "player_b"):
+        assert role_key in {r["role_key"] for r in cmp[key]["role_ratings"]}
 
 
 def test_real_rating_runs_recorded(real_client):
