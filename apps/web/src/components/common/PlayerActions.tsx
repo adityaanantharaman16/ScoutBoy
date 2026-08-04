@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 
+import { MOTION_EXIT_MS, usePresence } from "@/lib/motion/presence";
 import { useScoutingState, type PlayerRef } from "@/lib/state/scouting-state";
 
 export function ShortlistButton({
@@ -54,6 +56,14 @@ export function CompareQueueButton({
 /**
  * Outlined vs filled heart at identical geometry — the selected state toggles the
  * fill, never the icon's footprint. Inline and monochrome via `currentColor`.
+ *
+ * The fill is expressed as `fill="currentColor"` plus a `fill-opacity` of 1 or 0,
+ * rather than toggling `fill` between `currentColor` and `none`. Visually
+ * identical, but `none` is not a colour and therefore cannot interpolate — so
+ * transitioning `fill` would silently snap while `fill-opacity` genuinely
+ * transitions (see `.heart-fill` in globals.css). The stroke is always painted,
+ * so the outline never disappears mid-transition, and `data-filled` remains the
+ * asserted state attribute.
  */
 function HeartIcon({ filled }: { filled: boolean }) {
   return (
@@ -63,7 +73,7 @@ function HeartIcon({ filled }: { filled: boolean }) {
       height="18"
       aria-hidden="true"
       focusable="false"
-      fill={filled ? "currentColor" : "none"}
+      fill="none"
       stroke="currentColor"
       strokeWidth="1.8"
       strokeLinecap="round"
@@ -71,7 +81,12 @@ function HeartIcon({ filled }: { filled: boolean }) {
       data-testid="favorite-heart"
       data-filled={filled ? "true" : "false"}
     >
-      <path d="M12 20.6 4.7 13.3a4.85 4.85 0 0 1 0-6.9 4.75 4.75 0 0 1 6.6 0l.7.7.7-.7a4.75 4.75 0 0 1 6.6 0 4.85 4.85 0 0 1 0 6.9Z" />
+      <path
+        className="heart-fill"
+        d="M12 20.6 4.7 13.3a4.85 4.85 0 0 1 0-6.9 4.75 4.75 0 0 1 6.6 0l.7.7.7-.7a4.75 4.75 0 0 1 6.6 0 4.85 4.85 0 0 1 0 6.9Z"
+        fill="currentColor"
+        fillOpacity={filled ? 1 : 0}
+      />
     </svg>
   );
 }
@@ -178,41 +193,118 @@ export function PlayerActionRow({
   );
 }
 
+/**
+ * The compare tray is the one region in ScoutBoy that is spatially anchored to a
+ * viewport edge, so its presence may travel — but only from and toward the bottom
+ * boundary it already lives on.
+ *
+ * `usePresence` holds the tray mounted for the exit's duration and no longer. The
+ * queue state itself is never gated: `clearCompare` and `removeCompare` take
+ * effect synchronously, so clearing the tray works immediately and the live
+ * region is unaffected. Re-adding a player during the exit cancels the pending
+ * unmount rather than racing it, so rapid add/remove cannot strand a ghost tray.
+ * Under reduced motion the hold collapses to zero and the tray mounts/unmounts in
+ * the same commit, with no translation.
+ */
 export function CompareTray() {
   const { compareQueue, removeCompare, clearCompare } = useScoutingState();
-  if (compareQueue.length === 0) return null;
+  const { visible, leaving } = usePresence(compareQueue.length > 0, MOTION_EXIT_MS);
+  // Keeps the last non-empty queue on screen for the 120ms exit, so the tray
+  // animates out carrying the content it had rather than blanking to "Add one
+  // more player" first. Adjusted during render, never from a ref read.
+  const [held, setHeld] = useState<PlayerRef[]>(compareQueue);
+  if (compareQueue.length > 0 && held !== compareQueue) setHeld(compareQueue);
+  const trayRef = useRef<HTMLElement | null>(null);
+
+  /**
+   * WCAG 2.2 SC 2.4.11 Focus Not Obscured (Minimum).
+   *
+   * Reproduced during the closeout: with the tray open at the top of Discovery,
+   * tabbing to the third player link left it at y=686 inside a tray occupying
+   * 626–708 — entirely hidden. `scroll-padding-bottom` (kept, in globals.css)
+   * does not help on its own, because the browser only consults it when it
+   * decides to scroll, and here the element is already technically "in view".
+   *
+   * This is the smallest correction that resolves it: when focus lands on
+   * something the fixed tray overlaps, nudge the page so the control clears it.
+   *
+   * `behavior: "instant"`, NOT `"auto"`. Per the CSSOM View spec `"auto"` means
+   * "use the element's `scroll-behavior` CSS value" — and this document sets
+   * `scroll-behavior: smooth` under `no-preference`, so `"auto"` would start a
+   * smooth page scroll: page-wide motion the cadence rejects, and a delay before
+   * the focused control is actually visible. `"instant"` forces the immediate
+   * jump this needs, in both motion preferences.
+   *
+   * Pointer users cannot trigger it, since the tray already intercepts clicks
+   * over the region it covers.
+   */
+  useEffect(() => {
+    if (!visible) return;
+    const onFocusIn = (event: FocusEvent) => {
+      const target = event.target as HTMLElement | null;
+      const tray = trayRef.current;
+      if (!target || !tray || tray.contains(target)) return;
+
+      const focused = target.getBoundingClientRect();
+      const bar = tray.getBoundingClientRect();
+      const overlaps = focused.bottom > bar.top && focused.top < bar.bottom;
+      if (!overlaps) return;
+
+      // Scrolling down moves the focused control up, out from under the tray.
+      window.scrollBy({ top: focused.bottom - bar.top + 8, behavior: "instant" });
+    };
+    document.addEventListener("focusin", onFocusIn);
+    return () => document.removeEventListener("focusin", onFocusIn);
+  }, [visible]);
+
+  if (!visible) return null;
+  const queue = compareQueue.length > 0 ? compareQueue : held;
 
   const compareHref =
-    compareQueue.length === 2
-      ? `/compare?a=${compareQueue[0].id}&b=${compareQueue[1].id}`
-      : "/compare";
+    queue.length === 2 ? `/compare?a=${queue[0].id}&b=${queue[1].id}` : "/compare";
 
   return (
     <aside
-      className="fixed inset-x-3 bottom-3 z-40 mx-auto max-w-5xl border border-line-strong bg-ink px-3 py-3 text-paper shadow-sm sm:px-4"
+      ref={trayRef}
+      className={`fixed inset-x-3 bottom-3 z-40 mx-auto max-w-5xl border border-line-strong bg-ink px-3 py-3 text-paper shadow-sm sm:px-4 ${
+        leaving ? "tray-exit" : "tray-enter"
+      }`}
       aria-label="Compare queue"
+      data-testid="compare-tray"
+      data-leaving={leaving ? "true" : "false"}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="label text-paper/60">Compare queue · device local</div>
+          {/* `label-on-ink` rather than a `text-*` utility: `.label` is declared
+              after Tailwind's utilities layer, so a utility of equal specificity
+              cannot override its colour. See globals.css. */}
+          <div className="label label-on-ink">Compare queue · device local</div>
           <div className="mt-1 flex flex-wrap gap-2">
-            {compareQueue.map((player) => (
+            {queue.map((player) => (
               <span
                 key={player.id}
-                className="inline-flex items-center gap-2 border border-paper/20 px-2 py-1 text-sm"
+                // Opacity only, on mount: it points at WHICH name just joined the
+                // queue. Removal is instant — the tray already reports the change.
+                className="tray-token-enter inline-flex items-center gap-2 border border-paper/20 px-2 py-1 text-sm"
               >
                 {player.name}
+                {/* Was an 8x20 glyph — below the 24x24 minimum in WCAG 2.2
+                    SC 2.5.8, with no applicable exception (it is not inline in a
+                    sentence and its size is not essential). The hit area is now
+                    24x24 while the glyph itself is unchanged, so the tray's
+                    visual density is preserved. */}
                 <button
                   type="button"
-                  className="text-paper/70 hover:text-paper"
+                  className="-mr-1 inline-flex h-6 w-6 shrink-0 items-center justify-center text-paper/70 hover:text-paper"
                   aria-label={`Remove ${player.name} from compare queue`}
+                  data-testid="tray-remove"
                   onClick={() => removeCompare(player.id)}
                 >
-                  x
+                  <span aria-hidden="true">x</span>
                 </button>
               </span>
             ))}
-            {compareQueue.length < 2 && <span className="text-sm text-paper/60">Add one more player</span>}
+            {queue.length < 2 && <span className="text-sm text-paper/60">Add one more player</span>}
           </div>
         </div>
         <div className="flex gap-2">
@@ -221,8 +313,8 @@ export function CompareTray() {
           </button>
           <Link
             href={compareHref}
-            className={`btn btn-primary ${compareQueue.length < 2 ? "pointer-events-none opacity-55" : ""}`}
-            aria-disabled={compareQueue.length < 2}
+            className={`btn btn-primary ${queue.length < 2 ? "pointer-events-none opacity-55" : ""}`}
+            aria-disabled={queue.length < 2}
           >
             Open comparison
           </Link>

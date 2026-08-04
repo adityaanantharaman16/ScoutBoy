@@ -45,8 +45,17 @@ describe("score scale boundaries", () => {
     // 80-89 is a chromatic emerald (pitch.mid), NOT the near-black pitch.dark
     expect(scoreColor(85)).toBe("text-pitch-mid");
     expect(scoreColor(85)).not.toBe("text-pitch-dark");
-    // 90+ keeps the canonical elite blue
-    expect(scoreColor(92)).toBe("text-elite");
+    // 90+ is elite BLUE, but the darker `elite.ink` rather than the brighter
+    // `elite`. Changed in the M7 accessibility closeout: `elite` (#2e74e6)
+    // measures 3.94:1 on warm paper, which fails WCAG 2.2 SC 1.4.3 at the sizes
+    // this class actually renders — the leaderboard's `text-sm` cell, the
+    // comparison metric column, `ScoreReadout size="sm"`, and the role tab's
+    // 18px (below the 18.66px bold large-text cut-off). `elite.ink` (#1f57b0)
+    // measures 6.15:1 and passes at every size; the palette already defined it
+    // as "a darker companion for small text".
+    expect(scoreColor(92)).toBe("text-elite-ink");
+    // Still blue, and still distinct from every other band.
+    expect(scoreColor(92)).not.toBe(scoreColor(85));
     expect(scoreColor(null)).toBe("text-ink-soft");
     // 80-89 is distinct from the 70-79 green and the 90+ blue
     expect(scoreColor(85)).not.toBe(scoreColor(75));

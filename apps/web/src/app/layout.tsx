@@ -16,7 +16,19 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    // `data-scroll-behavior="smooth"` declares to Next.js that the document sets
+    // `scroll-behavior: smooth` in CSS (globals.css, under
+    // `prefers-reduced-motion: no-preference`). Next.js then temporarily switches
+    // route-transition scrolling to `auto` for non-hash navigations and restores
+    // the CSS behaviour afterwards.
+    //
+    // Without it, navigating away from a deeply scrolled dossier glides the whole
+    // previous document to the top — a page-wide route transition, which the
+    // Interaction & Motion cadence explicitly rejects. This is a declaration, not
+    // an animation: no route motion, no View Transitions API, no scroll JavaScript.
+    // In-page hash anchors still scroll smoothly, and `reduce` still computes to
+    // `auto`.
+    <html lang="en" data-scroll-behavior="smooth">
       <body>
         <Providers>
           <a href="#main" className="skip-link">

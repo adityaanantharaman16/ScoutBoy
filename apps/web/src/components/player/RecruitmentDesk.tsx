@@ -315,9 +315,27 @@ export function RecruitmentDesk({
               highlight={highlight}
               className="desk-pitch h-full"
             />
-            <RoleEvidenceList groups={groups} highlight={highlight} className="desk-traits" />
+            {/* The two remaining role-specific regions carry the same 120ms
+                settle as the pitch's zone overlay, keyed on the selected role so
+                it restarts (never queues) on rapid tab changes. `selectedKey`
+                drives the render synchronously, so the content is already the new
+                role's from the first frame — the settle acknowledges the change,
+                it never gates or delays it. The selected-role summary and the
+                evidence/context rail are deliberately excluded: the score is the
+                figure a scout came for and must not fade, and the rail's
+                card-level context did not change with the role. */}
+            <RoleEvidenceList
+              key={selectedKey}
+              groups={groups}
+              highlight={highlight}
+              className="desk-traits desk-analysis-enter"
+            />
             {/* Fills the space beneath the rail + pitch, down to the trait list. */}
-            <ExplanationBlock audit={audit!} className="desk-why h-full" />
+            <ExplanationBlock
+              key={`why-${selectedKey}`}
+              audit={audit!}
+              className="desk-why desk-analysis-enter h-full"
+            />
           </div>
         ) : (
           <div className="lg:grid lg:grid-cols-[minmax(300px,340px)_1fr] lg:items-start lg:gap-6">

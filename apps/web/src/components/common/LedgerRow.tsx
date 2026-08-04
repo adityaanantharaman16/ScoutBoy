@@ -21,7 +21,10 @@ export function LedgerRow({
 }) {
   return (
     <article
-      className="ledger-row px-4 py-3.5 transition hover:bg-paper-muted/50"
+      // The hover transition now comes from `.ledger-row` in globals.css as an
+      // explicit `background-color` change, not the broad Tailwind utility: a
+      // ledger of 12 rows must never carry promoted transform/filter layers.
+      className="ledger-row px-4 py-3.5 hover:bg-paper-muted/50"
       data-testid={testId}
     >
       {children}

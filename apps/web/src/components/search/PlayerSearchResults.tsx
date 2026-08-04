@@ -97,9 +97,16 @@ export function PlayerSearchResults({
           container and separated from the first player row by the existing
           hairline divider. Keeping it inside is what lets the results ledger and
           the filter rail start at the same y on desktop — no spacer is added
-          above the filter panel to fake the alignment. */}
+          above the filter panel to fake the alignment.
+
+          `pane-enter` is a mount-triggered opacity settle covering the whole
+          ledger — count header and rows together, as one atomic unit — so the
+          reported total and the visible rows can never be seen disagreeing. It
+          needs no key, state, or timer: this element only mounts when real data
+          replaces the skeleton or a previous result. Deliberately no row stagger,
+          no fly-in, and no reorder animation. */}
       <div
-        className="divide-y divide-line overflow-hidden border border-line bg-paper-panel"
+        className="pane-enter divide-y divide-line overflow-hidden border border-line bg-paper-panel"
         data-testid="results-ledger"
       >
         <div

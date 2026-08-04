@@ -1,8 +1,12 @@
 # Milestone 7 — Visual & Interaction Design (Recruitment Desk)
 
-**Status: Cadence 2 (dossier) complete; Cadence 3 (Cross-Surface Extension) and Cadence 4
-(static visual correction) implemented and self-verified — still NOT the completion of
-Milestone 7.**
+**Status: Milestone 7 is COMPLETE.** Cadence 2 (dossier), Cadence 3 (Cross-Surface
+Extension), Cadence 4 (static visual correction) and the Interaction & Motion cadence
+are implemented and self-verified, and the closing
+[Accessibility, Resilience & Visual-Regression Closeout](./milestone_7_accessibility_closeout.md)
+audited the result against WCAG 2.2 Level A/AA, fixed every defect it reproduced, and
+added the accessibility, resilience, cross-browser and visual-baseline suites. Dark mode
+remains deliberately deferred and untouched.
 Cadence 2 implemented the approved visual direction on the **player dossier**
 (`apps/web/src/app/players/[playerId]/page.tsx`). Cadence 3 (documented in
 [Cross-Surface Extension](#cross-surface-extension-cadence-3) below) extends the same
@@ -11,9 +15,11 @@ shortlist, methodology, navigation, and the shared loading/empty/missing/error s
 Cadence 4 (documented in
 [Static visual correction](#static-visual-correction-cadence-4)) corrects the Discovery
 filter/results composition, takes the production corner language to a literal 90 degrees, and
-normalizes comparison copy. **Dark mode and the dedicated motion pass remain deferred**, and a
-comprehensive accessibility/visual-regression audit is still out of scope, so Milestone 7 is
-not yet fully complete.
+normalizes comparison copy. The
+[Interaction & Motion cadence](#interaction--motion-cadence) then adds the restrained motion
+language across every surface. **Dark mode remains deferred**, and a comprehensive
+accessibility and visual-regression audit is recorded separately in the
+[closeout document](./milestone_7_accessibility_closeout.md).
 
 ## Approved thesis
 
@@ -182,8 +188,9 @@ Playwright API-route interception that lightly edits the real response shapes.
   [Cross-Surface Extension](#cross-surface-extension-cadence-3).**
 - Deciding whether the public demo cohort should include deliberately varied synthetic
   profiles so these honesty states are demonstrable without mocking.
-- Any lateral (left/right) territory nuance, richer motion, or territory tuning.
-- The dedicated motion pass and a comprehensive WCAG / cross-platform visual-regression audit.
+- Any lateral (left/right) territory nuance or territory tuning.
+- ~~The dedicated motion pass~~ **done — see [Interaction & Motion cadence](#interaction--motion-cadence).** A comprehensive WCAG / cross-platform visual-regression
+  audit remains outstanding.
 - **Dark mode.** An isolated pilot lives at `apps/web/src/app/design-pilots/dark-mode/` with
   its notes in `docs/design_pilots/`. It is deliberately quarantined from the production
   product — not expanded, integrated, or deleted — and is excluded from production-wide
@@ -440,7 +447,7 @@ scrolling (the methodology formula) is contained within its own block.
 
 ### Remaining (deferred) work
 
-- The dedicated **motion pass** (intentional entrances/emphasis, reduced-motion tuning).
+- ~~The dedicated **motion pass**~~ — **done in the [Interaction & Motion cadence](#interaction--motion-cadence).**
 - A comprehensive **WCAG audit** and any resilience hardening beyond this baseline.
 - Final cross-platform **visual-regression** coverage (kept out of CI as brittle snapshots).
 - Whether the public demo cohort should include deliberately varied synthetic profiles so
@@ -972,20 +979,309 @@ document flow above the results ledger.
 - **Dark mode remains deferred.** The isolated pilot under `apps/web/src/app/design-pilots/`
   and `docs/design_pilots/` was neither expanded, integrated, redesigned, nor deleted, and is
   explicitly excluded from the square-corner migration. No pilot styling reaches production.
-- **Motion remains deferred.** The dedicated motion pass is still outstanding.
+- **Motion is no longer deferred** — see the [Interaction & Motion cadence](#interaction--motion-cadence). The pilot is excluded from it.
 - The comprehensive WCAG / visual-regression audit is still outstanding.
+
+## Interaction & Motion cadence
+
+**Status: implemented and self-verified; NOT the completion of Milestone 7.** The dedicated motion
+pass, previously listed as deferred, is done. It adds no dependency, changes no product logic, and
+touches no backend, schema, contract, rating, market, playstyle, filter, URL-state, layout,
+typography, colour, corner, tag, label, or navigation behaviour. **Dark mode remains deferred and
+untouched**, and the comprehensive WCAG/resilience and cross-platform visual-regression closeout
+remains outstanding.
+
+### Motion thesis
+
+> The ledger acknowledges; it never performs.
+
+Motion exists only where it does at least one of five jobs: confirm an action was received, clarify
+where something came from or went, preserve continuity across a visible state change, direct
+attention to information that actually changed, or report that work is still in progress. Anything
+that did none of these was not built. The largest duration in the product is **180ms**; the largest
+travel is **8px**; nothing scales, rotates, bounces, lifts, glows, pulses, or staggers.
+
+### Kimi K3 design-review workflow
+
+Kimi K3 (`kimi-code/k3`, "K3", via the installed Kimi Code CLI 0.28.1 on the OAuth-managed
+`managed:kimi-code` provider) participated in **both** required stages, with vision.
+
+1. **Design review, before any implementation edit.** K3 received an isolated review workspace — the
+   Milestone 7 record, `globals.css`, the twelve in-scope components, representative tests, and 19
+   screenshots of the running app (Discovery, dossier + Recruitment Desk, role selector, Role
+   Territory hover/pin, My Favorites, Compare, mobile navigation, the compare tray, and the loading
+   skeleton) at 1280/390/320. It returned one restrained direction: a motion matrix, a token set, a
+   product-specific rejection list, and a static-surface list. The workspace was a copy containing
+   no `.env`, credentials, database, or unrelated local files; the CLI wrote nothing into the
+   repository and no CLI configuration was staged.
+2. **Implementation review, after the code was written.** K3 received the shipped motion CSS, the
+   presence helper, the full diff, **computed** styles measured off the running app (including the
+   reduced-motion audit), and an after-set of screenshots — several deliberately frozen
+   mid-animation by pausing the CSS animation and seeking to a fraction of its duration, so
+   intermediate frames could be judged rather than guessed. Its verdict was **ship it**: no
+   constraint violations, nothing to remove, all five Opus corrections accepted.
+
+Opus owns the final code. Every Kimi recommendation was reviewed before adoption and every
+Kimi-reported concern was independently verified before acting; the raw transcript is not committed.
+
+### Accepted motion matrix
+
+| Interaction / state change | Job | Element | Property | Duration | Easing | Origin |
+| --- | --- | --- | --- | --- | --- | --- |
+| Hover / press on a control | confirm | `.btn`, `.nav-link`, `.ledger-row`, `.input` | `background-color`, `border-color`, `color` | feedback | ease-out | in place |
+| Hover / press on an action rail | confirm | `.rail-action` | `background-color` | feedback | ease-out | in place |
+| Favourite / compare pressed marker | confirm, continuity | `.rail-action` inset marker | `box-shadow` | state | standard | in place |
+| Favourite heart fill | confirm, continuity | `path.heart-fill` | `fill-opacity` | state | standard | in place |
+| Role tab selection | confirm, continuity | `.role-tab` | `background-color`, `border-color`, `color`, `box-shadow` | state | standard | in place; marker on the tab's own edge |
+| Role change → analysis settle | continuity, attention | pitch zone overlay, `RoleEvidenceList`, "Why This Score" | `opacity` 0.6 → 1 | state | ease-out | the canvas, as one unit |
+| Evidence hover / focus / pin ↔ pitch zone | clarify, attention | `.evidence-group` + `.territory-zone` | `background-color`, `border-color` | state | standard | in place, both ends on one clock |
+| Compare tray presence | clarify, confirm | `CompareTray` | `opacity`, `translateY` 8px | enter / exit | ease-out / ease-in | the viewport bottom edge it is anchored to |
+| Newly queued player token | confirm | tray token `<span>` | `opacity` | state | ease-out | in place |
+| Mobile menu presence | clarify, continuity | `#primary-nav-links` (below `lg`) | `opacity`, `translateY` 4px | enter / exit | ease-out / ease-in | the Menu button directly above it |
+| Results / empty / error replacing a skeleton or a prior result | continuity, progress | `results-ledger`, `EmptyState`, `ErrorState` | `opacity` | enter | ease-out | the pane, atomically |
+
+Exits are shorter than their matching entrances in every case. Removal of a queued token is
+instant, and the results pane has no exit at all — outgoing content unmounts and incoming content
+performs the single entrance, which is the least prominent exit available.
+
+### Token values
+
+Seven tokens in `:root`, consumed **only** inside `@media (prefers-reduced-motion: no-preference)`.
+
+| Token | Value | Family |
+| --- | --- | --- |
+| `--motion-feedback` | `80ms` | immediate feedback |
+| `--motion-state` | `120ms` | reversible selected state |
+| `--motion-enter` | `180ms` | compact entrance |
+| `--motion-exit` | `120ms` | compact exit (always `< --motion-enter`) |
+| `--motion-ease-out` | `cubic-bezier(0.2, 0, 0, 1)` | productive ease-out — entrances, feedback |
+| `--motion-ease-in` | `cubic-bezier(0.4, 0, 1, 1)` | productive ease-in — exits only |
+| `--motion-ease-standard` | `cubic-bezier(0.4, 0, 0.2, 1)` | standard state easing — reversible transitions |
+
+No easing has a control point outside `[0, 1]` on the output axis, so **overshoot, bounce, and
+spring are unexpressible through the token set** rather than merely unused — a test asserts this.
+`--motion-ease-standard` is symmetric so a mid-flight reversal (rapid role arrows, hover flicker,
+double-toggle) interpolates from wherever it is instead of snapping. Component CSS names tokens and
+never literal durations.
+
+### Implemented surfaces
+
+- **Global interactive feedback** — buttons, native inputs and selects, role tabs, ledger rows,
+  action rails, evidence-group buttons, navigation links, pagination. The three broad Tailwind
+  `transition` utilities (on `.ledger-row`, the role tabs, and the evidence-group buttons) are
+  replaced by explicit per-property control; Tailwind's utility animated a wide list including
+  `transform`, `box-shadow` and `filter`, which a 12-row ledger must not carry.
+- **Recruitment Desk role changes** — the highest-priority motion. The tab's background, border,
+  colour and inset marker transition on the state clock; the analysis canvas settles from 0.6
+  opacity. The stored RoleFit score swaps instantly and is never counted between values; score band
+  colour swaps instantly too, because the bands are categorical and interpolating between them
+  would transit hues belonging to no band.
+- **Role Territory evidence highlighting** — the evidence row and its pitch zone transition on the
+  same duration and easing; that shared clock is the connection being communicated.
+- **Favorites and Compare actions** — pressed colour and inset marker, plus the heart's fill.
+- **Compare tray** — the only element that travels, and only along the edge it is anchored to.
+- **Mobile navigation** — a 4px inline expansion from its trigger, scoped below `lg`.
+- **Discovery content replacement** — the pane settles as one atomic unit, shared with the empty and
+  error states.
+
+### Intentionally static surfaces
+
+The filter rail while in use, the loading skeleton (no shimmer, pulse, gradient, or exit — it
+unmounts and the real pane performs the single entrance), the pitch field and its white markings,
+the centre circle and penalty arcs, the legend, the permanent illustrative disclosure, the
+selected-role summary, the evidence/context rail, market chart intervals, score bars on every
+render, Peer-Ranked Role bars, comparison metric values, the `ConfidenceMeter` segments, the
+favorites counter, the methodology document, page headers, display tags, sticky filter behaviour,
+the footer, page background and decoration, the `:focus-visible` ring, and the skip link.
+
+Two are worth stating as deliberate: **the focus ring and the skip link are never transitioned**,
+because both are wayfinding for keyboard users and must land in the current frame. Existing smooth
+anchor scrolling is retained for users without a reduced-motion preference; no scroll-triggered
+reveal was added.
+
+**Route scrolling is declared, not animated.** The root `<html>` carries
+`data-scroll-behavior="smooth"` (`app/layout.tsx`), which tells Next.js that the document sets
+`scroll-behavior: smooth` in CSS. Next.js then suppresses smooth behaviour for the duration of a
+**non-hash route transition** and restores the CSS behaviour afterwards. Without the declaration,
+Next.js emits its `missing-data-scroll-behavior` warning and navigating away from a deeply scrolled
+dossier glides the whole previous document to the top — a page-wide route transition, which this
+cadence explicitly rejects.
+
+The CSS is untouched, so **in-page hash anchors keep whatever behaviour that CSS gives them**:
+`scroll-behavior` still computes to `smooth` under normal motion and to `auto` under
+`prefers-reduced-motion: reduce`. Next.js only suspends it for the duration of a non-hash route
+transition and restores it immediately afterwards — verified by asserting the resting computed value
+after navigating. This is a declaration only: no route animation, no View Transitions API, no
+navigation state, no timer, and no custom scrolling JavaScript was introduced.
+
+**Disclosures were audited and deliberately received no motion.** `Evidence & Context` (a native
+`<details open>`) and the Complete Audit Trail (a conditional React mount) now share one treatment:
+immediate layout expansion and collapse, with the native `summary` marker untouched. A content fade
+was rejected because `<details open>` would fade on page load with no triggering action, while the
+conditional mount would fade only on action — two behaviours for one family is worse than none. No
+height is animated anywhere, and no native `<details>` was replaced to gain animation.
+
+**On the settle firing at first dossier paint.** The keyed analysis wrapper mounts when the ratings
+request resolves, so the settle also plays once when the territory replaces `TerritoryLoading`.
+This is deliberate and consistent with `pane-enter`: both mark *content arriving after a loading
+state*, which is job 5 → job 3. It is not the same as the rejected disclosure fade, which would
+have marked nothing happening at all.
+
+### Rejected motion patterns
+
+Scroll reveals, card cascades and row stagger, bounce, elastic springs, scale-on-hover, parallax,
+glow pulses, animated gradients, blur, floating decoration, count-up scores, chart-drawing
+animations, cursor effects, page-wide route transitions, simultaneous unrelated motion, and
+ornamental football-themed movement.
+
+Three rejections are load-bearing for this product specifically:
+
+- **Count-up scores** are the strongest available honesty violation. A RoleFit score is a *stored*
+  value the frontend must never reconstruct; animating through 87.4, 88.1, 89.6 would display
+  numbers that never existed.
+- **Chart-drawing animations** would animate a market interval or a score bar through false
+  intermediate values, and delay the exact figures a scout came for.
+- **Ornamental football movement** on the pitch would animate the very claim the permanent
+  disclosure exists to deny — implying tracking data ScoutBoy does not have.
+
+### Reduced-motion behaviour
+
+`prefers-reduced-motion: reduce` gives complete functionality with immediate state changes. This is
+guaranteed twice over, deliberately not once:
+
+1. **Structurally** — every motion rule lives inside `no-preference`, and the keyframes (which paint
+   nothing on their own) are referenced only from there. Under `reduce` there is nothing to
+   suppress, because the base cascade already *is* the final usable state.
+2. **The pre-existing kill-switch is preserved verbatim** as defence in depth, so anything a future
+   change declares outside that gate is still neutralised.
+
+Reduced motion is not "make every duration 1ms" — the movement is removed. Role content, territory
+highlighting, the mobile menu, the compare tray, and result replacement all change immediately;
+`usePresence` collapses its exit hold to zero and schedules no timer at all; no code path waits on
+`animationend` or a timeout before completing an action; and focus and live-region announcements are
+never sequenced behind animation. Colour, borders, glyph fill and inset markers continue to carry
+every state distinction. Measured on the running app: **zero animated elements, zero running
+animations, `scroll-behavior: auto`** across Discovery, My Favorites, Compare and Methodology, and
+the reduced-motion tray screenshot is byte-identical to the resting tray.
+
+### Accessibility guarantees
+
+The WAI-ARIA tablist and roving tabindex, native `<select>` and `<details>` semantics, keyboard
+evidence highlighting, `aria-pressed` on favourite and compare, polite live regions, alert and
+status regions, focus-visible outlines, the skip link, non-colour-only meaning, minimum action
+targets, 200% zoom, and 320/390 reflow are all preserved.
+
+Motion is never the only indication that something changed. Specifically: `aria-expanded` stays
+bound to the menu's real state rather than to its animation, so it reports closed the instant the
+toggle is pressed even while the panel is still exiting; the role live region announces the new role
+synchronously; `role="status"` and `role="alert"` content is present in the DOM at mount, so the
+opacity settle never delays an announcement; and `outline` appears in no transition-property list
+anywhere.
+
+### Performance constraints
+
+Only `opacity`, `transform`, and bounded colour/`box-shadow`/`fill-opacity` are animated. No layout
+property is animated anywhere — no `width`, `height`, `top`, `left`, `right`, `bottom`, `margin`,
+`padding`, `inset`, grid track, `flex`, or `font-size` — so there is no mechanism for animation to
+shift layout. There is no `transition: all` and no bare Tailwind `transition` utility in production
+source; no `will-change` anywhere, so no permanent promoted layer sits across the ledger's rows; no
+`animation-delay`, `transition-delay`, or `nth-child` stagger; and no infinite animation. A single
+role change runs three settles plus the tab-strip colour transitions — measured, **every one of them
+is 120ms**, so they start and finish together as one region on one clock rather than competing.
+
+### Tests and visual verification
+
+**Vitest `src/tests/motion.test.tsx` (41 tests).** Exactly four duration and three easing tokens; the
+240ms ceiling; exits shorter than entrances; tokens-not-literals in every motion rule; no overshoot
+control point in any easing; no `transition: all` and no bare `transition` utility in any production
+file; an explicit `transition-property` list, with a matching duration and timing function, that
+never includes `outline`; no layout property animated; keyframes restricted to `opacity` and
+`transform`; no infinite animation, delay, or stagger; no `will-change`; every motion rule inside
+`no-preference`; the kill-switch intact; no motion class or token reaching the dark-mode pilot; the
+skip link and focus ring never transitioned. Behaviour: role changes update content and the live
+region synchronously; rapid role selection cannot show stale analysis; the score stays outside the
+settling region; an unknown group's zone is excluded from the transition; hover, keyboard focus and
+pin stay synchronized; arrow/Home/End stay immediate; favourite and compare preserve labels,
+geometry and ARIA; the heart transitions `fill-opacity`, not the non-interpolable `fill`; rapid
+toggling is deterministic; the tray enters and exits from the bottom boundary, cannot be stranded as
+a ghost by rapid add/remove, clears immediately, and mounts/unmounts in one commit under reduced
+motion; the menu keeps `aria-expanded` bound to real state; the skeleton is completely static; and
+the disclosures stay native and unanimated.
+
+**Playwright `tests/e2e/motion.spec.ts` (23 tests).** In normal motion: computed tokens; explicit,
+bounded feedback that never animates `outline`; role tabs, evidence rows and pitch zones on one
+120ms clock; no infinite or over-budget animation anywhere on the page; the score never counting and
+the bar never growing; rapid role switching leaving exactly one selected tab and a correct live
+region; stable bounding boxes across selected/pressed transitions; the tray rising from the viewport
+bottom with `sb-rise-in` at 180ms and exiting with `sb-rise-out` at 120ms; rapid add/remove leaving
+no ghost tray; the menu dropping from its trigger at 180ms and exiting at 120ms; **the desktop
+navigation resolving to no animation at all**; the skeleton static and the pane fading as one unit
+with no per-row animation; the count and rows never disagreeing across pagination; native
+keyboard-operable disclosures with no height animation; an **intercepted** unknown-group response
+proving a hatched zone keeps `0s` transitions, its gradient, its dashed border and the word
+"unknown" while a known zone on the same page transitions at `0.12s`; and no horizontal overflow at
+1280/768/390/320 with the tray up and the menu open. Under
+`page.emulateMedia({ reducedMotion: "reduce" })`: every computed duration zero and every
+`animation-name` `none` across four surfaces, `scroll-behavior: auto`, immediate role change,
+immediate territory highlighting, the tray with no residual transform, the menu opening and closing
+in one commit, and focus reaching the skip link with a zero transition.
+
+Assertions are computed styles, final state, and stable geometry — deterministic polling rather than
+sleeping fixed intervals.
+
+**Manual verification.** 64 checks across **Chromium and WebKit**: no horizontal overflow on
+Discovery (tray up), the dossier, and the mobile menu at 1280, 768, 390, 320 and the 200%-zoom
+equivalent; role selection by mouse and by arrow/Home/End; rapid role switching; evidence
+hover/focus/pin synchronization; favourite add/remove with stable geometry; nine rapid compare-queue
+toggles leaving exactly one tray and none after emptying; filter URL state and pagination replacing
+the pane with rows intact; native disclosure toggling and the Complete Audit Trail's
+`aria-expanded`; and zero animated elements under reduced motion on four surfaces. Mid-animation
+frames were captured by pausing CSS animations and seeking to a fraction of their duration, then
+inspected at 30–50% completion.
+
+### Remaining Milestone 7 work
+
+**All resolved by the
+[Accessibility, Resilience & Visual-Regression Closeout](./milestone_7_accessibility_closeout.md).**
+That document is the authoritative record; it is not duplicated here.
+
+- ~~The comprehensive **WCAG / resilience audit**, including a full 200% zoom pass across every
+  surface.~~ Done — WCAG 2.2 A/AA, six production defects fixed, 200% zoom checked in Chromium
+  and WebKit. Manual screen-reader verification remains outstanding and is documented as a
+  residual risk, not as a passed criterion.
+- ~~Final cross-platform **visual-regression** coverage (kept out of CI as brittle snapshots).~~
+  Done — 59 curated baselines across four browser/viewport projects, run explicitly via
+  `pnpm visual`.
+- **Dark mode**, still deferred: the isolated pilot under `apps/web/src/app/design-pilots/` and
+  `docs/design_pilots/` was neither expanded, integrated, redesigned, nor deleted. It is excluded
+  from this cadence exactly as it was from the square-corner migration — it carries its own
+  `.pilot-*` vocabulary, uses no production primitive, and a test asserts that no motion class,
+  motion token, `transition`, or `animation` reaches it.
+- Whether the public demo cohort should include deliberately varied synthetic profiles so the
+  honesty states are demonstrable without mocking (open since Cadence 2).
+- Favourite/compare action copy outside the discovery and My Favorites rails still says
+  `Shortlist`.
 
 ## Known limitations
 
 - The territory is illustrative and coarse (thirds + box) with no lateral placement; it is
   not, and must never be presented as, positional/tracking data.
+- The motion layer's exit animations for the compare tray and the mobile menu are the only
+  behaviour that holds an element in the DOM past its state change (120ms, via `usePresence`).
+  Application state, ARIA and live regions are updated synchronously and never wait on it, and the
+  hold is not scheduled at all under reduced motion — but it is the one place where a timer exists,
+  so it is covered by explicit rapid-interaction tests in both the unit and E2E suites.
+- Because the sample cohort contains no null `group_score`, the hatched unknown-zone behaviour under
+  motion is verified by component fixtures plus one Playwright test that intercepts and lightly
+  edits the real ratings response — not by the live demo data.
 - Because the sample dataset contains only analyzed, high-coverage, mostly high-confidence
   players, several honesty states (profile-only, low/unknown confidence, missing/partial
   market, missing shared role) are currently only visible via component fixtures and
   Playwright response-interception across every surface — not in the live demo cohort.
-- Cadence 3 delivers the **static** cross-surface hierarchy and responsive extension. The
-  dedicated motion pass and a comprehensive accessibility/visual-regression audit are still
-  outstanding, so this is **not** the completion of Milestone 7.
+- Cadence 3 delivered the **static** cross-surface hierarchy and responsive extension; the
+  Interaction & Motion cadence added the motion layer on top of it. A comprehensive
+  accessibility/visual-regression audit is still outstanding, so this is **not** the completion
+  of Milestone 7.
 - The ledger corrections were verified at 1280, 640 (200%-zoom equivalent), 390 and 320. The
   comprehensive **WCAG / resilience audit**, including a full 200% zoom pass across every
   surface, remains a subsequent cadence.

@@ -79,7 +79,11 @@ export function RoleSelector({
             aria-selected={selected}
             aria-controls={panelId}
             tabIndex={selected ? 0 : -1}
-            className={`flex w-40 shrink-0 snap-start flex-col gap-1 border px-3 py-2 text-left transition sm:w-auto ${
+            // `role-tab` carries the selected-state transition (background,
+            // border, colour and the inset marker) from globals.css, replacing the
+            // broad Tailwind `transition` utility that previously animated a wide
+            // property list including transform and box-shadow.
+            className={`role-tab flex w-40 shrink-0 snap-start flex-col gap-1 border px-3 py-2 text-left sm:w-auto ${
               selected
                 ? "border-pitch bg-[#e9f0ea] text-pitch-dark shadow-[inset_0_-2px_0_var(--pitch)]"
                 : "border-line bg-paper-panel text-ink-muted hover:border-line-strong"

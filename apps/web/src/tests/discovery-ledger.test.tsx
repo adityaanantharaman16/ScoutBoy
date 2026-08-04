@@ -387,12 +387,20 @@ describe("Discovery action rail", () => {
 
     const inactive = geometry(heart());
     const inactiveButtonClass = favorite.className;
+    const fillPath = () => heart().querySelector("path.heart-fill")!;
+
     expect(heart()).toHaveAttribute("data-filled", "false");
-    expect(heart()).toHaveAttribute("fill", "none");
+    // The fill lives on the path as `fill-opacity`, not as the svg's `fill`
+    // attribute: `none` is not a colour and cannot interpolate, so a `fill`
+    // toggle would silently snap instead of transitioning. `fill` is therefore
+    // constant `currentColor` on the path and only its opacity changes.
+    expect(fillPath()).toHaveAttribute("fill", "currentColor");
+    expect(fillPath()).toHaveAttribute("fill-opacity", "0");
 
     fireEvent.click(favorite);
     expect(heart()).toHaveAttribute("data-filled", "true");
-    expect(heart()).toHaveAttribute("fill", "currentColor");
+    expect(fillPath()).toHaveAttribute("fill", "currentColor");
+    expect(fillPath()).toHaveAttribute("fill-opacity", "1");
     // only the fill changed: same element, same box, same class list
     expect(geometry(heart())).toEqual(inactive);
     expect(favorite.className).toBe(inactiveButtonClass);

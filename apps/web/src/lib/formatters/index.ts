@@ -80,8 +80,19 @@ export function scoreBand(score: number | null | undefined): ScoreBand {
 }
 
 // Text colour classes. 80–89 uses a chromatic emerald (`pitch.mid`) rather than
-// the near-black `pitch.dark`, so strong scores read clearly green; 90+ keeps
-// the canonical elite blue. All are AA-legible on warm paper.
+// the near-black `pitch.dark`, so strong scores read clearly green.
+//
+// 90+ uses `elite.ink` (#1f57b0), not the brighter `elite` (#2e74e6). Measured in
+// the M7 accessibility closeout: `elite` is 3.94:1 on warm paper, which clears
+// the 3:1 large-text threshold but NOT the 4.5:1 required by WCAG 2.2 SC 1.4.3
+// at the sizes this class actually appears — the leaderboard's `text-sm` table
+// cell, the comparison metric column, `ScoreReadout size="sm"`, and the role
+// tab's `text-lg` (18px, below the 18.66px bold large-text cut-off). `elite.ink`
+// measures 6.15:1 and passes at every size. The palette already defined it for
+// exactly this purpose ("a darker companion for small text").
+//
+// The brighter `elite` is retained for the BAR fill below, which is a
+// supplementary graphic — the number itself is always present as text.
 const BAND_TEXT: Record<ScoreBand, string> = {
   unknown: "text-ink-soft",
   red: "text-accent-red",
@@ -89,7 +100,7 @@ const BAND_TEXT: Record<ScoreBand, string> = {
   amber: "text-accent-amber",
   green: "text-pitch",
   deep: "text-pitch-mid",
-  elite: "text-elite",
+  elite: "text-elite-ink",
 };
 
 const BAND_BAR: Record<ScoreBand, string> = {

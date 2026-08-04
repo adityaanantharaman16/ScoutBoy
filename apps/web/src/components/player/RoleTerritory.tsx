@@ -195,13 +195,31 @@ export function RoleTerritoryPitch({
             evidence list, so the visual layer stays aria-hidden. */}
         <div className="relative mx-auto w-full max-w-[320px]" style={{ aspectRatio: "300 / 430" }}>
           <PitchField />
-          <div className="absolute inset-0" aria-hidden="true">
+          {/* Only the zone overlay carries the role-change settle — keyed so it
+              restarts when the selected role changes. The pitch field, its white
+              markings, the legend and the permanent illustrative disclosure are
+              deliberately outside it: they never move, never redraw, and are never
+              faded, because none of them changed. */}
+          <div
+            key={roleDisplayName}
+            className="desk-analysis-enter absolute inset-0"
+            aria-hidden="true"
+          >
             {zones.map((z) => {
               const isActive = active === z.key;
               return (
                 <div
                   key={z.key}
-                  className="absolute flex flex-col items-center justify-center text-center"
+                  // Only KNOWN zones get the highlight transition. An unknown zone
+                  // is a hatched `repeating-linear-gradient` with a dashed border:
+                  // it must stay visibly unknown for every frame and must never
+                  // appear to interpolate toward a numeric fill, so it is excluded
+                  // from the transition entirely rather than relying on the hatch
+                  // being a non-interpolable background-image.
+                  className={`${
+                    z.unknown ? "" : "territory-zone"
+                  } absolute flex flex-col items-center justify-center text-center`}
+                  data-zone-unknown={z.unknown ? "true" : "false"}
                   style={{
                     left: `${z.leftPct}%`,
                     top: `${z.topPct}%`,
@@ -308,7 +326,11 @@ export function RoleEvidenceList({
                 aria-label={`${titleCase(g.key)}: ${
                   unknown ? "unknown, no measured evidence" : `score ${Math.round(g.group_score as number)}`
                 }, role weight ${Math.round(g.normalized_weight * 100)} percent, ${territoryLabel(terr)}`}
-                className={`w-full scroll-mt-24 border px-3 py-2 text-left transition ${
+                // `evidence-group` shares one duration and easing with
+                // `territory-zone` in globals.css — that shared timing IS the
+                // connection between this row and its pitch zone. Replaces the
+                // broad Tailwind `transition` utility.
+                className={`evidence-group w-full scroll-mt-24 border px-3 py-2 text-left ${
                   isActive ? "border-line-strong bg-paper-muted" : "border-line bg-paper-panel hover:border-line-strong"
                 }`}
                 onMouseEnter={() => onHover(g.key)}

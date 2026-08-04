@@ -9,9 +9,23 @@
   --panel-muted: #efede2;
   --ink: #182219;
   --ink-muted: #49564c;
-  --ink-soft: #6e7a6f;
+  /* Darkened from #6e7a6f in the M7 accessibility closeout. The old value
+     measured 4.01:1 on --paper, 4.33:1 on --panel and 3.82:1 on --panel-muted —
+     below the 4.5:1 required by WCAG 2.2 SC 1.4.3 for the normal-size text it
+     carries (.label eyebrows, metadata lines, the footer, honest "unknown"
+     copy). Now 4.98 / 5.39 / 4.75. Same warm grey-green hue; only lightness
+     changed. */
+  --ink-soft: #5f6b61;
+  /* Decorative separator only — never a control boundary, so SC 1.4.11 does not
+     apply to it. */
   --line: #d8d3c2;
-  --line-strong: #b9b29d;
+  /* Darkened from #b9b29d in the M7 accessibility closeout. This token bounds
+     real controls (.btn, .input, select.input, .rail-box, .rail-action) whose
+     fill (--panel) sits at 1.08:1 against the page (--paper) — so the border is
+     the ONLY thing identifying the control. At 1.89:1 it failed WCAG 2.2
+     SC 1.4.11 (non-text contrast, 3:1). Now 3.25:1 on paper / 3.51:1 on panel.
+     Used exclusively for borders and small fills, never for text. */
+  --line-strong: #8d866f;
   --pitch: #1c5a3c;
   --pitch-dark: #13402b;
   --sage: #5e7166;
@@ -40,11 +54,39 @@
   --sans: "InterVariable", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+
+  /* ---- Motion system: four durations, three easings, nothing per-component ----
+     "The ledger acknowledges; it never performs." Every value is consumed ONLY
+     inside `@media (prefers-reduced-motion: no-preference)` further down, so the
+     base cascade is always the final usable state. Nothing here exceeds 240ms,
+     and the exit duration is strictly shorter than the entrance duration. */
+  --motion-feedback: 80ms; /* hover / press acknowledgement */
+  --motion-state: 120ms; /* reversible selected / pressed state */
+  --motion-enter: 180ms; /* compact entrance (tray, menu, results pane) */
+  --motion-exit: 120ms; /* compact exit — always < --motion-enter */
+  /* Entrances + feedback: immediate onset, gentle settle. No overshoot term, so
+     bounce/elastic is impossible to express through these tokens. */
+  --motion-ease-out: cubic-bezier(0.2, 0, 0, 1);
+  /* Exits only: accelerates away toward its boundary. */
+  --motion-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  /* Reversible state only. Symmetric, so a mid-flight reversal (rapid role
+     arrows, hover flicker, double-toggle) interpolates from wherever it is
+     instead of snapping. */
+  --motion-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 html {
   background: var(--paper);
   -webkit-text-size-adjust: 100%;
+  /* The compare tray is `position: fixed` at the bottom of the viewport. When
+     sequential focus moved to a control near the bottom of the document, the
+     browser scrolled it flush to the viewport edge — underneath the tray —
+     leaving the focused player link entirely hidden (WCAG 2.2 SC 2.4.11 Focus
+     Not Obscured (Minimum)). `scroll-padding-bottom` is the platform mechanism
+     for exactly this: it reserves space at the end of the scrollport for every
+     scroll-into-view, including the implicit one that follows Tab. Matches the
+     `pb-28` reservation already made on `main`. */
+  scroll-padding-bottom: 7rem;
 }
 
 body {
@@ -61,6 +103,19 @@ body {
   }
 }
 
+/* The reduced-motion contract.
+   Two independent guarantees, deliberately not one:
+   1. every motion rule in this file lives inside `no-preference`, so under
+      `reduce` there is nothing to suppress in the first place — the base
+      cascade already IS the final usable state; and
+   2. this kill-switch, kept as defence in depth for anything a future change
+      (or a dependency) declares outside that gate.
+   Reduced motion is NOT "every duration becomes 1ms": the movement is removed,
+   not accelerated. No production code path waits on `animationend` or a timeout
+   before completing an action, and `usePresence` collapses its exit hold to zero
+   under `reduce`, so state, focus and live-region announcements are never
+   sequenced behind an animation. Colour, borders, glyph fill and inset markers
+   continue to carry every state distinction without motion. */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -141,6 +196,17 @@ a {
 .label {
   color: var(--ink-soft);
   @apply text-[11px] font-bold uppercase tracking-[0.12em];
+}
+
+/* The compare tray is the one dark surface in production. `.label` is declared
+   after Tailwind's utilities layer and has the same specificity as a `text-*`
+   utility, so `class="label text-paper/60"` silently resolved to `--ink-soft` on
+   near-black ink — measured 2.94:1, a WCAG 2.2 SC 1.4.3 failure (it was already
+   failing at 3.65:1 before the closeout darkened `--ink-soft`). This modifier
+   keeps the eyebrow's typography and supplies a paper-side ink measured at
+   6.12:1 on `--ink`. */
+.label-on-ink {
+  color: #9aa096;
 }
 
 .mono {
@@ -422,7 +488,185 @@ select.input[size]:not([size="1"]) {
   @apply px-4 py-2 text-sm font-semibold;
 }
 
+/* Deliberately never transitioned: this is a `left` jump (a layout property) and
+   its audience is a keyboard user who needs it in the current frame. */
 .skip-link:focus {
   left: 8px;
   top: 8px;
+}
+
+/* ---------------------------------------------------------------------------
+   Motion
+   ---------------------------------------------------------------------------
+   Everything below is inside `prefers-reduced-motion: no-preference`. Nothing
+   here may be load-bearing: the base cascade above is the complete, usable
+   product, and this block only adds acknowledgement.
+
+   Rules this block obeys, enforced by `src/tests/motion.test.tsx` and
+   `tests/e2e/motion.spec.ts`:
+   - explicit `transition-property` lists only — never `transition: all`, and
+     never `outline`, so focus visibility is never delayed;
+   - no layout property is ever animated (no width/height/top/left/margin/
+     grid tracks) — only `opacity`, `transform`, and bounded colour/shadow;
+   - every duration comes from the four tokens; no literal ms values;
+   - no `animation-iteration-count` other than the default 1 — no infinite
+     production animation;
+   - exits are shorter than their matching entrances.
+   --------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* ---- 1. Immediate feedback: "the desk heard the pointer" ---------------
+     Colour only. No scale, lift, rotation, glow, or new shadow, and no element
+     changes dimensions, so nothing here can shift the ledger's pinned divider
+     and rail alignment. */
+  .btn,
+  .nav-link,
+  .ledger-row,
+  .input {
+    transition-property: background-color, border-color, color;
+    transition-duration: var(--motion-feedback);
+    transition-timing-function: var(--motion-ease-out);
+  }
+
+  /* The action rail carries two channels at once: a hover/press tint (feedback)
+     and the `aria-pressed` inset marker (a reversible state), so the two
+     properties are timed separately rather than averaged. */
+  .rail-action {
+    transition-property: background-color, box-shadow;
+    transition-duration: var(--motion-feedback), var(--motion-state);
+    transition-timing-function: var(--motion-ease-out), var(--motion-ease-standard);
+  }
+
+  /* ---- 2. Reversible selected state -------------------------------------
+     `--motion-ease-standard` throughout: these are the controls users flicker
+     across and double-toggle, so a symmetric curve that reverses mid-flight
+     matters more here than a snappier onset. */
+
+  /* Role tabs — the product's central act. One duration for the whole tab
+     (rather than a faster hover and slower selection) because hover and
+     selection share `border-color`; splitting them would make one property
+     race itself. `aria-selected` and the live region update synchronously in
+     React and are never sequenced behind this transition. */
+  .role-tab {
+    transition-property: background-color, border-color, color, box-shadow;
+    transition-duration: var(--motion-state);
+    transition-timing-function: var(--motion-ease-standard);
+  }
+
+  /* Evidence group rows and their pitch zones move together — that shared
+     timing IS the connection being communicated. */
+  .evidence-group,
+  .territory-zone {
+    transition-property: background-color, border-color;
+    transition-duration: var(--motion-state);
+    transition-timing-function: var(--motion-ease-standard);
+  }
+
+  /* The favourite heart's fill. `fill-opacity`, never `fill`: `none` is not a
+     colour and cannot interpolate, so transitioning `fill` would silently snap.
+     Geometry is untouched — no bounce, pop, rotation, or overshoot is
+     expressible here. */
+  .heart-fill {
+    transition-property: fill-opacity;
+    transition-duration: var(--motion-state);
+    transition-timing-function: var(--motion-ease-standard);
+  }
+
+  /* ---- 3. Entrances and exits -------------------------------------------
+     Only three things in the product "arrive": the compare tray, the mobile
+     menu, and a replaced results pane. Each enters from the boundary or trigger
+     it is actually anchored to, and each exit is shorter than its entrance. */
+
+  /* A pane of content replacing a skeleton or a previous result. Opacity only,
+     applied to the whole pane as one atomic unit — which is what guarantees the
+     result count and the rows can never be seen disagreeing. No stagger, no
+     fly-in, no reorder animation. Mount-triggered, so it needs no key, no
+     state, and no timer. */
+  .pane-enter {
+    animation: sb-fade-in var(--motion-enter) var(--motion-ease-out);
+  }
+
+  /* The role analysis canvas after a role change. Floored at 0.6, NOT 0: arrow
+     and Home/End traversal fires faster than 120ms, so a fade from zero would
+     leave the canvas permanently dim and read as flicker while also delaying
+     access to content. From 0.6 the new evidence is legible in the first frame
+     and the motion is a settle rather than a reveal. The selected-role summary
+     (score, role name, confidence) is deliberately OUTSIDE this wrapper so the
+     figure a scout came for never fades at all. */
+  .desk-analysis-enter {
+    animation: sb-settle-in var(--motion-state) var(--motion-ease-out);
+  }
+
+  /* The compare tray is anchored to the viewport bottom, so it may travel — but
+     only from the edge it already lives on. */
+  .tray-enter {
+    animation: sb-rise-in var(--motion-enter) var(--motion-ease-out);
+  }
+
+  .tray-exit {
+    animation: sb-rise-out var(--motion-exit) var(--motion-ease-in);
+  }
+
+  /* A newly queued player token: opacity only. It points at WHICH name joined
+     the queue; the tray itself already reported that something did. */
+  .tray-token-enter {
+    animation: sb-fade-in var(--motion-state) var(--motion-ease-out);
+  }
+
+  /* The mobile menu is an inline expansion anchored to the Menu button directly
+     above it, so it settles 4px downward out of its trigger. Scoped below `lg`
+     so the desktop navigation — which is always present and never toggled — is
+     bit-for-bit untouched. Not a drawer; no backdrop, no blur. */
+  @media (max-width: 1023px) {
+    .nav-menu-enter {
+      animation: sb-drop-in var(--motion-enter) var(--motion-ease-out);
+    }
+
+    .nav-menu-exit {
+      animation: sb-drop-out var(--motion-exit) var(--motion-ease-in);
+    }
+  }
+}
+
+/* Keyframes are declared unconditionally (a `@keyframes` at-rule paints nothing
+   on its own) but are referenced ONLY inside the `no-preference` block above,
+   and every one of them ends at the element's natural resting state. */
+@keyframes sb-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes sb-settle-in {
+  from {
+    opacity: 0.6;
+  }
+}
+
+@keyframes sb-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes sb-rise-out {
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes sb-drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes sb-drop-out {
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
 }

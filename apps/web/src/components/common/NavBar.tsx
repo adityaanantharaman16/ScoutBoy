@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+import { MOTION_EXIT_MS, usePresence } from "@/lib/motion/presence";
 import { useScoutingState } from "@/lib/state/scouting-state";
 
 // Test ids are declared, not derived from the label: the presentation copy is
@@ -20,6 +21,11 @@ export function NavBar() {
   const pathname = usePathname();
   const { shortlistIds } = useScoutingState();
   const [open, setOpen] = useState(false);
+  // Holds the menu displayed for its 120ms exit only. `aria-expanded` below stays
+  // bound to `open`, never to `visible`, so the announced state is correct the
+  // instant the toggle is pressed and is never sequenced behind the animation.
+  // Under reduced motion `visible` follows `open` in the same commit.
+  const { visible, leaving } = usePresence(open, MOTION_EXIT_MS);
 
   return (
     <header className="border-b border-line bg-paper-panel">
@@ -53,9 +59,16 @@ export function NavBar() {
           <span>Menu</span>
         </button>
 
+        {/* Below lg this is the toggled menu; at lg+ it is the permanent desktop
+            navigation (`lg:flex`), which the motion classes never reach — they are
+            scoped to `max-width: 1023px` in globals.css, so the desktop nav is
+            bit-for-bit unchanged. */}
         <div
           id="primary-nav-links"
-          className={`${open ? "flex" : "hidden"} order-last w-full flex-wrap gap-1 text-sm lg:order-none lg:flex lg:w-auto`}
+          className={`${visible ? "flex" : "hidden"} ${
+            leaving ? "nav-menu-exit" : open ? "nav-menu-enter" : ""
+          } order-last w-full flex-wrap gap-1 text-sm lg:order-none lg:flex lg:w-auto`}
+          data-testid="nav-menu-panel"
         >
           {LINKS.map((l) => {
             const active =
@@ -66,7 +79,7 @@ export function NavBar() {
               <Link
                 key={l.href}
                 href={l.href}
-                className={`px-2.5 py-1.5 font-semibold no-underline hover:bg-paper-muted hover:text-ink ${
+                className={`nav-link px-2.5 py-1.5 font-semibold no-underline hover:bg-paper-muted hover:text-ink ${
                   active ? "text-pitch-dark shadow-[inset_0_-2px_0_var(--pitch)]" : "text-ink-muted"
                 }`}
                 data-testid={l.testId}

@@ -134,7 +134,20 @@ export default function MethodologyPage() {
                   adjusted for context and confidence. The authoritative formula (contained here, not
                   reconstructed in the browser):
                 </p>
-                <pre className="mono mt-2 max-w-full overflow-x-auto border border-line bg-paper-muted p-3 text-xs text-pitch-dark">
+                {/* The formula is deliberately contained in its own horizontally
+                    scrolling block rather than wrapped, so the authoritative
+                    expression is never visually broken. A scrollable region must
+                    therefore be reachable and operable by keyboard (WCAG 2.2
+                    SC 2.1.1): `tabIndex={0}` makes it focusable so arrow keys can
+                    scroll it, and the group role + label announce what it is
+                    instead of leaving an unnamed focus stop. */}
+                <pre
+                  className="mono mt-2 max-w-full overflow-x-auto border border-line bg-paper-muted p-3 text-xs text-pitch-dark"
+                  tabIndex={0}
+                  role="group"
+                  aria-label="RoleFit formula (scrollable)"
+                  data-testid="methodology-formula"
+                >
                   {data.formula}
                 </pre>
                 <dl className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">

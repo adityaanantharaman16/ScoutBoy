@@ -120,7 +120,12 @@ export function EmptyState({ label, action }: { label: string; action?: React.Re
   return (
     <div
       role="status"
-      className="flex flex-col items-center gap-3 border border-line bg-paper-panel px-4 py-10 text-center text-sm text-ink-soft"
+      // Same restrained pane settle as a populated result — an empty result IS a
+      // result. Deliberately nothing theatrical: opacity only, no movement, no
+      // separate treatment that would dramatise the absence of players. The
+      // `role="status"` text is in the DOM at mount, so the announcement is never
+      // delayed by the visual settle.
+      className="pane-enter flex flex-col items-center gap-3 border border-line bg-paper-panel px-4 py-10 text-center text-sm text-ink-soft"
     >
       <span>{label}</span>
       {action}
@@ -132,7 +137,10 @@ export function ErrorState({ message }: { message: string }) {
   return (
     <div
       role="alert"
-      className="border border-accent-red/50 bg-[#f4e8e3] px-4 py-6 text-center text-sm font-semibold text-accent-red"
+      // The same pane settle, and nothing more: an error is not dramatised. The
+      // `role="alert"` content is present at mount, so assistive tech announces it
+      // immediately regardless of the opacity animation.
+      className="pane-enter border border-accent-red/50 bg-[#f4e8e3] px-4 py-6 text-center text-sm font-semibold text-accent-red"
     >
       <span className="mr-1" aria-hidden="true">
         ⚠
