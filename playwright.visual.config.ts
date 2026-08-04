@@ -16,10 +16,46 @@ import { defineConfig, devices } from "@playwright/test";
  * Compare against baselines:  pnpm visual
  * Regenerate baselines:       pnpm visual:update   (REVIEW THE DIFF BY HAND)
  *
+ * Both commands go through `scripts/run_visual.sh`, which prepares a throwaway
+ * migrated + sample-seeded + recomputed SQLite database and exports it as
+ * DATABASE_URL before Playwright starts. This config REFUSES to run without it —
+ * see `requireIsolatedFixtureDatabase` below.
+ *
  * Baselines are written to `tests/visual/__screenshots__/{project}/…` so the
  * browser and viewport that produced each one are visible in its path. Never
  * regenerate them in CI.
  */
+
+/**
+ * Screenshot comparison is only meaningful when the data behind the pixels is
+ * fixed. Started bare, the API webServer below would inherit whatever
+ * DATABASE_URL is in scope — in practice the developer's `db/scoutboy.db`, whose
+ * primary keys and cohort differ from the committed sample fixtures. That is
+ * exactly how a green-looking suite came to compare (and could have regenerated)
+ * baselines against pilot data, so this fails loudly instead of proceeding.
+ */
+function requireIsolatedFixtureDatabase(): void {
+  const fixtureRoot = process.env.SCOUTBOY_FIXTURE_ROOT ?? "";
+  const databaseUrl = process.env.DATABASE_URL ?? "";
+  const expected = `sqlite:///${fixtureRoot}/scoutboy.db`;
+
+  if (process.env.SCOUTBOY_VISUAL_FIXTURE_READY !== "1" || fixtureRoot === "") {
+    throw new Error(
+      "Visual comparison must be run through `pnpm visual` (or `pnpm visual:update`), " +
+        "which prepares an isolated migrated, sample-seeded and recomputed fixture " +
+        "database first. Running this config directly would compare screenshots " +
+        "against whatever database happens to exist locally.",
+    );
+  }
+  if (databaseUrl !== expected) {
+    throw new Error(
+      `Refusing to run visual comparison against DATABASE_URL=${databaseUrl || "(unset)"}: ` +
+        `expected the throwaway fixture database at ${expected}.`,
+    );
+  }
+}
+
+requireIsolatedFixtureDatabase();
 
 const PYTHONPATH = "packages:packages/rating_engine:packages/shared/python:apps/api";
 const API_PORT = process.env.SCOUTBOY_E2E_API_PORT ?? "18080";

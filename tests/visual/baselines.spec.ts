@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { NO_SHARED_ROLE_PAIR, compareByName, expectNoSharedRatedRole } from "./support/fixtures";
+
 /**
  * Milestone 7 closeout — Phase 12: the curated visual-regression baseline set.
  *
@@ -9,7 +11,9 @@ import { expect, test, type Page } from "@playwright/test";
  * updates.
  *
  * Determinism rules applied to every shot:
- *  - production build, fixture-backed API and database (see the config);
+ *  - production build against a throwaway migrated, sample-seeded and recomputed
+ *    database prepared by `scripts/run_visual.sh` — never the local/pilot one;
+ *  - identities asserted, never assumed from primary keys (see `support/fixtures`);
  *  - device-local state cleared unless the state under test needs it;
  *  - fonts loaded and all motion finished before capture;
  *  - masks used ONLY for genuinely nondeterministic values, each documented.
@@ -139,11 +143,22 @@ test.describe("Curated surfaces", () => {
   });
 
   test("no shared rated role comparison", async ({ page }) => {
-    // The seed cohort contains a genuine disjoint pair (Anton Keller ATT vs
-    // Karim Nasser MID), so this state needs no interception at all — it is the
-    // real API response, which makes the baseline both simpler and more honest.
-    await page.goto("/compare?a=6&b=17");
-    await page.waitForSelector('[data-testid="compare-no-shared-role"]');
+    // The sample cohort contains a genuine disjoint pair, so this state needs no
+    // interception at all — it is the real API response. The players are chosen by
+    // visible name, never by primary key, and every claim the baseline depends on
+    // is asserted before the capture: who each side is, that both are genuinely
+    // rated, that their rated roles do not intersect, and that the UI is showing
+    // the neutral state rather than hiding a role.
+    const { a, b } = NO_SHARED_ROLE_PAIR;
+    const response = await compareByName(page, a, b);
+    await expectNoSharedRatedRole(response, a, b);
+
+    await expect(page.getByTestId("compare-side-left")).toContainText(a);
+    await expect(page.getByTestId("compare-side-right")).toContainText(b);
+    await expect(page.getByTestId("compare-role")).toHaveText("No Shared Rated Role");
+    await expect(page.getByTestId("compare-no-shared-role")).toBeVisible();
+
+    await page.waitForLoadState("networkidle");
     await stable(page);
     await expect(page).toHaveScreenshot("comparison-no-shared-role.png");
   });

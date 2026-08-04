@@ -1251,7 +1251,8 @@ That document is the authoritative record; it is not duplicated here.
   residual risk, not as a passed criterion.
 - ~~Final cross-platform **visual-regression** coverage (kept out of CI as brittle snapshots).~~
   Done — 59 curated baselines across four browser/viewport projects, run explicitly via
-  `pnpm visual`.
+  `pnpm visual` against an isolated, migrated, sample-seeded and recomputed fixture database
+  (`scripts/run_visual.sh`); the local/pilot database is never read.
 - **Dark mode**, still deferred: the isolated pilot under `apps/web/src/app/design-pilots/` and
   `docs/design_pilots/` was neither expanded, integrated, redesigned, nor deleted. It is excluded
   from this cadence exactly as it was from the square-corner migration — it carries its own

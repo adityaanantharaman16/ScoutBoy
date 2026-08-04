@@ -11,6 +11,16 @@ remains on a production surface. Dark mode remains deferred and untouched.
 > the rest. Screen-reader verification was **not** performed — see
 > [Screen-reader status](#screen-reader-status).
 
+Two engineering defects found after the first closeout pass have been corrected
+and are recorded in place, not as an appendix:
+
+- the visual-regression suite ran against whatever database happened to exist
+  locally, and its no-shared-role scenario trusted primary keys — see
+  [Visual baselines](#visual-baselines-phase-12);
+- the production PostCSS override carried a newly disclosed moderate advisory that
+  the required high-severity audit gate could not see — see
+  [Dependency security](#dependency-security--postcss).
+
 ## Prerequisite
 
 The preceding scrolling correction was present before this phase began:
@@ -50,13 +60,21 @@ same list and cannot drift from this table.
 | Role leaderboard | `/roles/[id]` | `main` / role masthead | `h1` | empty rows, missing asking range |
 | Compare selection | `/compare` | `main` / page header | `compare-a` | one side unrated |
 | Completed comparison | `/compare?a=&b=` | `main` | `compare-role` | confidence warnings |
-| No-shared-role comparison | `/compare?a=6&b=17` | `main` | `compare-no-shared-role` | **real seed pair** |
+| No-shared-role comparison | `/compare?a=&b=` | `main` | `compare-no-shared-role` | **real disjoint sample pair** |
 | My Favorites | `/shortlist` | `main` / "Saved Players" | `h1` | zero saved, stale ids |
 | Methodology | `/methodology` | `main` / "Methodology" | `methodology-contents` | calibration inconclusive |
 | Global navigation | all | `header` > `nav` (banner/navigation) | `nav-discover` | — |
 | Mobile navigation | all `<lg` | same `nav`, toggled | `nav-menu-panel` | — |
 | Compare tray | all | `aside` "Compare queue" | `compare-tray` | one player queued |
 | Not found | any unmatched | `main` / "Page Not Found" | `not-found` | — |
+
+Player primary keys are **not** part of that surface contract. Ids are an
+artefact of insertion order — the same two players are 7 and 20 in a freshly
+seeded sample database and 6 and 17 in the local pilot database — so any scenario
+that depends on *which* player it is looking at must resolve identity by name and
+assert it. The visual suite does exactly that (see
+[Visual baselines](#visual-baselines-phase-12)); the accessibility scans are
+identity-agnostic and only need the state to be present.
 
 Keyboard entry point on every surface is the skip link, then the primary
 navigation. Live regions: `role="status"` for loading/empty, `role="alert"` for
@@ -276,23 +294,111 @@ reduced motion, 320px overflow.
 
 Manual **Safari + VoiceOver was not run** — see residual risk.
 
+Unlike `make e2e` and `pnpm visual`, this matrix is **not** fixture-isolated: run
+bare it starts the API with no `DATABASE_URL`, which falls back to
+`sqlite:///./db/scoutboy.db`. That is tolerable here because every assertion is
+about behaviour rather than about particular players — but it is recorded as a
+limitation rather than presented as isolation.
+
 ## Visual baselines (Phase 12)
 
 `playwright.visual.config.ts` + `tests/visual/`, deliberately **outside CI**
 (see `tests/visual/README.md` for the rationale, commands and review procedure).
-**59 baselines** across four projects.
+84 executions produce **59 baselines** across four projects; the remaining 25 are
+skipped as inapplicable to their project and report a skip rather than a pass.
 
-| Project | Baselines |
-| --- | --- |
-| `desktop-chromium` (1280×900) | 19 — 12 surfaces + 7 honesty states |
-| `desktop-webkit` (1280×900) | 12 surfaces |
-| `mobile-chromium` (390×844) | 14 surfaces incl. menu open and 320 |
-| `mobile-webkit` (390×844) | 14 surfaces incl. menu open and 320 |
+| Project | Baselines | Skipped |
+| --- | --- | --- |
+| `desktop-chromium` (1280×900) | 19 — 12 surfaces + 7 honesty states | 2 mobile-only |
+| `desktop-webkit` (1280×900) | 12 surfaces | 2 mobile-only + 7 honesty states |
+| `mobile-chromium` (390×844) | 14 surfaces incl. menu open and 320 | 7 honesty states |
+| `mobile-webkit` (390×844) | 14 surfaces incl. menu open and 320 | 7 honesty states |
 
 `maxDiffPixelRatio: 0.002`, retries off, animations disabled, fonts and motion
 settled before capture. Exactly one documented mask (`page-meta`, a build
-timestamp and rating version, both asserted textually elsewhere). Verified stable
-across two consecutive runs.
+timestamp and rating version, both asserted textually elsewhere). No player name,
+player datum or comparison panel is masked.
+
+### Isolated fixture lifecycle
+
+Every run of `pnpm visual` **and** `pnpm visual:update` goes through
+`scripts/run_visual.sh`, which before Playwright starts:
+
+1. creates a throwaway root with `mktemp -d` and installs a cleanup trap that
+   removes only that directory, on success and on failure alike;
+2. exports an isolated SQLite `DATABASE_URL` inside it, plus the test
+   environment, API origin, web origin and `NEXT_PUBLIC_API_BASE_URL`;
+3. runs `alembic upgrade head`;
+4. ingests the committed `sample` provider;
+5. recomputes ratings, playstyles and market values;
+6. builds the production web app against the isolated API origin;
+7. runs the visual config and forwards Playwright's exit status.
+
+**The developer's `db/scoutboy.db` is never opened**: `DATABASE_URL` points inside
+the throwaway root for every process in the run, and the file's SHA-256 and mtime
+were unchanged across this whole session. Steps 1–6 are shared with
+`make e2e` through `scripts/lib/fixture_env.sh`, so the two suites cannot drift
+apart in how they seed data. `playwright.visual.config.ts` refuses to load unless
+`SCOUTBOY_FIXTURE_ROOT` is set and `DATABASE_URL` points inside it, so the config
+cannot be run bare.
+
+This corrects a real defect. The previous arrangement started FastAPI with no
+database preparation at all, so the API served whatever `DATABASE_URL` happened to
+be in scope — in practice the local pilot database.
+
+### Identity assertions
+
+The no-shared-role scenario previously navigated to `/compare?a=6&b=17` and
+trusted the primary keys. Those ids resolve to **Rui Salgado and Ismael Traoré**
+in a freshly seeded sample database and to **Anton Keller and Karim Nasser** in
+the local pilot database. The committed baselines therefore showed Salgado and
+Traoré while the test's own comment named Keller and Nasser, and the audited run —
+against the pilot database — rendered Keller and Nasser. All four
+`comparison-no-shared-role.png` copies failed, which was test-data
+nondeterminism rather than a visual change.
+
+The scenario now selects **Anton Keller** and **Karim Nasser** by canonical name
+through the real comparison `<select>` controls, and proves the following from
+the compare response the UI actually rendered, before capturing anything:
+
+- Player 1 is Anton Keller and Player 2 is Karim Nasser;
+- both are genuinely rated in at least one role — an unrated player would reach
+  the same neutral state for the wrong reason;
+- their rated roles do not intersect (Keller: complete forward, inside forward,
+  pressing forward, shadow striker; Nasser: ball-winning midfielder, deep-lying
+  playmaker, tempo controller);
+- the compare API therefore selected no role (`role_key` is `null`);
+- the rendered surface shows both names and the neutral `No Shared Rated Role`
+  state.
+
+Nothing is intercepted or mocked: this is the real API answer for a genuinely
+disjoint sample pair. The identities and assertions live in
+`tests/visual/support/fixtures.ts`. Both failure modes were exercised
+deliberately — a player who *does* share a role, and a player absent from the
+cohort — and each fails with a message naming the players and the roles involved.
+
+### Baselines regenerated
+
+Four images, once, from the isolated fixture database, each reviewed by hand:
+
+| Baseline | Reason |
+| --- | --- |
+| `desktop-chromium/comparison-no-shared-role.png` | fixture pair corrected to Anton Keller vs Karim Nasser |
+| `desktop-webkit/comparison-no-shared-role.png` | same |
+| `mobile-chromium/comparison-no-shared-role.png` | same |
+| `mobile-webkit/comparison-no-shared-role.png` | same |
+
+Every changed region is player data — names, club/league, market range and risk
+tag, playstyle chips, evidence-context values, and the metric ledger's
+first-name column headers. Page chrome, the `Role comparison` eyebrow, the
+`No Shared Rated Role` heading, the explanatory note, the `why_higher` panel,
+card geometry, hairlines, spacing and typography are pixel-identical. No design
+drift.
+
+The other **55 baselines were byte-identical** against the isolated fixture
+database and were not rewritten, which is the strongest available evidence that
+the committed set was already fixture-consistent and that only this one scenario
+was wrong.
 
 ## Test commands
 
@@ -312,34 +418,74 @@ pnpm visual
 pnpm visual:update
 ```
 
+`pnpm visual` compares against the committed baselines; `pnpm visual:update`
+regenerates them and every rewritten image must be reviewed by hand. Both prepare
+the isolated fixture database first, so `visual:update` can never capture the
+developer's local or pilot data.
+
 The CI-relevant suite (`make e2e`) carries all accessibility scans, semantic
 assertions, keyboard/focus, target size, reflow, text spacing, degraded-state,
 interaction-stress and console-error coverage. Only the screenshot comparison is
 outside it.
 
+## Dependency security — PostCSS
+
+PostCSS reaches production resolution as a dependency of Next.js
+(`apps/web > next@16.2.11 > postcss`), not through the workspace's own
+devDependency, so it is in scope for `pnpm audit --prod`. The root package pins it
+through a `pnpm.overrides` entry.
+
+**GHSA-fxqj-rqcc-2cmp / CVE-2026-69153** — an incomplete fix of
+GHSA-6g55-p6wh-862q, in which an attacker-controlled `sourceMappingURL` can read
+arbitrary `.map` files when `from` is unset. It affects **all versions through
+8.5.22** and is patched in **8.5.23**. The override was pinned at `8.5.18`, so the
+production tree carried the advisory.
+
+Because the advisory is rated *moderate*, the repository's required gate
+`pnpm audit --prod --audit-level high` exited 0 throughout — which is why an
+earlier "no known vulnerabilities" claim was recorded here while an unfiltered
+`pnpm audit --prod` still reported the finding. That claim was inaccurate and has
+been replaced.
+
+**Remediation:** the override moved to `postcss@8.5.23` — the smallest patched
+version — and `pnpm-lock.yaml` was regenerated through pnpm. The only knock-on
+change is PostCSS's own transitive `nanoid` 3.3.15 → 3.3.17, forced by
+resolution. Next.js, Playwright, Vitest, ESLint and every other package are
+untouched. `pnpm why postcss --prod -r` confirms the override is applied
+(`next 16.2.11 └── postcss 8.5.23`), the lockfile contains no remaining reference
+to 8.5.18, and unfiltered `pnpm audit --prod` reports **no known
+vulnerabilities**. Nothing was suppressed, muted or ignored.
+
 ## Validation results
+
+All figures below were reproduced in the closeout-correction session; nothing is
+carried over unverified.
 
 | Gate | Result |
 | --- | --- |
 | `git diff --check` | clean |
-| `pnpm install --frozen-lockfile` | up to date |
+| `pnpm install --frozen-lockfile` | already up to date |
 | `pnpm --filter @scoutboy/web lint` | clean |
 | `pnpm --filter @scoutboy/web typecheck` | clean |
 | `pnpm --filter @scoutboy/web test run` | **284 passed** / 15 files |
 | `pnpm --filter @scoutboy/web build` | success |
 | `make e2e` | **175 passed** |
-| `make lint-py` | clean |
+| `pnpm e2e:cross-browser` | **27 passed** (3 engines) |
+| `pnpm visual` (fresh isolated DB) | **59 passed, 25 skipped** |
+| `pnpm visual` (second, independently prepared DB) | **59 passed, 25 skipped** |
+| `make lint-py` | clean — 141 files unchanged |
 | `make test-py` | **264 passed, 1 skipped** |
 | `make check-api-contract` | current, no drift |
-| `pnpm audit --prod --audit-level high` | **no known vulnerabilities** |
+| `pnpm audit --prod` | **no known vulnerabilities found** |
+| `pnpm audit --prod --audit-level high` | **no known vulnerabilities found** |
 | `docker compose -f docker-compose.full.yml config --quiet` | exit 0 |
-| `make docker-smoke` | passed |
-| `pnpm e2e:cross-browser` | **27 passed** (3 engines) |
-| `pnpm visual` | **59 passed** |
+| `make docker-smoke` | passed — build, `/healthz`, `/readyz`, web root |
 
-The dev-inclusive `pnpm audit` reports 9 advisories, all pre-existing transitives
-of `vitest`/`vite`/`esbuild`, `eslint` and `openapi-typescript`. **None** originate
-from `@axe-core/playwright`, and the required `--prod` gate is clean.
+The two `pnpm visual` runs each prepared their own throwaway database (distinct
+`mktemp` roots) and left every tracked baseline byte-identical. `db/scoutboy.db`
+kept the same SHA-256 and mtime across the whole session, and no temporary root
+survived — including after deliberately failed runs. Of the gates above, only
+`pnpm e2e:cross-browser` reads that database at all, and only for reading.
 
 ## Environmental limitations
 
@@ -351,7 +497,12 @@ from `@axe-core/playwright`, and the required `--prod` gate is clean.
   context at 640×450 (the CSS-pixel equivalent) in Chromium and WebKit. A true
   OS-level browser-zoom pass on physical hardware was not possible headlessly.
 - **Visual baselines were generated on macOS.** They will not match a Linux CI
-  runner without regeneration — the reason the suite is excluded from CI.
+  runner without regeneration — the reason the suite is excluded from CI. This is
+  ordinary font rasterization, not a defect to fix.
+- **The visual suite needs the local toolchain**, not just Node: it runs Alembic,
+  the ingest and recompute jobs from `.venv`, and a full production Next.js build
+  before Playwright starts. Each run therefore costs a build, which is another
+  reason it is a deliberate local/release-review gate rather than a per-push one.
 
 ## Residual risks
 
@@ -359,14 +510,16 @@ from `@axe-core/playwright`, and the required `--prod` gate is clean.
    programmatically, but only a real AT session can confirm the *experience* —
    announcement order, verbosity, whether the compound coverage/confidence unit
    reads naturally. A manual checklist is the natural next step.
-2. **One load-related flake.** `motion.spec.ts` › "the reported count and the
-   visible rows never disagree" timed out once waiting for the results ledger
-   under full-suite parallelism against the single-worker SQLite API, and passed
-   on re-run and in isolation. Not a product defect; CI already retries once.
+2. **Load-related flake under full-suite parallelism.** `motion.spec.ts` › "the
+   reported count and the visible rows never disagree" has previously timed out
+   waiting for the results ledger against the single-worker SQLite API. It did
+   **not** recur in this session's `make e2e` run. Not a product defect; CI
+   retries once.
 3. **Honesty states depend on interception.** The sample cohort has 29 audit
    groups with zero null scores, so unknown-evidence and most degraded states are
    only reachable via response interception. The no-shared-role state is the
-   exception — a real seed pair (`?a=6&b=17`) — and is used directly.
+   exception — a genuinely disjoint sample pair (Anton Keller vs Karim Nasser),
+   selected by name and asserted before capture — and is used directly.
 4. **`--line-strong` darkened product-wide.** Justified by measurement, but it
    changes the perceived weight of every hairline-bounded control slightly. The
    visual baselines now pin that appearance.
@@ -375,6 +528,13 @@ from `@axe-core/playwright`, and the required `--prod` gate is clean.
    behaviour that did not previously exist.
 6. **Baseline drift.** 59 images require human review on every intended visual
    change; if that discipline lapses the suite becomes noise.
+7. **Fixture identity is only asserted where it matters.** The no-shared-role
+   scenario now proves who it is looking at, but the remaining visual scenarios
+   still address players positionally ("the first result", "option 1 and option
+   2"). That is deterministic against the isolated fixture database and is why the
+   other 55 baselines were byte-identical, but it is ordering-dependent rather
+   than identity-asserted, so a future change to the default sort would show up as
+   a baseline diff to review rather than as a named failure.
 
 ## Dark mode
 
@@ -394,8 +554,10 @@ known WCAG 2.2 Level A or AA failure remains on a production surface; automated
 scans pass with no disabled rules; mandatory keyboard flows pass; focus is not
 obscured; target sizes pass with no exception claimed; 320px reflow passes;
 200% zoom was checked in two engines; degraded-data states pass; Chromium, WebKit
-and Firefox functional coverage passes; the curated visual set is reviewed and
-stable; reduced motion remains complete; and all repository validation gates pass.
+and Firefox functional coverage passes; the curated visual set is fixture-backed,
+reviewed and stable across two consecutive runs from independently prepared
+databases; the production dependency audit is clean; reduced motion remains
+complete; and all repository validation gates pass.
 
 The one substantive gap — **manual screen-reader verification** — is recorded
 above as an environmental limitation and a residual risk rather than as a
