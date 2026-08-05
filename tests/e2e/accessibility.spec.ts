@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page, type Route } from "@playwright/test";
 
 import { expectNoA11yViolations, readyForScan, settle } from "./support/a11y";
 import { gotoFirstDossier, seedDeviceState, VIEWPORTS } from "./support/surfaces";
@@ -93,15 +93,27 @@ test.describe("Automated accessibility scans", () => {
   });
 
   test("loading, empty and error states", async ({ page }) => {
-    await page.route("**/api/players?**", async (route) => {
-      await new Promise((r) => setTimeout(r, 2500));
-      await route.continue();
+    // Hold the request until the loading-state scan is complete, then let the
+    // handler finish before removing it. A fixed timer made the test race on
+    // slower CI runners: `unroute` could release the request while this callback
+    // was still asleep, leaving its later `route.continue()` to act on a route
+    // Playwright had already handled.
+    let releaseLoading!: () => void;
+    const loadingGate = new Promise<void>((resolve) => {
+      releaseLoading = resolve;
     });
+    const delayedPlayers = async (route: Route) => {
+      await loadingGate;
+      await route.continue();
+    };
+    await page.route("**/api/players?**", delayedPlayers);
     await page.goto("/");
     await page.waitForSelector('[data-testid="ledger-skeleton"]');
     await settle(page);
     await expectNoA11yViolations(page, "Discovery loading");
-    await page.unroute("**/api/players?**");
+    releaseLoading();
+    await page.waitForSelector('[data-testid="results-ledger"]');
+    await page.unroute("**/api/players?**", delayedPlayers);
 
     await page.route("**/api/players?**", (r) => r.fulfill({ status: 500, body: "{}" }));
     await page.goto("/");
