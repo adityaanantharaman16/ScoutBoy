@@ -93,7 +93,7 @@ export function LedgerRoleFitHero({
     >
       <div className="label mb-1">RoleFit</div>
       {hasAnalysis ? (
-        <ScoreReadout score={score} caption={role ?? "—"} captionWrap="words" size="lg" />
+        <ScoreReadout score={score} caption={role ?? "-"} captionWrap="words" size="lg" />
       ) : (
         <DisplayTag variant="evidence" value="profile_only">
           Profile Only

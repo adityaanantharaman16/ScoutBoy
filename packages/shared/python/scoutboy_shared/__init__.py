@@ -17,6 +17,7 @@ from .confidence import (
 from .constants import (
     DEFAULT_MIN_MINUTES,
     DISPLAY_SCALE_MAX,
+    DISPLAY_SCALE_MIN,
     MVP_UNIVERSE_KEY,
     POSITION_GROUPS,
     POSITIONS,
@@ -41,6 +42,7 @@ __all__ = [
     "label_for_confidence",
     "DEFAULT_MIN_MINUTES",
     "DISPLAY_SCALE_MAX",
+    "DISPLAY_SCALE_MIN",
     "MVP_UNIVERSE_KEY",
     "POSITION_GROUPS",
     "POSITIONS",

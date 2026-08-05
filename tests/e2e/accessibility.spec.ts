@@ -145,11 +145,11 @@ test.describe("Automated accessibility scans", () => {
 
 test.describe("Semantic structure", () => {
   const ROUTES: Array<[string, string, string]> = [
-    ["/", '[data-testid="results-ledger"]', "ScoutBoy — player discovery"],
-    ["/roles/touchline_winger", '[data-testid="leaderboard-table"]', "Role leaderboard — ScoutBoy"],
-    ["/compare", '[data-testid="compare-a"]', "Compare players — ScoutBoy"],
-    ["/shortlist", "h1", "My Favorites — ScoutBoy"],
-    ["/methodology", '[data-testid="methodology-contents"]', "Methodology — ScoutBoy"],
+    ["/", '[data-testid="results-ledger"]', "ScoutBoy - Player Discovery"],
+    ["/roles/touchline_winger", '[data-testid="leaderboard-table"]', "Role Leaderboard - ScoutBoy"],
+    ["/compare", '[data-testid="compare-a"]', "Compare Players - ScoutBoy"],
+    ["/shortlist", "h1", "My Favorites - ScoutBoy"],
+    ["/methodology", '[data-testid="methodology-contents"]', "Methodology - ScoutBoy"],
   ];
 
   test("every route has a distinct, descriptive title", async ({ page }) => {
@@ -164,10 +164,10 @@ test.describe("Semantic structure", () => {
     }
     // Dynamic routes get their own titles too.
     await gotoFirstDossier(page);
-    expect(await page.title()).toBe("Player dossier — ScoutBoy");
+    expect(await page.title()).toBe("Player Dossier - ScoutBoy");
     await page.goto("/definitely-not-a-route");
     await page.waitForSelector('[data-testid="not-found"]');
-    expect(await page.title()).toBe("Page not found — ScoutBoy");
+    expect(await page.title()).toBe("Page Not Found - ScoutBoy");
   });
 
   test("each surface exposes exactly one h1 and an ordered heading outline", async ({ page }) => {

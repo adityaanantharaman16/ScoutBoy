@@ -14,7 +14,7 @@ final = role_weighted_performance_score
         × role_usage
         × sample_reliability
         + recent_form_bonus
-        − risk_penalties            (clamped to 0–99.9)
+        − risk_penalties            (clamped to 0–99)
 ```
 
 Implemented in `packages/rating_engine/rolefit/formula.py`.

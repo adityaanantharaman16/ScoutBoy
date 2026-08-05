@@ -190,24 +190,24 @@ describe("Discovery result rows (honesty states)", () => {
 
 describe("Discovery results pane states", () => {
   afterEach(() => usePlayerSearchMock.mockReset());
-  const filters = { scope: "analyzed", age_band: "all", sort: "rolefit_desc", page: 1 };
+  const filters = { scope: "analyzed", sort: "rolefit_desc", page: 1 };
 
   it("shows a structural skeleton while loading (page identity preserved elsewhere)", () => {
     usePlayerSearchMock.mockReturnValue({ isLoading: true });
-    render(<PlayerSearchResults filters={filters} selectedScope="Analyzed" selectedAgeBand="All ages" onPage={noop} />);
+    render(<PlayerSearchResults filters={filters} ageSummary="All Ages" onPage={noop} />);
     expect(screen.getByTestId("ledger-skeleton")).toBeInTheDocument();
     expect(screen.getByTestId("ledger-skeleton")).toHaveAttribute("role", "status");
   });
 
   it("shows an honest empty state with no fabricated rows", () => {
     usePlayerSearchMock.mockReturnValue({ isLoading: false, isError: false, data: { items: [], total: 0, page: 1, page_size: 12, total_pages: 0 } });
-    render(<PlayerSearchResults filters={filters} selectedScope="Analyzed" selectedAgeBand="All ages" onPage={noop} />);
+    render(<PlayerSearchResults filters={filters} ageSummary="All Ages" onPage={noop} />);
     expect(screen.getByText(/No players match these filters/)).toBeInTheDocument();
   });
 
   it("shows an alert on request failure", () => {
     usePlayerSearchMock.mockReturnValue({ isLoading: false, isError: true, error: new Error("boom") });
-    render(<PlayerSearchResults filters={filters} selectedScope="Analyzed" selectedAgeBand="All ages" onPage={noop} />);
+    render(<PlayerSearchResults filters={filters} ageSummary="All Ages" onPage={noop} />);
     expect(screen.getByRole("alert")).toBeInTheDocument();
   });
 });
@@ -441,7 +441,9 @@ describe("Compare page role control", () => {
 
   it("describes the Automatic-role policy as a shared-role, strongest-joint-fit choice", () => {
     render(<ComparePage />);
-    expect(screen.getByRole("option", { name: "Automatic role" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Automatic Role" })).toBeInTheDocument();
+    // the lowercase form is gone entirely
+    expect(screen.queryByRole("option", { name: "Automatic role" })).not.toBeInTheDocument();
     expect(
       screen.getByText(
         /Chooses the shared rated role where both players have the strongest joint fit\./,
@@ -655,7 +657,7 @@ describe("My Favorites saved players", () => {
 describe("Shared readout primitives", () => {
   it("ScoreReadout renders the missing sentinel, never zero", () => {
     const { rerender } = render(<ScoreReadout score={null} />);
-    expect(screen.getByText("—")).toBeInTheDocument();
+    expect(screen.getByText("-")).toBeInTheDocument();
     expect(screen.queryByText("0.0")).not.toBeInTheDocument();
     rerender(<ScoreReadout score={82.4} caption="Inside Forward" />);
     expect(screen.getByText("82.4")).toBeInTheDocument();

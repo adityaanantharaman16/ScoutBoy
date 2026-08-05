@@ -126,7 +126,7 @@ def compare_players(
         if _CONF_ORDER.get(card.confidence, 0) <= 1:
             warnings.append(
                 f"{label} ({card.identity.canonical_name}) has "
-                f"{card.confidence} confidence — interpret with caution."
+                f"{card.confidence} confidence - interpret with caution."
             )
 
     return CompareResponse(

@@ -21,7 +21,7 @@ transparent market-value ranges — and it can always show *why* a score, badge,
 
 ## What it does
 
-1. **Search / browse** player profiles with filters for analysis scope, age band, position, role,
+1. **Search / browse** player profiles with filters for age threshold, position, role,
    league, minutes, RoleFit range, playstyle, and sort.
 2. **Player card** — identity, face stats, sub-stats, role-specific **RoleFit ratings**, playstyle
    badges, **market panel** (public value vs model value vs expected asking price), strengths &
@@ -122,6 +122,10 @@ minutes. See [docs/milestone_3_real_cohort.md](docs/milestone_3_real_cohort.md).
 
 ### Discover scopes
 
+Discovery no longer exposes a scope selector: the rail always requests the default
+`analyzed` scope. `scope` remains a supported API parameter, so existing links keep
+working.
+
 - **Analyzed** (default): players with at least one RoleFit rating for the selected/current
   season.
 - **All records**: every player with a usable season appearance/profile record. This includes
@@ -129,9 +133,12 @@ minutes. See [docs/milestone_3_real_cohort.md](docs/milestone_3_real_cohort.md).
 - **High-coverage U23**: the unchanged materialized `mvp_u23_att_mid_eu` universe: U23 attackers
   and midfielders meeting ScoutBoy's minimum performance-coverage threshold.
 
-Age bands are season-relative: U23 is `age <= 23`, then `24-26`, `27-30`, and `31+`.
-Unknown ages appear under All ages only. Defender and goalkeeper records can be discovered, but
-ScoutBoy does not currently model defender or goalkeeper RoleFit ratings.
+Age is a season-relative threshold on five stops (19, 22, 25, 28, 31) plus a direction:
+`age_max=<stop>` for "and younger", `age_min=<stop>` for "and older", neither for All Ages.
+The legacy `age_band` parameter is still accepted and is normalized into those bounds; see
+[docs/discover_scope_change.md](docs/discover_scope_change.md). Unknown ages appear only when
+no age bound is active. Defender and goalkeeper records can be discovered, but ScoutBoy does
+not currently model defender or goalkeeper RoleFit ratings.
 
 ### StatsBomb Open Data normalized import
 

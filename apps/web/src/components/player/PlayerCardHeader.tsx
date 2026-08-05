@@ -16,9 +16,9 @@ export function PlayerCardHeader({ card }: { card: PlayerCard }) {
           {id.canonical_name}
         </h1>
         <div className="mt-3 text-sm text-ink-muted">
-          {formatAge(id.age)} yrs · {id.primary_position ?? "—"}
+          {formatAge(id.age)} yrs · {id.primary_position ?? "-"}
           {id.secondary_positions.length > 0 && ` (${id.secondary_positions.join(", ")})`} ·{" "}
-          {id.nationality ?? "—"}
+          {id.nationality ?? "-"}
         </div>
         <div className="mt-1 text-xs text-ink-soft">
           {id.preferred_foot ? `${id.preferred_foot}-footed` : ""}{" "}

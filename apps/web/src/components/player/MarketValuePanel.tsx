@@ -160,7 +160,7 @@ export function MarketValuePanel({ market }: { market: MarketPanel | null | unde
           ))}
         </svg>
       ) : (
-        <p className="py-3 text-sm text-ink-soft">No plottable market values — all reads are unknown.</p>
+        <p className="py-3 text-sm text-ink-soft">No plottable market values - all reads are unknown.</p>
       )}
 
       {/* label + confidence + interpretation */}

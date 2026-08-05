@@ -41,10 +41,10 @@ function SavedRecord({
           nameTestId="shortlist-player"
         >
           <div className="mt-0.5 text-xs text-ink-muted">
-            {formatAge(id.age)} yrs · {id.primary_position ?? "—"} · {id.club ?? "—"}
+            {formatAge(id.age)} yrs · {id.primary_position ?? "-"} · {id.club ?? "-"}
           </div>
           <div className="text-xs text-ink-soft">
-            {id.league ?? "—"} · {card.season}
+            {id.league ?? "-"} · {card.season}
             {minutes != null ? ` · ${minutes} min` : ""}
           </div>
         </LedgerIdentity>
@@ -88,7 +88,7 @@ export default function ShortlistPage() {
       <PageHeader
         eyebrow="My Favorites"
         title="Saved Players"
-        lead="Players you have set aside to revisit. These are stored in this browser only — saved on this device, not synced to an account."
+        lead="Players you have set aside to revisit. These are stored in this browser only - saved on this device, not synced to an account."
         meta={
           cards.length > 0
             ? `${cards.length} resolved player${cards.length === 1 ? "" : "s"} · saved on this device`

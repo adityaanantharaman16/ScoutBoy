@@ -9,6 +9,7 @@ from rolefit import (
     load_role_configs,
 )
 from rolefit.context_adjustments import build_context as _bc
+from scoutboy_shared import DISPLAY_SCALE_MAX, DISPLAY_SCALE_MIN
 
 
 @pytest.fixture(scope="module")
@@ -50,7 +51,7 @@ def test_final_score_in_display_range(
             res = _rate(
                 pid, role.role_key, roles, ctx_config, sample_percentiles, sample_meta, form_index
             )
-            assert 0.0 <= res.final_score <= 99.9
+            assert DISPLAY_SCALE_MIN <= res.final_score <= DISPLAY_SCALE_MAX
             assert 0.0 <= res.raw_score <= 100.0
 
 
@@ -167,3 +168,67 @@ def test_audit_contains_all_breakdowns(
     assert "multipliers" in audit["context_breakdown_json"]
     assert "score" in audit["confidence_breakdown_json"]
     assert isinstance(audit["explanation_text"], str) and audit["explanation_text"]
+
+
+# ---------------------------------------------------------------------------
+# The 0-99 scale is a clamp in the engine, not a display convention
+# ---------------------------------------------------------------------------
+def test_shared_scale_bounds_are_exactly_zero_and_ninety_nine():
+    assert DISPLAY_SCALE_MIN == 0.0
+    assert DISPLAY_SCALE_MAX == 99.0
+
+
+def _flat_role(roles):
+    """Any role, used purely as a weight/metric shape for the clamp cases."""
+    return roles["inside_forward"]
+
+
+def _clamped(role, goodness, ctx_config, multiplier_slugs):
+    """Score `role` with every metric pinned to one goodness value."""
+    metrics = {m.name for g in role.groups for m in g.metrics}
+    ctx = _bc(
+        ctx_config,
+        competition_slug=multiplier_slugs[0],
+        team_slug=multiplier_slugs[1],
+        competition_type="domestic_top_tier",
+        minutes=3000,
+        recent_form_index=1.0,
+    )
+    return compute_role_rating(role, {m: goodness for m in metrics}, ctx, minutes=3000)
+
+
+def test_upper_clamp_is_exactly_ninety_nine(roles, ctx_config):
+    """A perfect profile in the strongest available context cannot exceed 99.
+
+    The pre-clamp figure is asserted separately, so this proves the cap is doing the
+    work rather than the inputs happening to stay low.
+    """
+    role = _flat_role(roles)
+    res = _clamped(role, 1.0, ctx_config, ("eng_premier_league", "arsenal"))
+    assert res.context_adjusted_score + res.context.form_bonus - res.penalties_total > 99.0
+    assert res.final_score == 99.0
+
+
+def test_lower_clamp_is_exactly_zero(roles, ctx_config):
+    """A bottom-tail profile is floored at 0, never pushed negative by penalties."""
+    role = _flat_role(roles)
+    res = _clamped(role, 0.0, ctx_config, ("ger_2_bundesliga", "unknown_team"))
+    assert res.penalties_total > 0
+    assert res.context_adjusted_score + res.context.form_bonus - res.penalties_total < 0.0
+    assert res.final_score == 0.0
+
+
+def test_every_role_and_fixture_stays_inside_the_clamped_scale(
+    roles, ctx_config, sample_percentiles, sample_meta, form_index
+):
+    for pid in sample_percentiles:
+        pg = sample_meta[pid]["position_group"]
+        for role in roles.values():
+            if role.position_group != pg:
+                continue
+            res = _rate(
+                pid, role.role_key, roles, ctx_config, sample_percentiles, sample_meta, form_index
+            )
+            assert DISPLAY_SCALE_MIN <= res.final_score <= DISPLAY_SCALE_MAX
+            # nothing in the 99.0-99.9 band the old cap allowed
+            assert res.final_score <= 99.0

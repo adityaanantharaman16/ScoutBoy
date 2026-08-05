@@ -12,8 +12,10 @@ app = FastAPI(
     title="ScoutBoy API",
     version="0.1.0",
     description=(
-        "ScoutBoy — FUT.gg-style real-life player discovery. MVP scope: U23 attackers "
-        "and midfielders in Europe. Every score/badge/value is explainable."
+        "ScoutBoy - real-life football player discovery. Discovery spans every "
+        "player-season in the connected local snapshots; configured RoleFit analysis "
+        "covers attacking and midfield roles only. Every score/badge/value is "
+        "explainable."
     ),
 )
 

@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 // discovery", which told a screen-reader or tab-switching user nothing about
 // where they were.
 export const metadata: Metadata = {
-  title: "Player dossier — ScoutBoy",
+  title: "Player Dossier - ScoutBoy",
   description: "Role-driven RoleFit dossier with evidence, market context and the full audit trail.",
 };
 

@@ -6,7 +6,7 @@
             − risk_penalties
 
 Everything is computed from stored, direction-adjusted *goodness* percentiles (0..1)
-and the role config weights. The output is clamped to the 0..99.9 display scale.
+and the role config weights. The output is clamped to the 0..99 display scale.
 Missing metrics are dropped and their weight is renormalized among present peers;
 they lower confidence rather than zeroing the score. The result carries a full audit.
 """
@@ -16,7 +16,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 
-from scoutboy_shared import DEFAULT_MIN_MINUTES, DISPLAY_SCALE_MAX
+from scoutboy_shared import DEFAULT_MIN_MINUTES, DISPLAY_SCALE_MAX, DISPLAY_SCALE_MIN
 
 from .confidence import ConfidenceResult, compute_confidence
 from .context_adjustments import ContextResult
@@ -184,7 +184,10 @@ def compute_role_rating(
     penalties_total = min(MAX_TOTAL_PENALTY, round(sum(p.points for p in penalties), 3))
 
     final = context_adjusted + context.form_bonus - penalties_total
-    final_score = round(max(0.0, min(DISPLAY_SCALE_MAX, final)), 1)
+    # Clamped to the shared scale, then rounded. Rounding AFTER the clamp cannot
+    # push the result back out of range, because both bounds are already whole
+    # numbers on the same one-decimal grid.
+    final_score = round(max(DISPLAY_SCALE_MIN, min(DISPLAY_SCALE_MAX, final)), 1)
 
     # 4) confidence
     conf_rules = role.confidence_rules or {}

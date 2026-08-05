@@ -27,7 +27,7 @@ import "./pilot.css";
  *  - production tokens in globals.css and tailwind.config.ts are untouched.
  */
 export const metadata: Metadata = {
-  title: "Dark Mode Pilot — ScoutBoy (for visual approval)",
+  title: "Dark Mode Pilot - ScoutBoy (for visual approval)",
   description:
     "An isolated dark-mode design pilot for ScoutBoy. Not a production theme and not live data.",
   robots: {
@@ -43,7 +43,7 @@ export default function DarkModePilotPage() {
     <div className="dark-pilot" data-testid="dark-mode-pilot">
       <div className="pilot-banner" role="note" data-testid="pilot-approval-banner">
         <div className="pilot-banner-inner">
-          <span className="pilot-banner-title">Dark Mode Pilot — For Visual Approval</span>
+          <span className="pilot-banner-title">Dark Mode Pilot - For Visual Approval</span>
           <span className="pilot-banner-note">
             Not a shipped theme. Not linked from navigation. Not live data.
           </span>
@@ -96,7 +96,7 @@ export default function DarkModePilotPage() {
 
         <Specimen
           index="02"
-          title="Discovery — filter rail and ledger"
+          title="Discovery - filter rail and ledger"
           note="The rail stays deliberately subordinate to the ledger: quiet hairlines, canvas-coloured fields, and a selected control that gains a green inset marker as well as a green tint, so selection never rests on colour alone. Four rows exercise the top and bottom of the score scale, all three market states, and a row whose confidence disagrees with its coverage."
         >
           <DiscoverySpecimen />
@@ -105,15 +105,15 @@ export default function DarkModePilotPage() {
         <Specimen
           index="03"
           title="Recruitment Desk excerpt"
-          note="Sekou Diallo’s stored Shadow Striker audit — a genuinely uncertain record: 1,300 minutes in Ligue 2, medium confidence, and a context multiplier that pulls a raw 81.2 down to 68.1. Role Territory is the only elevated surface in the pilot; on a dark canvas it earns that status by being lighter and greener than everything around it rather than by casting a shadow."
+          note="Sekou Diallo’s stored Shadow Striker audit - a genuinely uncertain record: 1,300 minutes in Ligue 2, medium confidence, and a context multiplier that pulls a raw 81.2 down to 68.1. Role Territory is the only elevated surface in the pilot; on a dark canvas it earns that status by being lighter and greener than everything around it rather than by casting a shadow."
         >
           <DeskSpecimen />
         </Specimen>
 
         <Specimen
           index="04"
-          title="Comparison excerpt — no shared rated role"
-          note="A real result from the cohort: an attacker and a defensive midfielder with no role in common. The surface stays useful — both sides keep their market state, playstyles and evidence context — and neither side is labelled “not rated”, because no role was selected. No score is fabricated to fill the gap."
+          title="Comparison excerpt - no shared rated role"
+          note="A real result from the cohort: an attacker and a defensive midfielder with no role in common. The surface stays useful - both sides keep their market state, playstyles and evidence context - and neither side is labelled “not rated”, because no role was selected. No score is fabricated to fill the gap."
         >
           <CompareSpecimen />
         </Specimen>
@@ -149,7 +149,7 @@ export default function DarkModePilotPage() {
                   of shadow.
                 </li>
                 <li>
-                  The four evidence channels — score, confidence, coverage, market — stay visually
+                  The four evidence channels - score, confidence, coverage, market - stay visually
                   separate on a dark canvas.
                 </li>
                 <li>Score bands stay distinguishable across all six steps.</li>
@@ -161,7 +161,7 @@ export default function DarkModePilotPage() {
               <ul>
                 <li>Whether ScoutBoy gets a dark theme at all.</li>
                 <li>
-                  If yes: dark-only, or a user-selectable theme — and whether it should follow the
+                  If yes: dark-only, or a user-selectable theme - and whether it should follow the
                   operating system.
                 </li>
                 <li>
@@ -170,7 +170,7 @@ export default function DarkModePilotPage() {
                 </li>
                 <li>
                   Whether score magnitude and market state should keep sharing hues. Amber, rust,
-                  red and elite blue are one value in both channels today — in production too —
+                  red and elite blue are one value in both channels today - in production too -
                   and a dark canvas makes the overlap more visible.
                 </li>
                 <li>Whether the printed-paper metaphor survives at all in a dark context.</li>

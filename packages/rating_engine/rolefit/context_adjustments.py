@@ -97,7 +97,7 @@ class ContextConfig:
             "explanation": (
                 f"League '{competition_slug or 'unknown'}' strength ×{mult:.2f}"
                 f" ({entry.get('translation_risk', 'high')} translation risk)"
-                + ("" if matched else " [default — league not in config]")
+                + ("" if matched else " [default - league not in config]")
             ),
         }
 
@@ -214,7 +214,7 @@ def build_context(
         "team_strength": team["explanation"],
         "opposition_quality": opposition["explanation"],
         "competition_stakes": stakes["explanation"],
-        "role_usage": f"Role usage ×{role_usage:.2f} (nominal — no positional-split data in MVP)",
+        "role_usage": f"Role usage ×{role_usage:.2f} (nominal - no positional-split data yet)",
         "sample_reliability": sample["explanation"],
         "combined_multiplier": round(combined, 4),
     }

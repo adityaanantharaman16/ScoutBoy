@@ -6,7 +6,7 @@ export function whyText(badge: PlaystyleBadge): string {
 }
 
 export function formatEur(value: number | null | undefined): string {
-  if (value == null) return "—";
+  if (value == null) return "-";
   if (value >= 1_000_000) return `€${(value / 1_000_000).toFixed(1)}M`;
   if (value >= 1_000) return `€${Math.round(value / 1_000)}K`;
   return `€${Math.round(value)}`;
@@ -21,7 +21,7 @@ export function formatEurRange(
 }
 
 export function formatScore(score: number | null | undefined): string {
-  if (score == null) return "—";
+  if (score == null) return "-";
   return score.toFixed(1);
 }
 
@@ -39,7 +39,7 @@ export function confidenceLabel(c: Confidence | string | null | undefined): stri
     case "low":
       return "Low confidence";
     default:
-      return "Unknown — insufficient data";
+      return "Unknown - insufficient data";
   }
 }
 

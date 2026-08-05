@@ -112,14 +112,23 @@ export function FavoriteHeartButton({ player }: { player: PlayerRef }) {
   );
 }
 
-/** Discovery-rail compare action: label only, same compare-queue behaviour. */
+/**
+ * Rail compare action: label only, same compare-queue behaviour.
+ *
+ * The selected marker always hugs the button's RIGHT edge (`rail-action-compare`),
+ * mirroring the favourite/remove side's left marker. This is the one Compare
+ * treatment for every rail that uses it — Discover, My Favorites, the leaderboard
+ * and the dossier's comparable-player cards — so a selected Compare looks the same
+ * wherever a scout meets it. It is an inset shadow, paint only, so the button never
+ * changes size and nothing around it moves.
+ */
 export function CompareRailButton({ player }: { player: PlayerRef }) {
   const { isQueuedForCompare, toggleCompare } = useScoutingState();
   const active = isQueuedForCompare(player.id);
   return (
     <button
       type="button"
-      className="rail-action"
+      className="rail-action rail-action-compare"
       aria-pressed={active}
       aria-label={`${active ? "Remove" : "Add"} ${player.name} ${active ? "from" : "to"} compare queue`}
       data-testid="compare-action"
@@ -189,6 +198,40 @@ export function PlayerActionRow({
     <div className="flex flex-wrap gap-2">
       <ShortlistButton player={player} size={size} />
       <CompareQueueButton player={player} size={size} />
+    </div>
+  );
+}
+
+/**
+ * Card action bar, used by the dossier's comparable-player cards and by the role
+ * leaderboard (desktop table cell and mobile ledger row).
+ *
+ * Composition, not a new mechanism: the same {@link FavoriteHeartButton} heart and
+ * the same bare "Compare" queue action Discovery uses, in one hairline box that
+ * spans its container's width at every breakpoint. The selected states are
+ * therefore identical to Discovery's — filled heart with a left marker, Compare
+ * with a right marker. It does not take the Discovery radius exception: this is a
+ * card, not a ledger row.
+ */
+export function CardActionBar({
+  player,
+  compact = false,
+}: {
+  player: PlayerRef;
+  /**
+   * Steps the Compare label down one size. For the leaderboard's desktop Actions
+   * column, which is the narrowest place this bar appears — the default 14px label
+   * crowds its half of a fixed 168px cell. Target sizes are unaffected.
+   */
+  compact?: boolean;
+}) {
+  return (
+    <div
+      className={`rail-box rail-box-inline${compact ? " rail-box-compact" : ""}`}
+      data-testid="card-action-bar"
+    >
+      <FavoriteHeartButton player={player} />
+      <CompareRailButton player={player} />
     </div>
   );
 }

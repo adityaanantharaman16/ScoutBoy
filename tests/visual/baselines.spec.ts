@@ -78,6 +78,23 @@ test.describe("Curated surfaces", () => {
     await expect(page).toHaveScreenshot("discovery.png", { fullPage: false });
   });
 
+  /**
+   * Discovery with an age threshold applied. Distinct from the default shot in
+   * three ways worth a baseline of their own: the slider's painted fill and
+   * selected stop, the pressed direction segment, and the results summary
+   * reporting the active age condition instead of "All Ages".
+   *
+   * `age_max=22` is chosen because it still returns players against the committed
+   * fixture cohort, so the shot exercises a filtered LEDGER rather than the empty
+   * state (which already has its own baseline).
+   */
+  test("discovery with an age threshold applied", async ({ page }) => {
+    await page.goto("/?age_max=22");
+    await page.waitForSelector('[data-testid="results-ledger"]');
+    await stable(page);
+    await expect(page).toHaveScreenshot("discovery-age-filtered.png", { fullPage: false });
+  });
+
   test("discovery with compare tray", async ({ page }) => {
     await seedTwo(page);
     await page.waitForSelector('[data-testid="compare-tray"]');
@@ -122,6 +139,49 @@ test.describe("Curated surfaces", () => {
     await expect(page.locator('[data-testid="action-rail-box"]').first()).toHaveScreenshot(
       "player-action-rail.png",
     );
+  });
+
+  /**
+   * The same rail with both actions selected: this is the one shot that proves the
+   * MIRRORED markers, favourite on the left edge and Compare on the right, and
+   * that selecting neither changes the rail's dimensions.
+   */
+  test("player action rail — both actions selected", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForSelector('[data-testid="result-row"]');
+    const rail = page.locator('[data-testid="action-rail-box"]').first();
+    await rail.locator('[data-testid="favorite-action"]').click();
+    await rail.locator('[data-testid="compare-action"]').click();
+    await stable(page);
+    await expect(rail).toHaveScreenshot("player-action-rail-selected.png");
+  });
+
+  /**
+   * The dossier's comparable-player cards: single-line identity, the RoleFit and
+   * expected-asking channels side by side, and the two-part heart/Compare bar.
+   */
+  test("player dossier — comparable players", async ({ page }) => {
+    await firstDossier(page, '[data-testid="similar-group"]');
+    await stable(page);
+    await expect(page.locator('[data-testid="similar-group"]').first()).toHaveScreenshot(
+      "player-comparables.png",
+    );
+  });
+
+  /**
+   * The comparable-player card's action bar with both actions selected. The
+   * unselected shot above cannot show it: the mirrored markers — heart on the left
+   * edge, Compare on the right — only exist in the pressed state, and this is the
+   * bar the leaderboard shares, so one baseline covers both surfaces' selected
+   * treatment.
+   */
+  test("comparable-player action bar — both actions selected", async ({ page }) => {
+    await firstDossier(page, '[data-testid="similar-group"]');
+    const bar = page.locator('[data-testid="card-action-bar"]').first();
+    await bar.locator('[data-testid="favorite-action"]').click();
+    await bar.locator('[data-testid="compare-action"]').click();
+    await stable(page);
+    await expect(bar).toHaveScreenshot("player-comparables-action-bar-selected.png");
   });
 
   test("my favorites", async ({ page }) => {

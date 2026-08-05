@@ -33,15 +33,14 @@ export function NavBar() {
         className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3"
         aria-label="Primary"
       >
-        {/* Typographic wordmark: weight + tight tracking carry it, no logo asset. */}
+        {/* Typographic wordmark: weight + tight tracking carry it, no logo asset,
+            no descriptor beside it. The link, its target, its accessible purpose
+            and its position in the nav flow are unchanged. */}
         <Link
           href="/"
           className="text-xl font-extrabold tracking-[-0.03em] text-ink no-underline"
         >
-          ScoutBoy{" "}
-          <span className="ml-1 text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">
-            Recruitment
-          </span>
+          ScoutBoy
         </Link>
 
         {/* Menu toggle for mobile/tablet. Inline links appear only at lg+, where

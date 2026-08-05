@@ -41,7 +41,7 @@ describe("Unified sans typography", () => {
     expect(heading.className).toContain("font-bold");
   });
 
-  it("renders the wordmark typographically with weight and tight tracking", () => {
+  it("renders the wordmark as ScoutBoy alone, with weight and tight tracking", () => {
     const { container } = render(
       <ScoutingStateProvider>
         <NavBar />
@@ -54,10 +54,15 @@ describe("Unified sans typography", () => {
     // no image/logo asset was introduced
     expect(container.querySelector("img")).toBeNull();
     expect(container.querySelector("svg")).toBeNull();
-    // the eyebrow keeps its uppercase tracked treatment
-    const eyebrow = screen.getByText("Recruitment");
-    expect(eyebrow.className).toContain("uppercase");
-    expect(eyebrow.className).toContain("tracking-[0.12em]");
+
+    // The "Recruitment" descriptor is gone, and nothing replaced it: the wordmark
+    // is exactly the product name, still linking home with the same accessible
+    // purpose and the same position in the nav flow.
+    expect(brand.textContent).toBe("ScoutBoy");
+    expect(brand).toHaveAccessibleName("ScoutBoy");
+    expect(brand).toHaveAttribute("href", "/");
+    expect(screen.queryByText("Recruitment")).not.toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/Recruitment/);
   });
 
   it("keeps ledger player names prominent without a serif face", () => {

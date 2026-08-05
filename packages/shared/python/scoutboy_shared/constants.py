@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import os
 
-# Display scale for RoleFit ratings.
-DISPLAY_SCALE_MAX = 99.9
+# Authoritative RoleFit scoring range. Every producer, guardrail and quality
+# check reads these two constants rather than repeating a literal, so the scale
+# has exactly one definition: 0-99 inclusive.
+DISPLAY_SCALE_MIN = 0.0
+DISPLAY_SCALE_MAX = 99.0
 
 # Default minimum minutes for a player-season to be eligible for scoring.
 DEFAULT_MIN_MINUTES = int(os.environ.get("SCOUTBOY_MIN_MINUTES", "450"))

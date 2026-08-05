@@ -95,11 +95,11 @@ export default function MethodologyPage() {
 
   return (
     <div>
-      <ScopeBanner text={data?.scope ?? "Prototype scope — see limitations below."} />
+      <ScopeBanner text={data?.scope ?? "Prototype scope - see limitations below."} />
       <PageHeader
         eyebrow="Technical note"
         title="Methodology"
-        lead="How ScoutBoy scores RoleFit, labels playstyles, models market ranges, and — just as important — where it is uncertain or unproven."
+        lead="How ScoutBoy scores RoleFit, labels playstyles, models market ranges, and - just as important - where it is uncertain or unproven."
         meta={data ? (data.last_updated ? `Last updated ${data.last_updated}` : "Last updated: not provided") : undefined}
       />
 
@@ -170,7 +170,7 @@ export default function MethodologyPage() {
                 {data.context_dimensions.map((c) => (
                   <div key={c.key} className="text-sm">
                     <span className="font-semibold text-pitch-dark">{titleCase(c.key)}</span>
-                    <span className="text-ink-muted"> — {c.explanation}</span>
+                    <span className="text-ink-muted"> - {c.explanation}</span>
                   </div>
                 ))}
               </div>
@@ -214,7 +214,7 @@ export default function MethodologyPage() {
                 {data.data_sources.map((s) => (
                   <div key={s.name} className="text-sm">
                     <span className="font-semibold text-ink">{s.name}</span>
-                    <span className="text-ink-muted"> — {s.role}. {s.note}</span>
+                    <span className="text-ink-muted"> - {s.role}. {s.note}</span>
                     {s.url && (
                       <a
                         href={s.url}

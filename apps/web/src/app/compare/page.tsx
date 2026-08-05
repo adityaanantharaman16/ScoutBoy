@@ -36,7 +36,7 @@ function ComparePageInner() {
       <PageHeader
         eyebrow="Analytical decision surface"
         title="Compare players"
-        lead="Select two players and a role to weigh them side by side. The conclusion, per-side confidence, and any confidence warnings come straight from the ScoutBoy compare API — nothing is recomputed here."
+        lead="Select two players and a role to weigh them side by side. The conclusion, per-side confidence, and any confidence warnings come straight from the ScoutBoy compare API - nothing is recomputed here."
       />
 
       <div className="card mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -80,7 +80,7 @@ function ComparePageInner() {
             value={role}
             onChange={(e) => setRole(e.target.value)}
           >
-            <option value="">Automatic role</option>
+            <option value="">Automatic Role</option>
             {ROLES.map((r) => (
               <option key={r.key} value={r.key}>
                 {r.label}

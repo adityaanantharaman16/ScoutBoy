@@ -204,7 +204,7 @@ test.describe("Degraded data and failure states", () => {
     await gotoFirstDossier(page, '[data-testid="player-name"]');
     const text = await page.locator("body").innerText();
     expect(text).not.toContain("€0");
-    expect(text).toMatch(/No market data|Unknown|—/);
+    expect(text).toMatch(/No market data|Unknown|-/);
     await expectNoRawSentinels(page, "missing market");
   });
 
@@ -275,7 +275,7 @@ test.describe("Degraded data and failure states", () => {
     await page.waitForSelector('[data-testid="not-found"]');
     await expect(page.locator("h1")).toHaveText("Page Not Found");
     await expect(page.locator('[data-testid="not-found-discover"]')).toBeVisible();
-    expect(await page.title()).toBe("Page not found — ScoutBoy");
+    expect(await page.title()).toBe("Page Not Found - ScoutBoy");
     await expectNoRawSentinels(page, "not found");
     await expectNoOverflowAt320(page, "not found");
     expect(errors.filter((e) => !e.includes("Failed to load resource"))).toEqual([]);
@@ -338,8 +338,14 @@ test.describe("Interaction stress", () => {
   test("fast filter changes cannot leave count and rows disagreeing", async ({ page }) => {
     await page.goto("/");
     await page.waitForSelector('[data-testid="results-ledger"]');
-    for (const idx of [1, 2, 0, 1]) {
-      await page.selectOption("#filter-scope", { index: idx }).catch(() => {});
+    // The age threshold took over from the retired scope selector as the rail's
+    // fastest-changing control, so it is what this stress case drives now.
+    for (const id of ["age-direction-younger", "age-direction-older", "age-direction-all"]) {
+      await page.getByTestId(id).click().catch(() => {});
+    }
+    await page.getByTestId("age-threshold-slider").focus();
+    for (const key of ["ArrowRight", "ArrowLeft", "ArrowLeft"]) {
+      await page.keyboard.press(key).catch(() => {});
     }
     await page.waitForLoadState("networkidle");
     await settle(page);
@@ -355,10 +361,10 @@ test.describe("Interaction stress", () => {
   test("back/forward navigation restores URL-backed filters", async ({ page }) => {
     await page.goto("/");
     await page.waitForSelector('[data-testid="results-ledger"]');
-    await page.selectOption("#filter-scope", { index: 1 });
+    await page.getByTestId("age-direction-younger").click();
     await page.waitForLoadState("networkidle");
     const filtered = page.url();
-    expect(filtered).toContain("scope=");
+    expect(filtered).toContain("age_max=");
 
     await page.goBack();
     await page.waitForLoadState("networkidle");
@@ -366,6 +372,12 @@ test.describe("Interaction stress", () => {
     await page.waitForLoadState("networkidle");
     expect(page.url()).toBe(filtered);
     await expect(page.locator('[data-testid="results-ledger"], [role="status"]')).toBeVisible();
+    // the control itself came back with the URL, not just the address bar
+    await expect(page.getByTestId("age-threshold-value")).toHaveText("25 Years");
+    await expect(page.getByTestId("age-direction-younger")).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 
   test("favorites and compare state survive a reload", async ({ page }) => {

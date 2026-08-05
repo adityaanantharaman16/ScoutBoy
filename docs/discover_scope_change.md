@@ -29,17 +29,55 @@ The URL/API parameter is `scope`. Legacy callers are preserved:
 - `universe=all` maps to `scope=all_records`
 - explicit `scope` wins when both are supplied
 
-## Age bands
+**Discovery no longer exposes a scope selector.** The rail has no Analysis Scope
+control and the results summary does not report one; the UI always requests the
+default `analyzed` scope. `scope` remains a supported API parameter, a
+scope-bearing URL still loads and is still honoured, and an unrecognised value
+falls back to the default rather than being forwarded.
 
-Age is calculated relative to the selected season's end date:
+## Age filter
 
-- All ages: no age restriction
-- U23: `age <= 23`
-- 24-26: `age >= 24 and age <= 26`
-- 27-30: `age >= 27 and age <= 30`
-- 31+: `age >= 31`
+Age is calculated relative to the selected season's end date.
 
-Unknown ages remain visible under All ages and are excluded from specific age bands.
+Discovery's age control is a five-stop threshold plus a direction. The stops are
+**19, 22, 25, 28, 31** — roughly three-year career stages from U19 up — and the
+direction decides which side of the stop is kept:
+
+| Control state           | URL / API           | Meaning                    |
+| ----------------------- | ------------------- | -------------------------- |
+| All Ages                | neither bound       | no age restriction         |
+| `<n>` Years And Younger | `age_max=<n>`       | `age <= n`                 |
+| `<n>` Years And Older   | `age_min=<n>`       | `age >= n`                 |
+
+Exactly one bound is ever emitted: switching direction clears the opposite bound
+from both the request and the URL, and the All Ages reset clears both. The root
+Discovery route is therefore unfiltered by age by default. Off-stop bounds in a
+hand-crafted URL snap to the nearest stop so the displayed threshold and the
+applied filter cannot disagree; when a URL carries both bounds, `age_max` wins.
+
+Unknown ages remain visible with no age bound applied and are excluded by either
+bound — an unknown age never passes an active minimum or maximum.
+
+### Legacy `age_band`
+
+`age_band` is still accepted by the API, but Discovery no longer writes it. A
+legacy `age_band` URL loads safely and is normalized once, deterministically, by
+a single rule: **a band with a lower bound becomes "older" at the smallest stop at
+or above that bound; a band bounded only from above becomes "younger" at the
+largest stop at or below it.**
+
+| Legacy    | Old semantics        | Normalized to  |
+| --------- | -------------------- | -------------- |
+| `all`     | no restriction       | All Ages       |
+| `u23`     | `age <= 23`          | `age_max=22`   |
+| `24_26`   | `24 <= age <= 26`    | `age_min=25`   |
+| `27_30`   | `27 <= age <= 30`    | `age_min=28`   |
+| `31_plus` | `age >= 31`          | `age_min=31`   |
+
+`31_plus` keeps its exact previous semantics. The closed bands become the nearest
+one-sided threshold, because the control expresses a single direction by design.
+The stale `age_band` parameter is dropped from the URL as soon as the new control
+is used, and an explicit `age_min`/`age_max` on the same URL wins over it.
 
 ## Evidence states
 

@@ -13,11 +13,7 @@ import {
   ScopeBanner,
   ScoreReadout,
 } from "@/components/common";
-import {
-  CompareQueueButton,
-  PlayerActionRow,
-  ShortlistButton,
-} from "@/components/common/PlayerActions";
+import { CardActionBar } from "@/components/common/PlayerActions";
 import { ROLES, SCOPE_BANNER } from "@/lib/constants";
 import { useRoleLeaderboard } from "@/lib/api/hooks";
 import { formatAge, formatScore, scoreColor } from "@/lib/formatters";
@@ -86,7 +82,10 @@ export default function RoleLeaderboardPage() {
                     <th>RoleFit Confidence</th>
                     <th>Playstyles</th>
                     <th className="text-right">Expected asking</th>
-                    <th>
+                    {/* A fixed action column: the shared two-part bar is a known
+                        width, and pinning it keeps every row's bar identical and
+                        stops a long club name from squeezing it. */}
+                    <th className="w-[168px]">
                       <span className="sr-only">Actions</span>
                     </th>
                   </tr>
@@ -103,7 +102,7 @@ export default function RoleLeaderboardPage() {
                           {r.canonical_name}
                         </Link>
                         <div className="text-xs text-ink-soft">
-                          {formatAge(r.age)} yrs · {r.club ?? "—"} · {r.league ?? "—"}
+                          {formatAge(r.age)} yrs · {r.club ?? "-"} · {r.league ?? "-"}
                         </div>
                       </td>
                       <td className={`text-right font-mono font-bold ${scoreColor(r.final_score)}`}>
@@ -113,22 +112,26 @@ export default function RoleLeaderboardPage() {
                         <ConfidenceMeter level={r.confidence} />
                       </td>
                       <td className="text-xs text-ink-muted">
-                        {r.top_playstyles.slice(0, 3).join(", ") || "—"}
+                        {r.top_playstyles.slice(0, 3).join(", ") || "-"}
                       </td>
-                      <td className="text-right font-mono text-xs">
+                      {/* The asking range is one figure, not two: `whitespace-nowrap`
+                          keeps it on a single line whatever the magnitudes are, so a
+                          nine-figure high end can never break away from its low end.
+                          The table shell already scrolls horizontally if a row ever
+                          needs more room than the viewport gives it. */}
+                      <td className="whitespace-nowrap text-right font-mono text-xs">
                         {marketRangeText(r.expected_asking_low_eur, r.expected_asking_high_eur)}
                       </td>
-                      <td>
-                        <div className="flex flex-nowrap justify-end gap-2">
-                          <ShortlistButton
-                            player={{ id: r.player_id, name: r.canonical_name }}
-                            size="sm"
-                          />
-                          <CompareQueueButton
-                            player={{ id: r.player_id, name: r.canonical_name }}
-                            size="sm"
-                          />
-                        </div>
+                      {/* The shared heart/Compare bar, identical to the one the
+                          dossier's comparable-player cards use — not a third
+                          implementation. Selection changes background and inset
+                          marker only, so a toggle cannot resize the cell or move
+                          any row. */}
+                      <td className="w-[168px]">
+                        <CardActionBar
+                          player={{ id: r.player_id, name: r.canonical_name }}
+                          compact
+                        />
                       </td>
                     </tr>
                   ))}
@@ -156,7 +159,7 @@ export default function RoleLeaderboardPage() {
                         </Link>
                       </div>
                       <div className="text-xs text-ink-soft">
-                        {formatAge(r.age)} yrs · {r.club ?? "—"} · {r.league ?? "—"}
+                        {formatAge(r.age)} yrs · {r.club ?? "-"} · {r.league ?? "-"}
                       </div>
                     </div>
                     <ScoreReadout score={r.final_score} size="md" className="shrink-0 text-right" />
@@ -175,11 +178,10 @@ export default function RoleLeaderboardPage() {
                       {r.top_playstyles.slice(0, 3).join(", ")}
                     </div>
                   )}
+                  {/* Full-width two-part bar beneath the row's information, the
+                      same treatment Discovery and the dossier cards use. */}
                   <div className="mt-3">
-                    <PlayerActionRow
-                      player={{ id: r.player_id, name: r.canonical_name }}
-                      size="sm"
-                    />
+                    <CardActionBar player={{ id: r.player_id, name: r.canonical_name }} />
                   </div>
                 </article>
               ))}

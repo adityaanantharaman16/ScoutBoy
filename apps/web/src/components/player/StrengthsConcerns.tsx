@@ -16,7 +16,7 @@ export function StrengthsConcerns({
           {strengths.map((s, i) => (
             <li key={i} className="text-sm">
               <span className="font-semibold text-pitch-dark">{s.label}</span>
-              <span className="text-ink-muted"> — {s.detail}</span>
+              <span className="text-ink-muted"> - {s.detail}</span>
             </li>
           ))}
         </ul>
@@ -28,7 +28,7 @@ export function StrengthsConcerns({
           {concerns.map((s, i) => (
             <li key={i} className="text-sm">
               <span className="font-semibold text-accent-red">{s.label}</span>
-              <span className="text-ink-muted"> — {s.detail}</span>
+              <span className="text-ink-muted"> - {s.detail}</span>
             </li>
           ))}
         </ul>

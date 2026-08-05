@@ -548,3 +548,177 @@ def test_admin_data_operations_reads_are_available(client):
 
 def test_player_not_found_404(client):
     assert client.get("/api/players/999999").status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Bounded numeric query validation (0-99, inclusive)
+# ---------------------------------------------------------------------------
+@pytest.mark.parametrize("param", ["min_minutes", "rolefit_min", "rolefit_max"])
+@pytest.mark.parametrize("value", ["-1", "100", "1000", "-0.5"])
+def test_numeric_filters_reject_values_outside_the_permitted_range(client, param, value):
+    """A directly crafted out-of-range request gets a predictable validation error
+    rather than silently producing a misleading result set."""
+    r = client.get(f"/api/players?{param}={value}")
+    assert r.status_code == 422
+    body = r.json()
+    assert any(param in str(err.get("loc", "")) for err in body["detail"])
+
+
+@pytest.mark.parametrize("param", ["min_minutes", "rolefit_min", "rolefit_max"])
+@pytest.mark.parametrize("value", ["0", "99"])
+def test_numeric_filters_accept_both_inclusive_bounds(client, param, value):
+    assert client.get(f"/api/players?{param}={value}&page_size=5").status_code == 200
+
+
+def test_zero_threshold_is_a_real_threshold_not_an_absent_one(client):
+    """min_minutes=0 must be honoured as a filter value, not treated as unset."""
+    zero = client.get("/api/players?scope=all_records&min_minutes=0&page_size=100").json()
+    absent = client.get("/api/players?scope=all_records&page_size=100").json()
+    assert zero["total"] == absent["total"]
+
+    # ...and a real threshold still narrows, proving the value reaches the filter.
+    high = client.get("/api/players?scope=all_records&min_minutes=99&page_size=100").json()
+    assert high["total"] <= zero["total"]
+
+
+def test_numeric_filters_reject_non_numeric_values(client):
+    assert client.get("/api/players?rolefit_min=abc").status_code == 422
+    assert client.get("/api/players?min_minutes=NaN").status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# The 0-99 RoleFit scale, enforced centrally
+# ---------------------------------------------------------------------------
+def test_shared_scale_constants_are_exactly_zero_and_ninety_nine():
+    from scoutboy_shared import DISPLAY_SCALE_MAX, DISPLAY_SCALE_MIN
+
+    assert DISPLAY_SCALE_MIN == 0.0
+    assert DISPLAY_SCALE_MAX == 99.0
+
+
+def test_no_public_rolefit_score_exceeds_the_scale(client):
+    """Every RoleFit figure the API can return, across every surface, sits in 0-99."""
+    from scoutboy_shared import DISPLAY_SCALE_MAX, DISPLAY_SCALE_MIN
+
+    def check(score, where):
+        assert score is None or DISPLAY_SCALE_MIN <= score <= DISPLAY_SCALE_MAX, f"{where}: {score}"
+
+    listing = client.get("/api/players?scope=all_records&page_size=100").json()
+    assert listing["items"]
+    for item in listing["items"]:
+        check(item["best_role_score"], f"search {item['id']}")
+
+    for item in listing["items"][:5]:
+        pid = item["id"]
+        card = client.get(f"/api/players/{pid}").json()
+        for rr in card["role_ratings"]:
+            check(rr["final_score"], f"card {pid} {rr['role_key']}")
+
+        detail = client.get(f"/api/players/{pid}/ratings").json()
+        for rr in detail["ratings"]:
+            check(rr["final_score"], f"ratings {pid} {rr['role_key']}")
+
+        for group in client.get(f"/api/players/{pid}/similar").json()["groups"]:
+            for sp in group["players"]:
+                check(sp["best_role_score"], f"similar {pid} {sp['player_id']}")
+
+    board = client.get("/api/roles/touchline_winger/rankings?limit=200").json()
+    assert board["rows"]
+    for row in board["rows"]:
+        check(row["final_score"], f"leaderboard {row['player_id']}")
+
+    a, b = _two_att_ids(client)
+    comparison = client.get(f"/api/compare?player_a={a}&player_b={b}").json()
+    for side in (comparison["player_a"], comparison["player_b"]):
+        for rr in side["role_ratings"]:
+            check(rr["final_score"], f"compare {side['identity']['id']} {rr['role_key']}")
+
+
+# ---------------------------------------------------------------------------
+# Methodology: current scope, current scale, honest provenance
+# ---------------------------------------------------------------------------
+def test_methodology_reports_the_current_scope_and_scale(client):
+    m = client.get("/api/methodology").json()
+
+    # the scale is the shared one, stated once
+    assert "0-99" in m["formula"]
+    assert "99.9" not in m["formula"]
+    assert "0-99" in m["scope"]
+
+    # no U23-only scope claim survives anywhere in the document
+    document = " ".join(
+        [m["scope"], m["formula"], *m["limitations"]]
+        + [f"{s['name']} {s['role']} {s['note']}" for s in m["data_sources"]]
+    )
+    assert "U23" not in document
+    assert "MVP" not in document
+
+    # discoverability and configured analysis are distinguished
+    assert "any age" in m["scope"]
+    assert "profile-only" in m["scope"]
+    assert "attacking and midfield roles only" in m["scope"]
+
+    # only the position groups that actually have role configs are claimed
+    configured_groups = {r["position_group"] for r in m["roles"]}
+    assert configured_groups == {"ATT", "MID"}
+    coverage = next(
+        limit for limit in m["limitations"] if limit.startswith("RoleFit is configured")
+    )
+    assert "9 attacking and midfield roles only" in coverage
+    assert "defensive, goalkeeping" in coverage
+    assert "never given a RoleFit rating" in coverage
+
+
+def test_methodology_states_provenance_at_its_actual_maturity(client):
+    m = client.get("/api/methodology").json()
+    by_name = {s["name"]: s for s in m["data_sources"]}
+
+    football_data = next(s for n, s in by_name.items() if n.startswith("Football-Data"))
+    assert "not connected to ingestion" in football_data["role"]
+    assert "unit-tested" in football_data["role"]
+
+    statsbomb = next(s for n, s in by_name.items() if n.startswith("StatsBomb"))
+    assert "Connected ingest source" in statsbomb["role"]
+    assert "single-club" in statsbomb["note"]
+
+    # analytical-honesty language is preserved, not traded away for confidence
+    document = " ".join(m["limitations"])
+    assert "synthetic" in document
+    assert "profile-only" in document
+    assert "proxy" in document
+    assert "ranges" in document
+    assert "never treated as zero" in document
+    assert "no score is invented" in document
+
+
+def test_no_user_visible_methodology_copy_contains_an_em_dash(client):
+    m = client.get("/api/methodology").json()
+    blob = [m["scope"], m["formula"], *m["limitations"]]
+    blob += [f"{s['name']}{s['role']}{s['note']}" for s in m["data_sources"]]
+    blob += [c["explanation"] for c in m["context_dimensions"]]
+    blob += [m["calibration"]["methodology_note"], m["calibration"]["pilot_coverage_limitation"]]
+    for text in blob:
+        assert "—" not in text, text
+
+
+def test_unknown_age_never_passes_an_active_age_bound(client, db_session):
+    """A record with no birth date is visible unfiltered, and excluded by either
+    one-sided bound the new age control can write - never silently kept."""
+    from datetime import date
+
+    unknown_id = _insert_profile_only_player(db_session, name="No Birth Date Keeper")
+    _insert_profile_only_player(
+        db_session, name="Dated Young Defender", birth_date=date(2004, 1, 1)
+    )
+
+    unfiltered = client.get("/api/players?scope=all_records&q=No Birth Date Keeper").json()
+    assert [i["id"] for i in unfiltered["items"]] == [unknown_id]
+    assert unfiltered["items"][0]["age"] is None
+
+    for bound in ("age_max=25", "age_min=19", "age_max=31", "age_min=31"):
+        body = client.get(f"/api/players?scope=all_records&{bound}&q=No Birth Date Keeper").json()
+        assert body["total"] == 0, bound
+
+    # the dated record is still matched by a bound that genuinely covers it
+    dated = client.get("/api/players?scope=all_records&age_max=25&q=Dated Young Defender").json()
+    assert dated["total"] == 1

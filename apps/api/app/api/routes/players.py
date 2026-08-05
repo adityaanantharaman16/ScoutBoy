@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
+from scoutboy_shared import DISPLAY_SCALE_MAX
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
@@ -25,6 +26,10 @@ from app.services import (
 
 router = APIRouter(prefix="/players", tags=["players"])
 
+# Inclusive upper bound for the numeric Discovery filters. Derived from the shared
+# RoleFit scale (0-99) so the filter range and the scoring range are one decision.
+SCORE_FILTER_MAX = int(DISPLAY_SCALE_MAX)
+
 
 @router.get("", response_model=Paginated[PlayerSearchCard])
 def search_players(
@@ -36,20 +41,33 @@ def search_players(
     league: Optional[str] = None,
     club: Optional[str] = None,
     nationality: Optional[str] = None,
-    min_minutes: Optional[int] = None,
-    rolefit_min: Optional[float] = None,
-    rolefit_max: Optional[float] = None,
+    # The two Discovery numeric thresholds and their RoleFit ceiling share one
+    # inclusive 0-99 range, declared on the route so a directly crafted request
+    # outside it gets a 422 rather than silently producing a misleading result set.
+    # `SCORE_FILTER_MAX` is the shared RoleFit scale bound, so the filter ceiling
+    # can never drift away from what the engine can actually produce.
+    min_minutes: Optional[int] = Query(None, ge=0, le=SCORE_FILTER_MAX),
+    rolefit_min: Optional[float] = Query(None, ge=0, le=SCORE_FILTER_MAX),
+    rolefit_max: Optional[float] = Query(None, ge=0, le=SCORE_FILTER_MAX),
     playstyle: Optional[str] = None,
     value_min: Optional[float] = None,
     value_max: Optional[float] = None,
     sort: str = "rolefit_desc",
     scope: Optional[str] = Query(
         None,
-        description="'analyzed' (default), 'all_records', or 'high_coverage_u23'",
+        description=(
+            "'analyzed' (default), 'all_records', or 'high_coverage_u23'. Still a "
+            "supported API capability; the Discovery UI no longer exposes a selector "
+            "for it and always requests the default."
+        ),
     ),
     age_band: Optional[str] = Query(
         None,
-        description="'all' (default), 'u23', '24_26', '27_30', or '31_plus'",
+        description=(
+            "Legacy age filter: 'all' (default), 'u23', '24_26', '27_30', or "
+            "'31_plus'. Superseded by the one-sided age_min / age_max bounds the "
+            "Discovery age control writes; retained so existing callers keep working."
+        ),
     ),
     universe: Optional[str] = Query(
         None,

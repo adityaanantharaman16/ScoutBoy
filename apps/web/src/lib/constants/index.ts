@@ -1,39 +1,31 @@
 export const SCOPE_BANNER =
   "Explore available player profiles with RoleFit analysis where evidence supports it.";
 
-export const SEARCH_SCOPES = [
-  {
-    key: "analyzed",
-    label: "Analyzed",
-    description: "Players with at least one RoleFit rating.",
-  },
-  {
-    key: "all_records",
-    label: "All records",
-    description: "Every player with a usable season profile.",
-  },
-  {
-    key: "high_coverage_u23",
-    label: "High-coverage U23",
-    description: "U23 attackers and midfielders meeting ScoutBoy coverage thresholds.",
-  },
-];
+/**
+ * Analysis scope is no longer a Discovery control: the rail exposes no scope
+ * selector and the results summary no longer reports one. `scope` remains a
+ * supported API capability, so these keys stay here for exactly one job —
+ * validating a scope-bearing URL before it is forwarded to `/players`, so an old
+ * link keeps working instead of silently sending an unknown value.
+ *
+ * `analyzed` is the default and the only value the app itself ever requests.
+ */
+export const SEARCH_SCOPE_KEYS = ["analyzed", "all_records", "high_coverage_u23"] as const;
+export const DEFAULT_SEARCH_SCOPE = "analyzed";
 
-export const AGE_BANDS = [
-  { key: "all", label: "All ages" },
-  { key: "u23", label: "U23" },
-  { key: "24_26", label: "24-26" },
-  { key: "27_30", label: "27-30" },
-  { key: "31_plus", label: "31+" },
-];
-
+// Every visible option label in the Discovery rail is Title Case, including the
+// "all"/"any" defaults. Only the labels changed: `key` is the query-parameter
+// value and is deliberately untouched.
 export const POSITION_GROUPS = [
-  { key: "", label: "All positions" },
+  { key: "", label: "All Positions" },
   { key: "ATT", label: "Attackers" },
   { key: "MID", label: "Midfielders" },
   { key: "DEF", label: "Defenders" },
   { key: "GK", label: "Goalkeepers" },
 ];
+
+/** The Role select's "no specific role" option. Title Case, same empty key. */
+export const ANY_ROLE_LABEL = "Any Role (Best)";
 
 // Role keys + display names mirror configs/roles/*.yaml (also exposed via /methodology).
 export const ROLES = [
@@ -48,11 +40,13 @@ export const ROLES = [
   { key: "tempo_controller", label: "Tempo Controller", group: "MID" },
 ];
 
+// Labels are Title Case; the `key` values ARE the `sort` query parameter and the
+// service's sort keys, so they stay exactly as they were.
 export const SORT_OPTIONS = [
-  { key: "rolefit_desc", label: "RoleFit (high → low)" },
-  { key: "rolefit_asc", label: "RoleFit (low → high)" },
-  { key: "age_asc", label: "Age (young → old)" },
-  { key: "value_desc", label: "Asking price (high → low)" },
-  { key: "value_asc", label: "Asking price (low → high)" },
+  { key: "rolefit_desc", label: "RoleFit (High → Low)" },
+  { key: "rolefit_asc", label: "RoleFit (Low → High)" },
+  { key: "age_asc", label: "Age (Young → Old)" },
+  { key: "value_desc", label: "Asking Price (High → Low)" },
+  { key: "value_asc", label: "Asking Price (Low → High)" },
   { key: "name_asc", label: "Name (A → Z)" },
 ];

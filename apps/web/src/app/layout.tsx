@@ -10,7 +10,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "ScoutBoy — player discovery",
+  title: "ScoutBoy - Player Discovery",
   description: "Explainable, role-based scouting dossiers for football player discovery.",
 };
 

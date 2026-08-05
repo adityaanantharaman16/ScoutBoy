@@ -17,9 +17,9 @@ export function SubstatsTable({ substats }: { substats: SubStat[] }) {
           {substats.map((s) => (
             <tr key={s.name}>
               <td>{s.display}</td>
-              <td className="text-right font-mono">{s.per90_value == null ? "—" : s.per90_value.toFixed(2)}</td>
+              <td className="text-right font-mono">{s.per90_value == null ? "-" : s.per90_value.toFixed(2)}</td>
               <td className={`text-right font-mono font-semibold ${scoreColor(s.score)}`}>
-                {s.score == null ? "—" : Math.round(s.score)}
+                {s.score == null ? "-" : Math.round(s.score)}
               </td>
             </tr>
           ))}

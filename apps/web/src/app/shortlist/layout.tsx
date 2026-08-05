@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 // discovery", which told a screen-reader or tab-switching user nothing about
 // where they were.
 export const metadata: Metadata = {
-  title: "My Favorites — ScoutBoy",
+  title: "My Favorites - ScoutBoy",
   description: "Players saved on this device, with their stored RoleFit scores and market context.",
 };
 

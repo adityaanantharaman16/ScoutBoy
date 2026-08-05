@@ -14,7 +14,7 @@ describe("formatters", () => {
   it("formats euros with magnitude suffixes", () => {
     expect(formatEur(55_000_000)).toBe("€55.0M");
     expect(formatEur(750_000)).toBe("€750K");
-    expect(formatEur(null)).toBe("—");
+    expect(formatEur(null)).toBe("-");
   });
 
   it("formats a euro range and shows Unknown when both missing", () => {
@@ -23,7 +23,7 @@ describe("formatters", () => {
   });
 
   it("does not turn missing scores into zero", () => {
-    expect(formatScore(null)).toBe("—");
+    expect(formatScore(null)).toBe("-");
     expect(formatScore(85.4)).toBe("85.4");
     expect(formatAge(null)).toBe("unknown");
   });

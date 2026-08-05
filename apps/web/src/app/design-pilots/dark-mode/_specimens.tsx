@@ -691,7 +691,7 @@ export function DeskSpecimen() {
                 </div>
                 <p className="pilot-evidence-detail">
                   {g.score == null
-                    ? "No measured evidence for this group — shown as unknown, not zero."
+                    ? "No measured evidence for this group - shown as unknown, not zero."
                     : `Measured: ${g.metrics.join(", ")}`}
                 </p>
               </div>
@@ -849,7 +849,7 @@ export function HonestyStatesSpecimen() {
           RoleFit
         </p>
         <div className="pilot-score band-unknown" data-testid="pilot-unknown-score">
-          —
+          -
         </div>
         <p className="pilot-honesty-caption">
           No stored rating. The sentinel is a dash, never 0.0.
@@ -865,7 +865,7 @@ export function HonestyStatesSpecimen() {
           <span style={{ fontSize: "0.875rem", fontWeight: 600 }}>Unknown</span>
         </span>
         <p className="pilot-honesty-caption">
-          A hatch plus the word — not an empty meter, which would read as low.
+          A hatch plus the word - not an empty meter, which would read as low.
         </p>
       </div>
 

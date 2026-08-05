@@ -29,7 +29,7 @@ export function band(score: number | null): Band {
 
 /** Mirrors the production `formatEur` sentinel behaviour: missing is "—", never €0. */
 export function eur(value: number | null): string {
-  if (value == null) return "—";
+  if (value == null) return "-";
   if (value >= 1_000_000) return `€${(value / 1_000_000).toFixed(1)}M`;
   if (value >= 1_000) return `€${Math.round(value / 1_000)}K`;
   return `€${Math.round(value)}`;
@@ -353,7 +353,7 @@ export const SWATCH_GROUPS: { title: string; swatches: Swatch[] }[] = [
   {
     title: "Surfaces",
     swatches: [
-      { name: "--pilot-canvas", hex: "#1a2019", role: "Page background — warm charcoal" },
+      { name: "--pilot-canvas", hex: "#1a2019", role: "Page background - warm charcoal" },
       { name: "--pilot-panel", hex: "#222a21", role: "Primary panel / ledger surface" },
       { name: "--pilot-panel-muted", hex: "#2b342a", role: "Subordinate fill, hover, table head" },
       { name: "--pilot-track", hex: "#3a4438", role: "Neutral bar track" },
@@ -363,13 +363,13 @@ export const SWATCH_GROUPS: { title: string; swatches: Swatch[] }[] = [
     title: "Hairlines",
     swatches: [
       { name: "--pilot-line", hex: "#414c40", role: "Decorative separator" },
-      { name: "--pilot-line-strong", hex: "#6e7a64", role: "Control boundary — held to 3:1" },
+      { name: "--pilot-line-strong", hex: "#6e7a64", role: "Control boundary - held to 3:1" },
     ],
   },
   {
     title: "Text",
     swatches: [
-      { name: "--pilot-text", hex: "#eef0e6", role: "Primary — off-white, warmed", kind: "text" },
+      { name: "--pilot-text", hex: "#eef0e6", role: "Primary - off-white, warmed", kind: "text" },
       { name: "--pilot-text-muted", hex: "#bcc2b4", role: "Secondary", kind: "text" },
       { name: "--pilot-text-soft", hex: "#98a08f", role: "Tertiary / captions", kind: "text" },
     ],
@@ -393,7 +393,7 @@ export const SWATCH_GROUPS: { title: string; swatches: Swatch[] }[] = [
       { name: "--pilot-band-green", hex: "#86c9a2", role: "70 – 79.9", kind: "text" },
       { name: "--pilot-band-emerald", hex: "#3fca8f", role: "80 – 89.9", kind: "text" },
       { name: "--pilot-band-elite", hex: "#7cabf5", role: "90 and above", kind: "text" },
-      { name: "--pilot-band-unknown", hex: "#98a08f", role: "Unknown — never zero", kind: "text" },
+      { name: "--pilot-band-unknown", hex: "#98a08f", role: "Unknown - never zero", kind: "text" },
     ],
   },
   {
@@ -412,7 +412,7 @@ export const SWATCH_GROUPS: { title: string; swatches: Swatch[] }[] = [
     title: "Role Territory (the one elevated surface)",
     swatches: [
       { name: "--pilot-territory-surface", hex: "#2b342a", role: "Signature card surface" },
-      { name: "--pilot-pitch-field", hex: "#27704f", role: "Pitch field — 6.0× the panel's luminance" },
+      { name: "--pilot-pitch-field", hex: "#27704f", role: "Pitch field - 6.0× the panel's luminance" },
       { name: "--pilot-pitch-field-alt", hex: "#29734f", role: "Solid mowing band" },
       { name: "--pilot-pitch-line", hex: "#e2eae0", role: "Pitch markings" },
       { name: "--pilot-pitch-tab", hex: "#16281d", role: "Solid plate behind a zone label" },

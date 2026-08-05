@@ -27,7 +27,7 @@ def compute_asking_price(inp: MarketInputs, model_mid: float) -> tuple[float, di
     contract = inp.contract_years_remaining
     if contract is None:
         contract_adj = 0.0
-        factors["contract"] = "unknown — no premium adjustment, range widened"
+        factors["contract"] = "unknown - no premium adjustment, range widened"
     elif contract >= 3:
         contract_adj = 0.15
         factors["contract"] = f"+0.15 (long contract, {contract:.0f}y remaining)"
@@ -36,7 +36,7 @@ def compute_asking_price(inp: MarketInputs, model_mid: float) -> tuple[float, di
         factors["contract"] = f"+0.08 ({contract:.0f}y remaining)"
     else:
         contract_adj = -0.10
-        factors["contract"] = f"-0.10 (short contract, {contract:.1f}y — pressure to sell)"
+        factors["contract"] = f"-0.10 (short contract, {contract:.1f}y - pressure to sell)"
     premium += contract_adj
 
     scarcity_adj = SCARCITY.get(inp.position.upper(), 1.0) - 1.0

@@ -61,7 +61,7 @@ def render_markdown(result: dict) -> str:
         lines.append("| Benchmark | Evidence | Status | Primary role | Explanation |")
         lines.append("| --- | --- | --- | --- | --- |")
         for b in benches:
-            primary = b.get("actual_primary_role") or "—"
+            primary = b.get("actual_primary_role") or "-"
             expl = (b.get("explanation") or "").replace("|", "\\|").replace("\n", " ")
             lines.append(
                 f"| `{b['benchmark_id']}` | {b.get('evidence_level', '?')} | "

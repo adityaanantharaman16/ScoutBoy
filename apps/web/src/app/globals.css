@@ -329,6 +329,193 @@ select.input[size]:not([size="1"]) {
   border-bottom: 0;
 }
 
+/* ---------------------------------------------------------------------------
+   Discovery age-threshold control
+   ---------------------------------------------------------------------------
+   A real `<input type="range">` with its platform track neutralized, laid over a
+   rail we paint ourselves. Doing it this way rather than through a background
+   gradient on `::-webkit-slider-runnable-track` keeps two promises at once: there
+   is no gradient anywhere in the control (every surface is one flat colour with a
+   hard edge), and the fill/ticks land on the THUMB's travel positions in every
+   engine, since WebKit exposes no progress pseudo-element to lean on.
+
+   The travel geometry is expressed once, as `calc()` over the thumb width: the
+   thumb centre moves from `--age-thumb-w / 2` to `100% - --age-thumb-w / 2`, so a
+   fraction of 0 sits under the first tick and 1 under the last. Both fractions
+   arrive as unitless custom properties set inline from the selected stop.
+
+   Every rectangle here is 90 degrees: rail, fill, ticks, thumb and the three
+   direction segments. No glow, no scaling thumb, no floating value bubble. */
+:root {
+  /* Slider geometry, declared once so the rail, the fill, the ticks and both
+     engines' thumb pseudo-elements cannot drift apart.
+
+     The rail is a substantial 14px block rather than a hairline: it reads as a
+     track a thumb travels along, not as a divider. `box-sizing: border-box` is
+     global here, so the 14px INCLUDES the 1px border on each side, leaving a 12px
+     interior. Ticks are 6px — 43% of the track, inside the one-third-to-one-half
+     band the design calls for — inset 3px from the interior's top and bottom, so
+     they are wholly contained and touch neither border. The thumb is deliberately
+     taller than the rail (22px vs 14px) so it stays easy to grab, and wider than a
+     tick so the active stop reads as "under the thumb". */
+  --age-thumb-w: 16px;
+  --age-thumb-h: 22px;
+  --age-rail-h: 14px;
+  --age-tick-inset: 3px;
+  --age-tick-w: 2px;
+}
+
+/* Tall enough to contain the 22px thumb with clearance, and to keep the whole
+   control a comfortable pointer target (WCAG 2.2 SC 2.5.8). */
+.age-slider-shell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 28px;
+}
+
+/* Decorative rail beneath the input: the control's value, focus and keyboard
+   behaviour all live on the input itself, so this is `aria-hidden` and inert. */
+.age-slider-rail {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: var(--age-rail-h);
+  margin-top: calc(var(--age-rail-h) / -2);
+  background: var(--track);
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
+  pointer-events: none;
+}
+
+/* The selected side of the scale. "And younger" fills leftward from the thumb,
+   "and older" fills rightward, so the direction is legible without reading the
+   buttons. Under All Ages no fill is rendered at all. */
+.age-slider-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--pitch);
+}
+
+.age-slider-fill-younger {
+  left: 0;
+  width: calc(var(--age-thumb-w) / 2 + var(--age-fraction) * (100% - var(--age-thumb-w)));
+}
+
+.age-slider-fill-older {
+  right: 0;
+  width: calc(
+    100% - (var(--age-thumb-w) / 2 + var(--age-fraction) * (100% - var(--age-thumb-w)))
+  );
+}
+
+/* Increment indicators: short, centred, and wholly INSIDE the track.
+   `top`/`bottom` resolve against the rail's padding box (inside its border), so a
+   symmetric inset can never reach, let alone cross, either border. The horizontal
+   position is the thumb's own travel formula, which is what keeps the first and
+   last ticks under the thumb at its two extremes in every engine. */
+.age-slider-stop {
+  position: absolute;
+  top: var(--age-tick-inset);
+  bottom: var(--age-tick-inset);
+  width: var(--age-tick-w);
+  margin-left: calc(var(--age-tick-w) / -2);
+  left: calc(
+    var(--age-thumb-w) / 2 + var(--age-stop-fraction) * (100% - var(--age-thumb-w))
+  );
+  background: var(--line-strong);
+}
+
+/* Stronger green for the selected stop — colour only, identical geometry. */
+.age-slider-stop[data-age-stop-active="true"] {
+  background: var(--pitch-dark);
+}
+
+.age-slider-input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  position: relative;
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.age-slider-input::-webkit-slider-runnable-track {
+  height: var(--age-rail-h);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.age-slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: var(--age-thumb-w);
+  height: var(--age-thumb-h);
+  margin-top: calc((var(--age-rail-h) - var(--age-thumb-h)) / 2);
+  background: var(--pitch);
+  border: 1px solid var(--pitch-dark);
+  border-radius: 0;
+}
+
+.age-slider-input::-moz-range-track {
+  height: var(--age-rail-h);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.age-slider-input::-moz-range-thumb {
+  width: var(--age-thumb-w);
+  height: var(--age-thumb-h);
+  background: var(--pitch);
+  border: 1px solid var(--pitch-dark);
+  border-radius: 0;
+}
+
+/* Three equal direction segments in one hairline box, mirroring `.rail-box`. */
+.age-direction-box {
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: hidden;
+}
+
+.age-direction-box > * + * {
+  border-left: 1px solid var(--line-strong);
+}
+
+.age-direction-action {
+  appearance: none;
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+  min-height: 36px;
+  border-radius: 0;
+  @apply flex w-full items-center justify-center px-1 text-[11px] font-semibold;
+}
+
+.age-direction-action:hover {
+  background: var(--panel-muted);
+}
+
+.age-direction-action:active {
+  background: var(--track);
+}
+
+/* Selected state is background plus an inset marker only — never a dimension —
+   so choosing a direction cannot reflow the rail. */
+.age-direction-action[aria-pressed="true"] {
+  background: #e9f0ea;
+  color: var(--pitch-dark);
+  box-shadow: inset 0 -3px 0 var(--pitch);
+}
+
 /* Recruitment Desk analysis grid. Mobile: a simple stacked flow. Desktop: a
    three-column layout where the evidence rail (railtop) bottom-aligns with the
    pitch, the trait list spans both rows, and "Why This Score" fills the space
@@ -441,6 +628,18 @@ select.input[size]:not([size="1"]) {
     border-right: 0;
     border-bottom: 1px solid var(--line-strong);
   }
+
+  /* Comparable-player cards on the dossier are not ledger rows: their action bar
+     spans the card's width at every breakpoint instead of becoming the ledger's
+     full-height two-row rail. Same box, same two equal regions, same states. */
+  .rail-box-inline {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto;
+  }
+  .rail-box-inline > :first-child {
+    border-right: 1px solid var(--line-strong);
+    border-bottom: 0;
+  }
 }
 
 /* An action fills its half of the rail. `color` is the player-name ink so the
@@ -467,6 +666,28 @@ select.input[size]:not([size="1"]) {
 .rail-action[aria-pressed="true"] {
   background: #e9f0ea;
   box-shadow: inset 3px 0 0 var(--pitch);
+}
+
+/* A rail's two actions sit against opposite outer edges, so their selected markers
+   mirror each other: the favourite/remove side keeps the left marker above, and a
+   selected Compare marks its own right edge. Still an inset shadow — paint only,
+   zero layout cost — so neither the button, the divider, nor the row moves when the
+   state flips.
+
+   Carried by `CompareRailButton` itself, so every rail that uses it reads the same:
+   Discover, My Favorites, the role leaderboard and the dossier's comparable-player
+   cards. The remaining Compare controls in the app are `.btn`s (the dossier header
+   and Recruitment Desk) and keep their own pressed treatment. */
+.rail-action-compare[aria-pressed="true"] {
+  box-shadow: inset -3px 0 0 var(--pitch);
+}
+
+/* Compact label variant for the leaderboard's fixed-width desktop Actions column.
+   Type scale only: the 44px minimum target, the heart's 18px SVG and every box
+   dimension are untouched, so nothing in the table shifts. */
+.rail-box-compact .rail-action {
+  font-size: 0.75rem;
+  line-height: 1rem;
 }
 
 /* Role Territory is the ONE elevated surface in ScoutBoy. Everything else keeps
@@ -531,7 +752,8 @@ select.input[size]:not([size="1"]) {
   /* The action rail carries two channels at once: a hover/press tint (feedback)
      and the `aria-pressed` inset marker (a reversible state), so the two
      properties are timed separately rather than averaged. */
-  .rail-action {
+  .rail-action,
+  .age-direction-action {
     transition-property: background-color, box-shadow;
     transition-duration: var(--motion-feedback), var(--motion-state);
     transition-timing-function: var(--motion-ease-out), var(--motion-ease-standard);

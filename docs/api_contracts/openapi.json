@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "ScoutBoy API",
-    "description": "ScoutBoy \u2014 FUT.gg-style real-life player discovery. MVP scope: U23 attackers and midfielders in Europe. Every score/badge/value is explainable.",
+    "description": "ScoutBoy - real-life football player discovery. Discovery spans every player-season in the connected local snapshots; configured RoleFit analysis covers attacking and midfield roles only. Every score/badge/value is explainable.",
     "version": "0.1.0"
   },
   "paths": {
@@ -149,7 +149,9 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "integer"
+                  "type": "integer",
+                  "maximum": 99,
+                  "minimum": 0
                 },
                 {
                   "type": "null"
@@ -165,7 +167,9 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "number"
+                  "type": "number",
+                  "maximum": 99,
+                  "minimum": 0
                 },
                 {
                   "type": "null"
@@ -181,7 +185,9 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "number"
+                  "type": "number",
+                  "maximum": 99,
+                  "minimum": 0
                 },
                 {
                   "type": "null"
@@ -261,10 +267,10 @@
                   "type": "null"
                 }
               ],
-              "description": "'analyzed' (default), 'all_records', or 'high_coverage_u23'",
+              "description": "'analyzed' (default), 'all_records', or 'high_coverage_u23'. Still a supported API capability; the Discovery UI no longer exposes a selector for it and always requests the default.",
               "title": "Scope"
             },
-            "description": "'analyzed' (default), 'all_records', or 'high_coverage_u23'"
+            "description": "'analyzed' (default), 'all_records', or 'high_coverage_u23'. Still a supported API capability; the Discovery UI no longer exposes a selector for it and always requests the default."
           },
           {
             "name": "age_band",
@@ -279,10 +285,10 @@
                   "type": "null"
                 }
               ],
-              "description": "'all' (default), 'u23', '24_26', '27_30', or '31_plus'",
+              "description": "Legacy age filter: 'all' (default), 'u23', '24_26', '27_30', or '31_plus'. Superseded by the one-sided age_min / age_max bounds the Discovery age control writes; retained so existing callers keep working.",
               "title": "Age Band"
             },
-            "description": "'all' (default), 'u23', '24_26', '27_30', or '31_plus'"
+            "description": "Legacy age filter: 'all' (default), 'u23', '24_26', '27_30', or '31_plus'. Superseded by the one-sided age_min / age_max bounds the Discovery age control writes; retained so existing callers keep working."
           },
           {
             "name": "universe",

@@ -1,20 +1,19 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AGE_BANDS, SEARCH_SCOPES } from "@/lib/constants";
+import { AGE_STOPS } from "@/lib/filters";
 import { ScoutingStateProvider } from "@/lib/state/scouting-state";
 import type { PlayerSearchCard } from "@/lib/api/types";
 
 // ---- routing + data are mocked so the discovery surface renders standalone ----
-const { replaceMock, paramsRef, usePlayerSearchMock } = vi.hoisted(() => ({
-  replaceMock: vi.fn(),
+const { paramsRef, usePlayerSearchMock } = vi.hoisted(() => ({
   paramsRef: { current: new URLSearchParams() },
   usePlayerSearchMock: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
-    replace: replaceMock,
+    replace: vi.fn(),
     push: vi.fn(),
     prefetch: vi.fn(),
     back: vi.fn(),
@@ -25,6 +24,10 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => paramsRef.current,
 }));
 vi.mock("@/lib/api/hooks", () => ({ usePlayerSearch: usePlayerSearchMock }));
+
+// The rail writes its URL through the native History API (see SearchExperience for
+// why), so that is what the assertions observe.
+const replaceStateSpy = vi.spyOn(window.history, "replaceState");
 
 import { SearchExperience } from "@/components/search/SearchExperience";
 
@@ -65,13 +68,19 @@ function mountDiscovery(search = "") {
   );
 }
 
-/** The single URL the last filter interaction pushed. */
+/** The single URL the last filter interaction wrote. */
 function lastUrl(): string {
-  return replaceMock.mock.calls.at(-1)![0] as string;
+  return replaceStateSpy.mock.calls.at(-1)![2] as string;
+}
+
+/** The filters object the results hook was last asked to fetch. */
+function lastRequest() {
+  return usePlayerSearchMock.mock.calls.at(-1)![0];
 }
 
 beforeEach(() => {
-  replaceMock.mockReset();
+  replaceStateSpy.mockClear();
+  usePlayerSearchMock.mockReset();
   usePlayerSearchMock.mockReturnValue({
     isLoading: false,
     isError: false,
@@ -80,88 +89,311 @@ beforeEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// Compact filter rail — native selectors, unchanged semantics
+// Analysis scope is gone from the surface, not from the API contract
 // ---------------------------------------------------------------------------
-describe("Discovery filter rail", () => {
-  it("exposes Analysis scope as an accessible selector carrying every existing option", () => {
+describe("Discovery filter rail: retired Analysis scope", () => {
+  it("exposes no scope selector or helper copy anywhere in the rail", () => {
+    const { container } = mountDiscovery();
+    expect(screen.queryByTestId("scope-filter")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("scope-description")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/analysis scope/i)).not.toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/analysis scope/i);
+    // none of the retired option labels survive as visible copy either
+    expect(container.textContent).not.toMatch(/All records|High-coverage U23/);
+  });
+
+  it("still requests the default analyzed pool", () => {
     mountDiscovery();
-    const scope = screen.getByLabelText("Analysis scope");
-    expect(scope.tagName.toLowerCase()).toBe("select");
-    expect(scope).toBe(screen.getByTestId("scope-filter"));
+    expect(lastRequest()).toMatchObject({ scope: "analyzed" });
+  });
+
+  it("keeps the global scope/evidence banner, which is not the retired filter", () => {
+    mountDiscovery();
+    expect(screen.getByTestId("scope-banner")).toHaveTextContent("RoleFit analysis");
+  });
+
+  it("loads an existing scope-bearing URL safely and forwards it unchanged", () => {
+    mountDiscovery("scope=all_records");
+    expect(lastRequest()).toMatchObject({ scope: "all_records" });
+    expect(screen.getByTestId("results-ledger")).toBeInTheDocument();
+  });
+
+  it("falls back to the default for an unknown scope rather than forwarding it", () => {
+    mountDiscovery("scope=not_a_scope");
+    expect(lastRequest()).toMatchObject({ scope: "analyzed" });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The five-stop directional age control
+// ---------------------------------------------------------------------------
+describe("Discovery age threshold control", () => {
+  const slider = () => screen.getByTestId("age-threshold-slider") as HTMLInputElement;
+
+  it("is a native range input over exactly the five career stops", () => {
+    mountDiscovery();
+    expect(AGE_STOPS).toEqual([19, 22, 25, 28, 31]);
+    const input = slider();
+    expect(input.tagName.toLowerCase()).toBe("input");
+    expect(input).toHaveAttribute("type", "range");
+    expect(input).toHaveAttribute("min", "19");
+    expect(input).toHaveAttribute("max", "31");
+    expect(input).toHaveAttribute("step", "3");
+
+    // the rendered stops are the same five values, in order
     expect(
-      Array.from((scope as HTMLSelectElement).options).map((o) => [o.value, o.text]),
-    ).toEqual(SEARCH_SCOPES.map((s) => [s.key, s.label]));
-    expect(scope).toHaveValue("analyzed");
+      screen.getAllByTestId("age-slider-stop").map((s) => Number(s.dataset.ageStop)),
+    ).toEqual([19, 22, 25, 28, 31]);
   });
 
-  it("exposes Age band as an accessible selector carrying every existing option", () => {
+  it("labels the scale Youth / Seasoned and shows the active threshold", () => {
     mountDiscovery();
-    const age = screen.getByLabelText("Age band");
-    expect(age.tagName.toLowerCase()).toBe("select");
-    expect(age).toBe(screen.getByTestId("age-band-filter"));
-    expect(
-      Array.from((age as HTMLSelectElement).options).map((o) => [o.value, o.text]),
-    ).toEqual(AGE_BANDS.map((b) => [b.key, b.label]));
-    expect(age).toHaveValue("all");
+    expect(screen.getByText("Youth")).toBeInTheDocument();
+    expect(screen.getByText("Seasoned")).toBeInTheDocument();
+    expect(screen.getByTestId("age-threshold-value")).toHaveTextContent("25 Years");
   });
 
-  it("shows the selected scope's explanation as helper text and updates it with the scope", () => {
+  it("carries an accessible label and announces the full semantics, not a bare number", () => {
+    mountDiscovery("age_max=25");
+    expect(slider()).toHaveAccessibleName("Age threshold");
+    expect(slider()).toHaveAttribute("aria-valuetext", "25 Years And Younger");
+    expect(slider()).toHaveValue("25");
+
+    mountDiscovery("age_min=28");
+    const older = screen.getAllByTestId("age-threshold-slider").at(-1)!;
+    expect(older).toHaveAttribute("aria-valuetext", "28 Years And Older");
+  });
+
+  it("names the direction controls unambiguously and marks exactly one as pressed", () => {
     mountDiscovery();
-    expect(screen.getByTestId("scope-description")).toHaveTextContent(
-      "Players with at least one RoleFit rating.",
-    );
+    // default state: no age bound at all
+    expect(screen.getByTestId("age-direction-all")).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByTestId("age-direction-younger")).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByTestId("age-direction-older")).toHaveAttribute("aria-pressed", "false");
 
-    mountDiscovery("scope=high_coverage_u23");
-    expect(screen.getAllByTestId("scope-description").at(-1)).toHaveTextContent(
-      "U23 attackers and midfielders meeting ScoutBoy coverage thresholds.",
+    expect(screen.getByTestId("age-direction-younger")).toHaveAccessibleName(
+      "25 Years And Younger",
     );
+    expect(screen.getByTestId("age-direction-older")).toHaveAccessibleName("25 Years And Older");
+    // visible copy is words, never a lone arrow glyph
+    expect(screen.getByTestId("age-direction-younger").textContent).toBe("Younger");
+    expect(screen.getByTestId("age-direction-older").textContent).toBe("Older");
+    expect(screen.getByTestId("age-direction-all").textContent).toBe("All Ages");
   });
 
-  it("keeps the helper text out of the selector's accessible name", () => {
+  it("emits only age_max in younger mode", () => {
     mountDiscovery();
-    // described-by, not labelled-by: the name stays the short control label
-    expect(screen.getByTestId("scope-filter")).toHaveAccessibleName("Analysis scope");
-    expect(screen.getByTestId("scope-filter")).toHaveAccessibleDescription(
-      "Players with at least one RoleFit rating.",
-    );
+    fireEvent.click(screen.getByTestId("age-direction-younger"));
+    expect(lastUrl()).toContain("age_max=25");
+    expect(lastUrl()).not.toContain("age_min");
+    expect(lastUrl()).not.toContain("age_band");
   });
 
-  it("writes the scope to the URL and resets pagination", () => {
+  it("emits only age_min in older mode, clearing a previous age_max", () => {
+    mountDiscovery("age_max=25");
+    fireEvent.click(screen.getByTestId("age-direction-older"));
+    expect(lastUrl()).toContain("age_min=25");
+    expect(lastUrl()).not.toContain("age_max");
+  });
+
+  it("applies the moved threshold, defaulting to younger when no direction was active", () => {
+    mountDiscovery();
+    fireEvent.change(slider(), { target: { value: "31" } });
+    expect(lastUrl()).toContain("age_max=31");
+    expect(lastUrl()).not.toContain("age_min");
+  });
+
+  it("keeps the active direction when the threshold moves", () => {
+    mountDiscovery("age_min=22");
+    fireEvent.change(slider(), { target: { value: "28" } });
+    expect(lastUrl()).toContain("age_min=28");
+    expect(lastUrl()).not.toContain("age_max");
+  });
+
+  it("resets pagination on a direction change and on a threshold change", () => {
     mountDiscovery("page=3");
-    fireEvent.change(screen.getByTestId("scope-filter"), { target: { value: "all_records" } });
-    expect(lastUrl()).toContain("scope=all_records");
+    fireEvent.click(screen.getByTestId("age-direction-younger"));
+    expect(lastUrl()).not.toContain("page=");
+
+    mountDiscovery("page=3&age_max=22");
+    fireEvent.change(screen.getAllByTestId("age-threshold-slider").at(-1)!, {
+      target: { value: "28" },
+    });
     expect(lastUrl()).not.toContain("page=");
   });
 
-  it("writes the age band to the URL and resets pagination", () => {
-    mountDiscovery("page=3");
-    fireEvent.change(screen.getByTestId("age-band-filter"), { target: { value: "u23" } });
-    expect(lastUrl()).toContain("age_band=u23");
-    expect(lastUrl()).not.toContain("page=");
+  it("removes both bounds on the All Ages reset", () => {
+    mountDiscovery("age_min=31&q=Anton");
+    fireEvent.click(screen.getByTestId("age-direction-all"));
+    expect(lastUrl()).not.toContain("age_min");
+    expect(lastUrl()).not.toContain("age_max");
+    // unrelated filters survive the reset
+    expect(lastUrl()).toContain("q=Anton");
   });
 
-  it("drops the scope and age band from the URL when returned to their defaults", () => {
-    mountDiscovery("scope=all_records&age_band=u23");
-    fireEvent.change(screen.getByTestId("scope-filter"), { target: { value: "analyzed" } });
-    expect(lastUrl()).not.toContain("scope=");
-    expect(lastUrl()).toContain("age_band=u23");
+  it("leaves the root Discovery route unfiltered by age", () => {
+    mountDiscovery();
+    const request = lastRequest();
+    expect(request.age_min).toBeUndefined();
+    expect(request.age_max).toBeUndefined();
+    expect(request.age_band).toBeUndefined();
   });
 
+  // Hydration is the whole back/forward story: the control is derived from the
+  // URL's own bounds, so replaying a previous URL restores it exactly.
+  it.each([
+    ["age_max=22", "22 Years", "age-direction-younger"],
+    ["age_min=31", "31 Years", "age-direction-older"],
+    ["", "25 Years", "age-direction-all"],
+  ])("hydrates %s accurately from the URL", (search, value, pressedTestId) => {
+    mountDiscovery(search);
+    expect(screen.getByTestId("age-threshold-value")).toHaveTextContent(value);
+    expect(screen.getByTestId(pressedTestId)).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("restores the control when navigation replays an earlier URL", () => {
+    const { unmount } = mountDiscovery("age_max=19");
+    expect(screen.getByTestId("age-threshold-value")).toHaveTextContent("19 Years");
+    unmount();
+
+    // forward
+    const forward = mountDiscovery("age_min=28");
+    expect(screen.getByTestId("age-threshold-value")).toHaveTextContent("28 Years");
+    expect(screen.getByTestId("age-direction-older")).toHaveAttribute("aria-pressed", "true");
+    forward.unmount();
+
+    // back
+    mountDiscovery("age_max=19");
+    expect(screen.getByTestId("age-threshold-value")).toHaveTextContent("19 Years");
+    expect(screen.getByTestId("age-direction-younger")).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("snaps an off-stop URL bound so the display and the request cannot disagree", () => {
+    mountDiscovery("age_max=24");
+    expect(screen.getByTestId("age-threshold-value")).toHaveTextContent("25 Years");
+    expect(lastRequest()).toMatchObject({ age_max: 25 });
+    expect(lastRequest().age_min).toBeUndefined();
+  });
+
+  it("ignores a non-numeric or negative URL bound rather than filtering by it", () => {
+    mountDiscovery("age_max=abc");
+    expect(screen.getByTestId("age-direction-all")).toHaveAttribute("aria-pressed", "true");
+    expect(lastRequest().age_max).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Legacy age_band URLs
+// ---------------------------------------------------------------------------
+describe("Legacy age_band URLs", () => {
+  it.each([
+    ["u23", { age_max: 22 }, "22 Years", "age-direction-younger"],
+    ["24_26", { age_min: 25 }, "25 Years", "age-direction-older"],
+    ["27_30", { age_min: 28 }, "28 Years", "age-direction-older"],
+    // the one band with an exact representation keeps its old semantics
+    ["31_plus", { age_min: 31 }, "31 Years", "age-direction-older"],
+  ])("normalizes age_band=%s deterministically", (band, bounds, value, pressedTestId) => {
+    mountDiscovery(`age_band=${band}`);
+    expect(lastRequest()).toMatchObject(bounds);
+    expect(lastRequest().age_band).toBeUndefined();
+    expect(screen.getByTestId("age-threshold-value")).toHaveTextContent(value);
+    expect(screen.getByTestId(pressedTestId)).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it.each(["all", "not_a_band"])("treats age_band=%s as no age filter", (band) => {
+    mountDiscovery(`age_band=${band}`);
+    expect(lastRequest().age_min).toBeUndefined();
+    expect(lastRequest().age_max).toBeUndefined();
+    expect(screen.getByTestId("age-direction-all")).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("drops the stale age_band once the new control is used", () => {
+    mountDiscovery("age_band=u23");
+    fireEvent.click(screen.getByTestId("age-direction-older"));
+    expect(lastUrl()).not.toContain("age_band");
+    expect(lastUrl()).toContain("age_min=22");
+  });
+
+  it("lets an explicit bound win over a legacy band on the same URL", () => {
+    mountDiscovery("age_band=u23&age_min=28");
+    expect(lastRequest()).toMatchObject({ age_min: 28 });
+    expect(lastRequest().age_max).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Bounded numeric thresholds
+// ---------------------------------------------------------------------------
+describe("Discovery numeric thresholds", () => {
+  it("declares the 0-99 range semantically on both inputs", () => {
+    mountDiscovery();
+    for (const label of ["Min minutes", "Min RoleFit"]) {
+      const input = screen.getByLabelText(label);
+      expect(input).toHaveAttribute("type", "number");
+      expect(input).toHaveAttribute("min", "0");
+      expect(input).toHaveAttribute("max", "99");
+      expect(input).toHaveAttribute("step", "1");
+    }
+  });
+
+  it("accepts the bounds and preserves a typed zero as zero", () => {
+    mountDiscovery();
+    fireEvent.change(screen.getByLabelText("Min RoleFit"), { target: { value: "0" } });
+    expect(lastUrl()).toContain("rolefit_min=0");
+
+    fireEvent.change(screen.getByLabelText("Min RoleFit"), { target: { value: "99" } });
+    expect(lastUrl()).toContain("rolefit_min=99");
+
+    fireEvent.change(screen.getByLabelText("Min minutes"), { target: { value: "0" } });
+    expect(lastUrl()).toContain("min_minutes=0");
+  });
+
+  it("treats an emptied field as no threshold", () => {
+    mountDiscovery("rolefit_min=70");
+    expect(screen.getByLabelText("Min RoleFit")).toHaveValue(70);
+    fireEvent.change(screen.getByLabelText("Min RoleFit"), { target: { value: "" } });
+    expect(lastUrl()).not.toContain("rolefit_min");
+  });
+
+  it("clamps typed values outside 0-99 instead of sending them", () => {
+    mountDiscovery();
+    fireEvent.change(screen.getByLabelText("Min RoleFit"), { target: { value: "150" } });
+    expect(lastUrl()).toContain("rolefit_min=99");
+
+    fireEvent.change(screen.getByLabelText("Min minutes"), { target: { value: "-5" } });
+    expect(lastUrl()).toContain("min_minutes=0");
+  });
+
+  it("clamps URL-supplied values before they reach the request", () => {
+    mountDiscovery("rolefit_min=250&min_minutes=-3");
+    expect(lastRequest()).toMatchObject({ rolefit_min: 99, min_minutes: 0 });
+    expect(screen.getByLabelText("Min RoleFit")).toHaveValue(99);
+    expect(screen.getByLabelText("Min minutes")).toHaveValue(0);
+  });
+
+  it("rejects a non-finite URL value as no threshold", () => {
+    mountDiscovery("rolefit_min=Infinity&min_minutes=abc");
+    expect(lastRequest().rolefit_min).toBeUndefined();
+    expect(lastRequest().min_minutes).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Everything else in the rail is untouched
+// ---------------------------------------------------------------------------
+describe("Discovery filter rail: preserved controls", () => {
   it("keeps every other filter as it was, with unchanged semantics", () => {
     mountDiscovery();
     expect(screen.getByTestId("search-input").tagName.toLowerCase()).toBe("input");
     for (const testId of ["position-group-filter", "role-filter"]) {
       expect(screen.getByTestId(testId).tagName.toLowerCase()).toBe("select");
     }
-    for (const label of ["Min minutes", "Min RoleFit"]) {
-      expect(screen.getByLabelText(label)).toHaveAttribute("type", "number");
-    }
     expect(screen.getByLabelText("Sort").tagName.toLowerCase()).toBe("select");
 
     fireEvent.change(screen.getByTestId("role-filter"), { target: { value: "inside_forward" } });
     expect(lastUrl()).toContain("role=inside_forward");
-    fireEvent.change(screen.getByLabelText("Min minutes"), { target: { value: "900" } });
-    expect(lastUrl()).toContain("min_minutes=900");
+    fireEvent.change(screen.getByTestId("position-group-filter"), { target: { value: "DEF" } });
+    expect(lastUrl()).toContain("position_group=DEF");
   });
 
   it("is sticky only from the desktop breakpoint up", () => {
@@ -175,7 +407,7 @@ describe("Discovery filter rail", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Filter / ledger alignment
+// Filter / ledger alignment + summary contents
 // ---------------------------------------------------------------------------
 describe("Discovery results ledger header", () => {
   it("renders the result summary inside the bordered ledger, not above it", () => {
@@ -189,15 +421,28 @@ describe("Discovery results ledger header", () => {
     expect(within(ledger).getAllByTestId("result-row").length).toBe(2);
   });
 
-  it("keeps the full summary — count, scope, age band, season, page and Ranked ledger", () => {
+  it("reports count, age condition, season, page and Ranked ledger — and no scope", () => {
     mountDiscovery();
     const summary = screen.getByTestId("result-count");
     expect(summary).toHaveTextContent("37 players");
-    expect(summary).toHaveTextContent("Analyzed");
-    expect(summary).toHaveTextContent("All ages");
+    expect(summary).toHaveTextContent("All Ages");
     expect(summary).toHaveTextContent("2023/24");
     expect(summary).toHaveTextContent("page 2 of 4");
     expect(summary).toHaveTextContent("Ranked ledger");
+    expect(summary.textContent).not.toMatch(/Analyzed|All records|High-coverage/);
+  });
+
+  it("reports the active age condition in the shared phrasing", () => {
+    mountDiscovery("age_max=25");
+    expect(screen.getByTestId("result-count")).toHaveTextContent("25 Years And Younger");
+
+    mountDiscovery("age_min=28");
+    expect(screen.getAllByTestId("result-count").at(-1)).toHaveTextContent("28 Years And Older");
+  });
+
+  it("does not report a scope even when a legacy scope URL is in play", () => {
+    mountDiscovery("scope=high_coverage_u23");
+    expect(screen.getByTestId("result-count").textContent).not.toMatch(/High-coverage/);
   });
 
   it("separates the header from the first row with the ledger's existing hairline", () => {
@@ -223,5 +468,8 @@ describe("Discovery results ledger header", () => {
     expect(screen.queryByTestId("results-ledger")).not.toBeInTheDocument();
     expect(screen.queryByTestId("result-count")).not.toBeInTheDocument();
     expect(screen.getByText(/No players match these filters/)).toBeInTheDocument();
+    // the empty state no longer advises widening a scope the user cannot see
+    expect(screen.getByText(/Try widening the age range or clearing a filter/)).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/widen(ing)? the analysis scope/i);
   });
 });

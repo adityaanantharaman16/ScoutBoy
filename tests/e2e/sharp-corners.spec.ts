@@ -192,17 +192,28 @@ test.describe("Discovery filter rail & ledger alignment", () => {
     }
   });
 
-  test("scope and age band are native selectors with URL-backed state", async ({ page }) => {
+  test("the retired Analysis scope selector is gone from the rail", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/");
     await page.getByTestId("results-ledger").waitFor();
 
-    const scope = page.getByTestId("scope-filter");
-    const age = page.getByTestId("age-band-filter");
-    for (const control of [scope, age]) {
-      await expect(control).toHaveJSProperty("tagName", "SELECT");
-    }
-    await expect(page.getByTestId("scope-description")).toBeVisible();
+    await expect(page.getByTestId("scope-filter")).toHaveCount(0);
+    await expect(page.getByTestId("scope-description")).toHaveCount(0);
+    await expect(page.getByTestId("age-band-filter")).toHaveCount(0);
+    await expect(page.getByTestId("filter-rail")).not.toContainText(/analysis scope/i);
+    // the global scope/evidence banner is a different thing and stays
+    await expect(page.getByTestId("scope-banner")).toBeVisible();
+  });
+
+  test("the age threshold control is a native range with URL-backed state", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/");
+    await page.getByTestId("results-ledger").waitFor();
+
+    const slider = page.getByTestId("age-threshold-slider");
+    await expect(slider).toHaveJSProperty("tagName", "INPUT");
+    await expect(slider).toHaveJSProperty("type", "range");
+    await expect(page.getByTestId("age-slider-stop")).toHaveCount(5);
 
     // page off the first page first, so the reset is actually observable
     const next = page.getByRole("button", { name: "Next" });
@@ -211,16 +222,14 @@ test.describe("Discovery filter rail & ledger alignment", () => {
       await expect(page).toHaveURL(/page=2/);
     }
 
-    await scope.selectOption("all_records");
-    await expect(page).toHaveURL(/scope=all_records/);
+    await page.getByTestId("age-direction-younger").click();
+    await expect(page).toHaveURL(/age_max=25/);
     await expect(page).not.toHaveURL(/page=/);
-    await expect(page.getByTestId("scope-description")).toHaveText(
-      "Every player with a usable season profile.",
+    await expect(slider).toHaveValue("25");
+    await expect(page.getByTestId("age-direction-younger")).toHaveAttribute(
+      "aria-pressed",
+      "true",
     );
-
-    await age.selectOption("u23");
-    await expect(page).toHaveURL(/age_band=u23/);
-    await expect(age).toHaveValue("u23");
   });
 
   for (const [label, width] of [["320px", 320], ["390px", 390], ["tablet", 768], ["desktop", 1280]] as const) {

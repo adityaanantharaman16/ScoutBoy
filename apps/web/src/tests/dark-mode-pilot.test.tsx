@@ -107,7 +107,7 @@ describe("dark-mode pilot — honest formatting helpers mirror production", () =
   });
 
   it("renders missing money as a sentinel and never as zero", () => {
-    expect(eur(null)).toBe("—");
+    expect(eur(null)).toBe("-");
     expect(eurRange(null, null)).toBe("Unknown");
     expect(eurRange(20_000_000, null)).toBe("From €20.0M");
     expect(eurRange(null, 20_000_000)).toBe("Up to €20.0M");

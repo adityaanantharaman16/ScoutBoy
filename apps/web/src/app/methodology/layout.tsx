@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 // discovery", which told a screen-reader or tab-switching user nothing about
 // where they were.
 export const metadata: Metadata = {
-  title: "Methodology — ScoutBoy",
+  title: "Methodology - ScoutBoy",
   description: "How ScoutBoy computes RoleFit, calibration evidence, data sources and limitations.",
 };
 

@@ -107,15 +107,15 @@ test.describe("Cross-surface layout & honesty", () => {
     });
   }
 
-  test("discovery: filter rail narrows results and survives a scope change", async ({ page }) => {
+  test("discovery: filter rail narrows results and survives an age change", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/");
     await expect(page.getByTestId("filter-rail")).toBeVisible();
     await expect(page.getByTestId("results-ledger")).toBeVisible();
     await expect(page.getByTestId("result-row").first()).toBeVisible();
 
-    await page.getByTestId("scope-filter").selectOption("all_records");
-    await expect(page).toHaveURL(/scope=all_records/);
+    await page.getByTestId("age-direction-younger").click();
+    await expect(page).toHaveURL(/age_max=25/);
     // a result-pane change does not erase the filter rail
     await expect(page.getByTestId("filter-rail")).toBeVisible();
 

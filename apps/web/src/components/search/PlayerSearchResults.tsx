@@ -32,10 +32,10 @@ export function ResultCard({ p }: { p: PlayerSearchCard }) {
           nameTestId="player-result"
         >
           <div className="mt-0.5 text-xs text-ink-muted">
-            {formatAge(p.age)} yrs · {p.primary_position ?? "—"} · {p.club ?? "—"}
+            {formatAge(p.age)} yrs · {p.primary_position ?? "-"} · {p.club ?? "-"}
           </div>
           <div className="text-xs text-ink-soft">
-            {p.league ?? "—"} · {p.season} · {p.represented_minutes ?? p.minutes ?? "—"} min
+            {p.league ?? "-"} · {p.season} · {p.represented_minutes ?? p.minutes ?? "-"} min
           </div>
         </LedgerIdentity>
         <LedgerRoleFitHero
@@ -64,13 +64,12 @@ export function ResultCard({ p }: { p: PlayerSearchCard }) {
 
 export function PlayerSearchResults({
   filters,
-  selectedScope,
-  selectedAgeBand,
+  ageSummary,
   onPage,
 }: {
   filters: SearchFilters;
-  selectedScope: string;
-  selectedAgeBand: string;
+  /** The active age condition, phrased by the shared `ageSummaryText` helper. */
+  ageSummary: string;
   onPage: (page: number) => void;
 }) {
   const { data, isLoading, isError, error } = usePlayerSearch(filters);
@@ -83,7 +82,7 @@ export function PlayerSearchResults({
         label="No players match these filters."
         action={
           <span className="text-xs text-ink-soft">
-            Try widening the analysis scope or clearing a filter.
+            Try widening the age range or clearing a filter.
           </span>
         }
       />
@@ -113,8 +112,12 @@ export function PlayerSearchResults({
           className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 bg-paper-muted px-4 py-2 text-xs text-ink-soft"
           data-testid="result-count"
         >
+          {/* Analysis scope is deliberately absent: it is no longer a Discovery
+              control, so reporting it here would describe a filter the user
+              cannot see or change. What remains is all active information —
+              count, age condition, season, pagination. */}
           <span>
-            {data.total} player{data.total === 1 ? "" : "s"} · {selectedScope} · {selectedAgeBand} ·{" "}
+            {data.total} player{data.total === 1 ? "" : "s"} · {ageSummary} ·{" "}
             {data.items[0]?.season ?? "current season"} · page {page} of {data.total_pages}
           </span>
           <span>Ranked ledger</span>

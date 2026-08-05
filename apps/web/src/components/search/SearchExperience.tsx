@@ -1,18 +1,25 @@
 "use client";
 
 import { useMemo } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 import { PageHeader, ScopeBanner } from "@/components/common";
-import { AGE_BANDS, SCOPE_BANNER, SEARCH_SCOPES } from "@/lib/constants";
+import { DEFAULT_SEARCH_SCOPE, SCOPE_BANNER, SEARCH_SCOPE_KEYS } from "@/lib/constants";
+import {
+  ageBounds,
+  ageSelectionFromBounds,
+  ageSummaryText,
+  legacyAgeBandSelection,
+  parseAgeBound,
+  parseThreshold,
+} from "@/lib/filters";
 import type { SearchFilters } from "@/lib/api/hooks";
 
 import { PlayerSearchFilters } from "./PlayerSearchFilters";
 import { PlayerSearchResults } from "./PlayerSearchResults";
 
 const DEFAULT_FILTERS: SearchFilters = {
-  scope: "analyzed",
-  age_band: "all",
+  scope: DEFAULT_SEARCH_SCOPE,
   sort: "rolefit_desc",
   page: 1,
   page_size: 12,
@@ -25,24 +32,45 @@ function numberParam(value: string | null): number | undefined {
 }
 
 export function SearchExperience() {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const filters = useMemo<SearchFilters>(() => {
-    const scope = searchParams.get("scope") ?? DEFAULT_FILTERS.scope;
-    const ageBand = searchParams.get("age_band") ?? DEFAULT_FILTERS.age_band;
+    const scope = searchParams.get("scope") ?? DEFAULT_SEARCH_SCOPE;
+
+    // Age hydration, in precedence order:
+    //   1. explicit age_min / age_max (what the control writes)
+    //   2. a legacy age_band, normalized once into a one-sided threshold
+    //   3. no age bound at all
+    // Whichever wins is re-expressed through `ageBounds`, so the request can only
+    // ever carry a snapped, single-sided bound — never an off-stop value, never
+    // both sides, and never `age_band` itself.
+    const explicitAge = ageSelectionFromBounds(
+      parseAgeBound(searchParams.get("age_min")),
+      parseAgeBound(searchParams.get("age_max")),
+    );
+    const ageSelection =
+      explicitAge.direction != null
+        ? explicitAge
+        : (legacyAgeBandSelection(searchParams.get("age_band")) ?? explicitAge);
+
     return {
       ...DEFAULT_FILTERS,
       q: searchParams.get("q") || undefined,
-      scope: SEARCH_SCOPES.some((s) => s.key === scope) ? scope : DEFAULT_FILTERS.scope,
-      age_band: AGE_BANDS.some((a) => a.key === ageBand) ? ageBand : DEFAULT_FILTERS.age_band,
+      // Not a Discovery control any more, but a scope-bearing URL must still load
+      // and still mean what it said. Unknown values fall back to the default.
+      scope: (SEARCH_SCOPE_KEYS as readonly string[]).includes(scope)
+        ? scope
+        : DEFAULT_SEARCH_SCOPE,
+      ...ageBounds(ageSelection),
       position_group: searchParams.get("position_group") || undefined,
       role: searchParams.get("role") || undefined,
       league: searchParams.get("league") || undefined,
       playstyle: searchParams.get("playstyle") || undefined,
-      min_minutes: numberParam(searchParams.get("min_minutes")),
-      rolefit_min: numberParam(searchParams.get("rolefit_min")),
+      // Clamped on the way in as well as on the way out: a hand-crafted
+      // ?rolefit_min=-5 or ?min_minutes=500 never reaches the API unbounded.
+      min_minutes: parseThreshold(searchParams.get("min_minutes")),
+      rolefit_min: parseThreshold(searchParams.get("rolefit_min")),
       sort: searchParams.get("sort") || DEFAULT_FILTERS.sort,
       page: numberParam(searchParams.get("page")) ?? DEFAULT_FILTERS.page,
       page_size: numberParam(searchParams.get("page_size")) ?? DEFAULT_FILTERS.page_size,
@@ -54,18 +82,37 @@ export function SearchExperience() {
     Object.entries(next).forEach(([key, value]) => {
       if (value == null || value === "") return;
       if (key === "scope" && value === DEFAULT_FILTERS.scope) return;
-      if (key === "age_band" && value === DEFAULT_FILTERS.age_band) return;
       if (key === "sort" && value === DEFAULT_FILTERS.sort) return;
       if (key === "page" && value === DEFAULT_FILTERS.page) return;
       if (key === "page_size" && value === DEFAULT_FILTERS.page_size) return;
       params.set(key, String(value));
     });
     const suffix = params.toString();
-    router.replace(suffix ? `${pathname}?${suffix}` : pathname, { scroll: false });
+    const url = suffix ? `${pathname}?${suffix}` : pathname;
+
+    /**
+     * `window.history.replaceState`, not `router.replace`.
+     *
+     * Discovery is a statically generated route. After a HARD load of a
+     * filter-bearing URL (`/?age_max=25`, `/?q=Anton`, a legacy `/?scope=...` —
+     * exactly the shared links the filters produce), `router.replace` to the same
+     * pathname with different search params was silently dropped: the address bar
+     * never moved and every control in the rail stopped responding, so a shared
+     * filtered link arrived read-only. It only worked when the visit started at a
+     * bare `/`. Reproduced against a production build for the age control, the
+     * search box and the pre-existing `scope` parameter alike, so this is the
+     * mechanism failing rather than any one filter.
+     *
+     * Next.js supports the native History methods for exactly this case and keeps
+     * `usePathname` / `useSearchParams` in sync with them, so the URL-backed flow
+     * is unchanged in every respect that matters: same URLs, same replace
+     * semantics (a filter change still adds no history entry), same hydration on
+     * reload and on back/forward, and no scroll jump.
+     */
+    window.history.replaceState(null, "", url);
   };
 
-  const selectedScope = SEARCH_SCOPES.find((s) => s.key === filters.scope) ?? SEARCH_SCOPES[0];
-  const selectedAge = AGE_BANDS.find((a) => a.key === filters.age_band) ?? AGE_BANDS[0];
+  const ageSummary = ageSummaryText(ageSelectionFromBounds(filters.age_min, filters.age_max));
 
   return (
     <div>
@@ -92,8 +139,7 @@ export function SearchExperience() {
         <section aria-label="Results" className="min-w-0">
           <PlayerSearchResults
             filters={filters}
-            selectedScope={selectedScope.label}
-            selectedAgeBand={selectedAge.label}
+            ageSummary={ageSummary}
             onPage={(page) => setFilters({ ...filters, page })}
           />
         </section>

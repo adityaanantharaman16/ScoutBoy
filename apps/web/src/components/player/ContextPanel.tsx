@@ -4,7 +4,7 @@ function Mult({ label, value }: { label: string; value: number | null | undefine
   return (
     <div className="flex items-center justify-between">
       <span className="text-sm text-ink-muted">{label}</span>
-      <span className="font-mono text-sm font-semibold text-ink">{value == null ? "—" : `x${value.toFixed(2)}`}</span>
+      <span className="font-mono text-sm font-semibold text-ink">{value == null ? "-" : `x${value.toFixed(2)}`}</span>
     </div>
   );
 }
@@ -13,7 +13,7 @@ function Value({ label, value }: { label: string; value: string | number | null 
   return (
     <div className="flex items-center justify-between gap-3">
       <span className="text-sm text-ink-muted">{label}</span>
-      <span className="text-right text-sm font-semibold text-ink">{value ?? "—"}</span>
+      <span className="text-right text-sm font-semibold text-ink">{value ?? "-"}</span>
     </div>
   );
 }
@@ -59,7 +59,7 @@ export function ContextPanel({ context }: { context: ContextPanelType | null | u
       </div>
       <div className="flex items-center justify-between border-t border-line pt-1.5">
         <span className="text-sm text-ink-muted">Minutes</span>
-        <span className="font-mono text-sm font-semibold text-ink">{context.minutes ?? "—"}</span>
+        <span className="font-mono text-sm font-semibold text-ink">{context.minutes ?? "-"}</span>
       </div>
       {context.limitations?.slice(0, 2).map((item) => (
         <p key={item} className="pt-1 text-xs text-ink-soft">

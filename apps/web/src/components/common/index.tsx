@@ -83,7 +83,20 @@ export function DossierSection({
   fill?: boolean;
 }) {
   return (
-    <section className={`mb-8 ${fill ? "flex h-full flex-col" : ""}`}>
+    /**
+     * `mb-8` is this component's contribution to the dossier's 32px section
+     * rhythm — but ONLY for a section that is its own block in the flow.
+     *
+     * A `fill` section is a cell of a paired grid (04 Market Value / 05 Context &
+     * Coverage). There, `h-full` stretches the section to the grid row's height,
+     * so its bottom margin lands INSIDE the cell and contributes nothing below the
+     * grid: section 06 ended up flush against the grid's bottom edge, a measured
+     * 0px where every other transition is 32px. Dropping the margin for `fill`
+     * sections hands that responsibility to the grid wrapper, which is the element
+     * actually adjacent to what follows — so the gap is emitted exactly once and
+     * cannot double at the mobile stack point either.
+     */
+    <section className={fill ? "flex h-full flex-col" : "mb-8"}>
       <div className="section-rule mb-3 flex items-end justify-between gap-3 pb-2">
         <div>
           <div className="label mb-1">{number} / {eyebrow ?? "ScoutBoy dossier"}</div>

@@ -29,7 +29,7 @@ test.describe("dark-mode pilot", () => {
     await expect(page.getByTestId("dark-mode-pilot")).toBeVisible();
     const banner = page.getByTestId("pilot-approval-banner");
     await expect(banner).toBeVisible();
-    await expect(banner).toContainText("Dark Mode Pilot — For Visual Approval");
+    await expect(banner).toContainText("Dark Mode Pilot - For Visual Approval");
     // It must also be unmistakably not-live-data.
     await expect(banner).toContainText("Not live data");
 
@@ -72,7 +72,7 @@ test.describe("dark-mode pilot", () => {
       page.getByRole("heading", { name: "No Shared Rated Role", exact: true }),
     ).toBeVisible();
     // honesty states: a missing score renders the sentinel, never zero
-    await expect(page.getByTestId("pilot-unknown-score")).toHaveText("—");
+    await expect(page.getByTestId("pilot-unknown-score")).toHaveText("-");
   });
 
   test("keeps status legible without relying on colour", async ({ page }) => {

@@ -25,10 +25,110 @@ test("discovery loads and filters", async ({ page }) => {
   await expect(page.locator('[data-testid="results-ledger"]')).toBeVisible();
   expect(await page.locator('[data-testid="result-row"]').count()).toBeGreaterThan(0);
 
-  await page.selectOption("#filter-scope", { index: 1 });
+  // The age threshold is the rail's own control in every engine: a native range
+  // input plus plain buttons, so this also smoke-tests that the styled slider is
+  // operable outside Chromium.
+  const slider = page.locator('[data-testid="age-threshold-slider"]');
+  await expect(slider).toBeVisible();
+  await expect(slider).toHaveValue("25");
+
+  await page.locator('[data-testid="age-direction-younger"]').click();
   await page.waitForLoadState("networkidle");
-  expect(page.url()).toContain("scope=");
+  expect(page.url()).toContain("age_max=25");
   await expect(page.locator('[data-testid="filter-column"]')).toBeVisible();
+  await expect(page.locator('[data-testid="result-count"]')).toContainText(
+    "25 Years And Younger",
+  );
+
+  await slider.focus();
+  await page.keyboard.press("ArrowLeft");
+  await expect(slider).toHaveValue("22");
+  await page.waitForLoadState("networkidle");
+  expect(page.url()).toContain("age_max=22");
+});
+
+test("age slider track and ticks hold their geometry in every engine", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator('[data-testid="results-ledger"]')).toBeVisible();
+
+  const geometry = await page.evaluate(() => {
+    const rail = document.querySelector<HTMLElement>(".age-slider-rail")!;
+    const rr = rail.getBoundingClientRect();
+    const cs = getComputedStyle(rail);
+    return {
+      rail: { top: rr.top, bottom: rr.bottom, height: rr.height, left: rr.left, width: rr.width },
+      interior: {
+        top: rr.top + parseFloat(cs.borderTopWidth),
+        bottom: rr.bottom - parseFloat(cs.borderBottomWidth),
+      },
+      ticks: Array.from(
+        document.querySelectorAll<HTMLElement>('[data-testid="age-slider-stop"]'),
+      ).map((t) => {
+        const b = t.getBoundingClientRect();
+        return {
+          stop: Number(t.dataset.ageStop),
+          top: b.top,
+          bottom: b.bottom,
+          height: b.height,
+          centre: b.left + b.width / 2,
+        };
+      }),
+    };
+  });
+
+  // A real track, not a hairline.
+  expect(geometry.rail.height).toBeGreaterThanOrEqual(12);
+  expect(geometry.rail.height).toBeLessThanOrEqual(14);
+
+  // Five stops, every one wholly inside the track and clear of both borders.
+  expect(geometry.ticks.map((t) => t.stop)).toEqual([19, 22, 25, 28, 31]);
+  for (const tick of geometry.ticks) {
+    const where = `stop ${tick.stop}`;
+    expect(tick.top, where).toBeGreaterThan(geometry.interior.top);
+    expect(tick.bottom, where).toBeLessThan(geometry.interior.bottom);
+    expect(tick.height / geometry.rail.height, where).toBeGreaterThanOrEqual(1 / 3);
+    expect(tick.height / geometry.rail.height, where).toBeLessThanOrEqual(1 / 2);
+  }
+
+  // Evenly spaced, and the outer two aligned with the thumb's travel endpoints.
+  const gaps = geometry.ticks.slice(1).map((t, i) => t.centre - geometry.ticks[i].centre);
+  expect(Math.max(...gaps) - Math.min(...gaps)).toBeLessThanOrEqual(1);
+  const half = await page.evaluate(() =>
+    parseFloat(
+      getComputedStyle(document.documentElement).getPropertyValue("--age-thumb-w"),
+    ),
+  );
+  expect(Math.abs(geometry.ticks[0].centre - (geometry.rail.left + half / 2))).toBeLessThanOrEqual(1);
+  expect(
+    Math.abs(
+      geometry.ticks[4].centre - (geometry.rail.left + geometry.rail.width - half / 2),
+    ),
+  ).toBeLessThanOrEqual(1);
+});
+
+test("leaderboard actions use the shared heart/Compare bar in every engine", async ({ page }) => {
+  await page.goto("/roles/touchline_winger");
+  // Both the desktop table and the mobile ledger are in the DOM; scope to the one
+  // this viewport actually shows.
+  const bar = page
+    .locator('[data-testid="leaderboard-table"] [data-testid="card-action-bar"]')
+    .first();
+  await expect(bar).toBeVisible();
+  await expect(bar.locator('[data-testid="compare-action"]')).toHaveText("Compare");
+  await expect(bar.locator('[data-testid="favorite-heart"]')).toHaveAttribute(
+    "data-filled",
+    "false",
+  );
+  expect(await page.evaluate(() => document.body.innerText)).not.toMatch(
+    /Shortlisted|Shortlist|Queued/,
+  );
+
+  await bar.locator('[data-testid="favorite-action"]').click();
+  await expect(bar.locator('[data-testid="favorite-action"]')).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(bar.locator('[data-testid="favorite-heart"]')).toHaveAttribute("data-filled", "true");
 });
 
 test("player dossier renders with role switching and evidence pinning", async ({ page }) => {

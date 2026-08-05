@@ -73,7 +73,12 @@ export default function PlayerCardPage() {
               </DossierSection>
             )}
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch">
+            {/* The paired 04/05 grid owns the section gap that follows it: its
+                `fill` children are stretched grid cells whose own bottom margin
+                would be absorbed inside the row (see DossierSection). `mb-8` here
+                is the same 32px every other major transition uses — emitted once,
+                by the element actually adjacent to section 06. */}
+            <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch">
               <div id="market-full" className="flex scroll-mt-24">
                 <DossierSection number="04" title="Market Value" eyebrow="Ranges and confidence" fill>
                   <MarketValuePanel market={card.market} />
@@ -140,8 +145,8 @@ export default function PlayerCardPage() {
       <Section title="Sources, Version & Limitations" eyebrow="Data provenance">
         <div className="card space-y-2 text-sm text-ink-muted">
           <p>
-            Rating version <span className="font-mono text-ink">{card.rating_version ?? "—"}</span>
-            {" "}· last updated <span className="font-mono text-ink">{card.last_updated ?? "—"}</span>
+            Rating version <span className="font-mono text-ink">{card.rating_version ?? "-"}</span>
+            {" "}· last updated <span className="font-mono text-ink">{card.last_updated ?? "-"}</span>
           </p>
           <ul className="space-y-2">
             {card.data_sources.length === 0 && <li>No source metadata available.</li>}

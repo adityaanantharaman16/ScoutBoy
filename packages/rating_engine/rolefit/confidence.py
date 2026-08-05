@@ -66,7 +66,7 @@ def compute_confidence(
         notes.append("Missing required metrics: " + ", ".join(missing_required) + ".")
     if coverage_factor == 0.0:
         score = 0.0
-        notes.append("No required metrics available — profile is effectively unknown.")
+        notes.append("No required metrics available - profile is effectively unknown.")
 
     level = confidence_from_score(score)
     return ConfidenceResult(

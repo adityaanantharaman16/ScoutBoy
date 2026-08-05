@@ -264,7 +264,7 @@ export function RoleTerritoryPitch({
         </p>
         {lowReliability && (
           <p className="mt-1 text-xs text-accent-rust">
-            Lower selected-role confidence — read the territory as directional, not definitive.
+            Lower selected-role confidence - read the territory as directional, not definitive.
           </p>
         )}
 
@@ -359,7 +359,7 @@ export function RoleEvidenceList({
                 </div>
                 <div className="mt-1.5 text-[11px] text-ink-muted">
                   {unknown ? (
-                    <span>No measured evidence for this group — shown as unknown, not zero.</span>
+                    <span>No measured evidence for this group - shown as unknown, not zero.</span>
                   ) : (
                     <>
                       {present.length > 0 && <span>Measured: {present.map((m) => m.display).join(", ")}</span>}

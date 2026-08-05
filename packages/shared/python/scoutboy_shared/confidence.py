@@ -36,7 +36,7 @@ def confidence_from_score(score: float) -> ConfidenceLevel:
 
 def label_for_confidence(level: ConfidenceLevel) -> str:
     return {
-        ConfidenceLevel.UNKNOWN: "Unknown — insufficient data",
+        ConfidenceLevel.UNKNOWN: "Unknown - insufficient data",
         ConfidenceLevel.LOW: "Low confidence",
         ConfidenceLevel.MEDIUM: "Medium confidence",
         ConfidenceLevel.HIGH: "High confidence",

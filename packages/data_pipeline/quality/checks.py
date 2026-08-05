@@ -10,7 +10,13 @@ from __future__ import annotations
 from collections import Counter
 from datetime import date, datetime
 
-from scoutboy_shared import is_performance_metric, position_group_for, resolve_metric
+from scoutboy_shared import (
+    DISPLAY_SCALE_MAX,
+    DISPLAY_SCALE_MIN,
+    is_performance_metric,
+    position_group_for,
+    resolve_metric,
+)
 
 from ..adapters.base import IngestBundle
 
@@ -168,5 +174,5 @@ def run_bundle_checks(bundle: IngestBundle, *, min_minutes: int = 450) -> dict:
 
 def run_rating_outlier_check(final_scores: list[float]) -> dict:
     """Flag ratings outside the valid display range (post-recompute)."""
-    outliers = [s for s in final_scores if s < 0 or s > 99.9]
+    outliers = [s for s in final_scores if s < DISPLAY_SCALE_MIN or s > DISPLAY_SCALE_MAX]
     return _finding("outlier_ratings", "error" if outliers else "ok", len(outliers), outliers[:10])

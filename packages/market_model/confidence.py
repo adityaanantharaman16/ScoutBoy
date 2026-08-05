@@ -18,12 +18,12 @@ def market_confidence(inp: MarketInputs) -> tuple[ConfidenceLevel, dict]:
     if inp.public_value_eur is not None:
         score += 0.2
     else:
-        notes.append("No public market value — confidence reduced.")
+        notes.append("No public market value - confidence reduced.")
 
     if inp.contract_years_remaining is not None:
         score += 0.15
     else:
-        notes.append("No contract data — range widened and confidence reduced.")
+        notes.append("No contract data - range widened and confidence reduced.")
 
     if inp.best_rolefit is not None:
         score += 0.15
@@ -32,7 +32,7 @@ def market_confidence(inp: MarketInputs) -> tuple[ConfidenceLevel, dict]:
 
     if inp.age is None:
         score -= 0.1
-        notes.append("No birth date — age premium not applied.")
+        notes.append("No birth date - age premium not applied.")
 
     if inp.minutes >= 1800:
         score += 0.1

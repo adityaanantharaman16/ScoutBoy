@@ -6,23 +6,32 @@ test("main scouting flow", async ({ page }) => {
   // 1) Search / home
   await page.goto("/");
   await expect(page.getByTestId("scope-banner")).toContainText("RoleFit analysis");
-  await expect(page.getByTestId("scope-filter")).toHaveValue("analyzed");
+  // Analysis scope is no longer a Discovery control; the default analyzed pool is.
+  await expect(page.getByTestId("scope-filter")).toHaveCount(0);
   await expect(page.getByTestId("player-result").first()).toBeVisible();
-  const analyzedCountText = await page.getByTestId("result-count").textContent();
+  await expect(page.getByTestId("result-count")).toContainText("All Ages");
+  const defaultCountText = await page.getByTestId("result-count").textContent();
+  expect(defaultCountText).not.toBeNull();
 
-  await page.getByTestId("scope-filter").selectOption("all_records");
-  await expect(page).toHaveURL(/scope=all_records/);
+  // Age threshold: one bound at a time, both directions, then an explicit reset.
+  await page.getByTestId("age-direction-younger").click();
+  await expect(page).toHaveURL(/age_max=25/);
+  await expect(page).not.toHaveURL(/age_min/);
+  await expect(page.getByTestId("result-count")).toContainText("25 Years And Younger");
   await expect(page.getByTestId("player-result").first()).toBeVisible();
-  const allCountText = await page.getByTestId("result-count").textContent();
-  expect(allCountText).not.toBeNull();
-  expect(analyzedCountText).not.toBeNull();
 
-  await page.getByTestId("age-band-filter").selectOption("u23");
-  await expect(page).toHaveURL(/age_band=u23/);
+  await page.getByTestId("age-direction-older").click();
+  await expect(page).toHaveURL(/age_min=25/);
+  await expect(page).not.toHaveURL(/age_max/);
 
-  await page.getByTestId("scope-filter").selectOption("high_coverage_u23");
-  await expect(page).toHaveURL(/scope=high_coverage_u23/);
-  await expect(page.getByTestId("result-count")).toContainText("High-coverage U23");
+  await page.getByTestId("age-direction-all").click();
+  await expect(page).not.toHaveURL(/age_m(in|ax)/);
+  await expect(page.getByTestId("result-count")).toContainText("All Ages");
+
+  // A legacy age_band link still loads and still narrows by age.
+  await page.goto("/?age_band=u23");
+  await expect(page.getByTestId("age-threshold-value")).toHaveText("22 Years");
+  await expect(page.getByTestId("age-direction-younger")).toHaveAttribute("aria-pressed", "true");
 
   await page.goto("/");
   await expect(page.getByTestId("player-result").first()).toBeVisible();

@@ -59,6 +59,18 @@ def test_outlier_rating_check():
     assert run_rating_outlier_check([50.0, 120.0, -3.0])["count"] == 2
 
 
+def test_outlier_rating_check_uses_the_shared_zero_to_ninety_nine_scale():
+    """The guardrail reads the shared constants, so both inclusive bounds pass and
+    anything in the retired 99.0-99.9 band is now flagged."""
+    from scoutboy_shared import DISPLAY_SCALE_MAX, DISPLAY_SCALE_MIN
+
+    assert (DISPLAY_SCALE_MIN, DISPLAY_SCALE_MAX) == (0.0, 99.0)
+    assert run_rating_outlier_check([0.0, 99.0])["count"] == 0
+    flagged = run_rating_outlier_check([99.1, 99.9, -0.1])
+    assert flagged["count"] == 3
+    assert flagged["severity"] == "error"
+
+
 class _RecordingSession:
     def __init__(self, scores):
         self.scores = scores

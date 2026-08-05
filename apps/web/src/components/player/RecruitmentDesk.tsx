@@ -52,9 +52,9 @@ function IdentityBlock({ card }: { card: PlayerCard }) {
         {id.canonical_name}
       </h1>
       <div className="mt-2 text-sm text-ink-muted">
-        {formatAge(id.age)} yrs · {id.primary_position ?? "—"}
+        {formatAge(id.age)} yrs · {id.primary_position ?? "-"}
         {id.secondary_positions.length > 0 && ` (${id.secondary_positions.join(", ")})`} ·{" "}
-        {id.nationality ?? "—"}
+        {id.nationality ?? "-"}
       </div>
       <div className="mt-1 text-xs text-ink-soft">
         {id.preferred_foot ? `${id.preferred_foot}-footed` : ""}
@@ -118,7 +118,7 @@ function EvidenceContextRail({ card }: { card: PlayerCard }) {
   const market = card.market;
   const coverage =
     ctx?.competition_coverage_pct == null && ctx?.matches_covered == null
-      ? "—"
+      ? "-"
       : ctx?.competition_coverage_pct == null
       ? "Selective"
       : `${Math.round(ctx.competition_coverage_pct * 100)}%`;
@@ -133,14 +133,14 @@ function EvidenceContextRail({ card }: { card: PlayerCard }) {
 
       <div className="mt-3 space-y-1.5 border-t border-line pt-3 text-sm">
         <Row label="Competition coverage" value={coverage} />
-        <Row label="Minutes" value={ctx?.minutes ?? "—"} mono />
-        <Row label="Appearances" value={ctx?.appearances ?? "—"} mono />
+        <Row label="Minutes" value={ctx?.minutes ?? "-"} mono />
+        <Row label="Appearances" value={ctx?.appearances ?? "-"} mono />
       </div>
 
       <div className="mt-2 space-y-1.5 border-t border-line pt-2 text-sm">
-        <Row label="Overall evidence" value={ctx?.overall_rating_confidence ?? "—"} />
-        <Row label="Sample confidence" value={ctx?.sample_size_confidence ?? ctx?.sample_confidence ?? "—"} />
-        <Row label="Coverage confidence" value={ctx?.coverage_confidence ?? "—"} />
+        <Row label="Overall evidence" value={ctx?.overall_rating_confidence ?? "-"} />
+        <Row label="Sample confidence" value={ctx?.sample_size_confidence ?? ctx?.sample_confidence ?? "-"} />
+        <Row label="Coverage confidence" value={ctx?.coverage_confidence ?? "-"} />
       </div>
 
       <div className="mt-2 border-t border-line pt-2">

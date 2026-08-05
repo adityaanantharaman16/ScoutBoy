@@ -8,7 +8,7 @@ import Link from "next/link";
 // every other unavailable state: say what is unavailable, do not invent a cause,
 // and keep a way forward.
 export const metadata: Metadata = {
-  title: "Page not found — ScoutBoy",
+  title: "Page Not Found - ScoutBoy",
   description: "The requested ScoutBoy page does not exist.",
 };
 

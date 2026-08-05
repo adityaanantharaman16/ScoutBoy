@@ -95,7 +95,7 @@ final = role_weighted_performance_score
 
 - `role_weighted_performance_score` ∈ base 0–100, from weighted percentile of role metric groups.
 - Each context multiplier defaults to `1.0` and is clamped to a documented band (see `configs/context/*.yaml`).
-- Output is clamped to the **0–99.9** display scale.
+- Output is clamped to the **0–99** display scale.
 - Missing required metrics lower **confidence** and are listed in the audit; they do not silently zero the score.
 
 ## 8. Testing posture

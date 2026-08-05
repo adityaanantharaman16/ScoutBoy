@@ -1336,9 +1336,9 @@ export interface operations {
                 value_min?: number | null;
                 value_max?: number | null;
                 sort?: string;
-                /** @description 'analyzed' (default), 'all_records', or 'high_coverage_u23' */
+                /** @description 'analyzed' (default), 'all_records', or 'high_coverage_u23'. Still a supported API capability; the Discovery UI no longer exposes a selector for it and always requests the default. */
                 scope?: string | null;
-                /** @description 'all' (default), 'u23', '24_26', '27_30', or '31_plus' */
+                /** @description Legacy age filter: 'all' (default), 'u23', '24_26', '27_30', or '31_plus'. Superseded by the one-sided age_min / age_max bounds the Discovery age control writes; retained so existing callers keep working. */
                 age_band?: string | null;
                 /** @description Legacy alias: 'mvp' maps to high_coverage_u23; 'all' maps to all_records. Ignored when scope is supplied. */
                 universe?: string | null;

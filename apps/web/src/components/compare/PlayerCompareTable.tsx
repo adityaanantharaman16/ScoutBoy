@@ -138,7 +138,7 @@ function BalanceColumn({
           {side.identity.canonical_name}
         </div>
         <div className="text-xs text-ink-soft">
-          {side.identity.club ?? "—"} · {side.identity.league ?? "—"}
+          {side.identity.club ?? "-"} · {side.identity.league ?? "-"}
         </div>
       </div>
       {rating ? (

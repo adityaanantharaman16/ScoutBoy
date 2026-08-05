@@ -89,36 +89,33 @@ describe("MarketValuePanel", () => {
 });
 
 describe("Discover filters", () => {
-  it("renders Analyzed as the default scope and supports U23 quick filtering", () => {
+  const baseFilters = { scope: "analyzed", sort: "rolefit_desc", page: 1 };
+
+  it("exposes no Analysis scope selector while keeping the default analyzed scope", () => {
     const onChange = vi.fn();
-    render(
-      <PlayerSearchFilters
-        filters={{ scope: "analyzed", age_band: "all", sort: "rolefit_desc", page: 1 }}
-        onChange={onChange}
-      />,
+    const { container } = render(
+      <PlayerSearchFilters filters={baseFilters} onChange={onChange} />,
     );
-    expect(screen.getByTestId("scope-filter")).toHaveValue("analyzed");
-    fireEvent.change(screen.getByTestId("age-band-filter"), { target: { value: "u23" } });
+    expect(screen.queryByTestId("scope-filter")).not.toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/analysis scope/i);
+    // the scope the surface requests is untouched by the rail
+    fireEvent.change(screen.getByTestId("role-filter"), { target: { value: "inside_forward" } });
     expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ scope: "analyzed", age_band: "u23", page: 1 }),
+      expect.objectContaining({ scope: "analyzed", role: "inside_forward", page: 1 }),
     );
   });
 
-  it("supports All records and High-coverage U23 scopes plus defender/GK filters", () => {
+  it("narrows by age through the threshold control and clears the retired band", () => {
     const onChange = vi.fn();
-    render(
-      <PlayerSearchFilters
-        filters={{ scope: "analyzed", age_band: "all", sort: "rolefit_desc", page: 1 }}
-        onChange={onChange}
-      />,
-    );
-    const scope = screen.getByTestId("scope-filter");
-    fireEvent.change(scope, { target: { value: "all_records" } });
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ scope: "all_records" }));
-    fireEvent.change(scope, { target: { value: "high_coverage_u23" } });
+    render(<PlayerSearchFilters filters={baseFilters} onChange={onChange} />);
+    fireEvent.click(screen.getByTestId("age-direction-younger"));
     expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ scope: "high_coverage_u23" }),
+      expect.objectContaining({ age_max: 25, age_min: undefined, age_band: undefined, page: 1 }),
     );
+  });
+
+  it("keeps the defender and goalkeeper position filters", () => {
+    render(<PlayerSearchFilters filters={baseFilters} onChange={vi.fn()} />);
     expect(screen.getByRole("option", { name: "Defenders" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Goalkeepers" })).toBeInTheDocument();
   });
