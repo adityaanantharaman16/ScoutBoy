@@ -1,12 +1,15 @@
 "use client";
 
-import { ANY_ROLE_LABEL, POSITION_GROUPS, ROLES, SORT_OPTIONS } from "@/lib/constants";
+import { ANY_ROLE_LABEL, DEFAULT_SORT, POSITION_GROUPS, ROLES, SORT_OPTIONS } from "@/lib/constants";
 import {
   ageBounds,
   ageSelectionFromBounds,
-  parseThreshold,
-  THRESHOLD_MAX,
-  THRESHOLD_MIN,
+  MIN_MINUTES_CEILING,
+  MIN_MINUTES_FLOOR,
+  parseMinutesThreshold,
+  parseRoleFitThreshold,
+  ROLEFIT_SCALE_MAX,
+  ROLEFIT_SCALE_MIN,
   type AgeSelection,
 } from "@/lib/filters";
 import type { SearchFilters } from "@/lib/api/hooks";
@@ -117,11 +120,17 @@ export function PlayerSearchFilters({
             this same grid item, structurally attached to the inputs it
             describes, so it cannot occupy a cell of its own.
 
-            Both are bounded to whole numbers 0-99 semantically (`min`/`max`/`step`)
-            AND deterministically in the handler, so a pasted, typed or
-            URL-supplied value outside the range is clamped before it can reach a
-            request. An empty field stays empty ("no threshold"); a typed 0 stays 0
-            and is never mistaken for empty. */}
+            Sharing a row is a LAYOUT decision only. The two measure different
+            things and carry their own bounds: minutes are minutes, RoleFit is the
+            authoritative 0-99 score. Each is bounded semantically
+            (`min`/`max`/`step`) and again deterministically in its own handler, so
+            a pasted, typed or URL-supplied value outside its range is clamped
+            before it can reach a request. They previously shared one 0-99 ceiling,
+            which quietly rewrote a 1,500-minute threshold as 99 minutes and made
+            this helper sentence describe a contract the API did not have.
+
+            An empty field stays empty ("no threshold"); a typed 0 stays 0 and is
+            never mistaken for empty. */}
         <div className="flex min-w-0 flex-col gap-1.5" data-testid="threshold-pair">
           <div className="grid grid-cols-2 gap-3">
             <label className="flex min-w-0 flex-col gap-1">
@@ -130,12 +139,12 @@ export function PlayerSearchFilters({
                 type="number"
                 inputMode="numeric"
                 className="input"
-                min={THRESHOLD_MIN}
-                max={THRESHOLD_MAX}
+                min={MIN_MINUTES_FLOOR}
+                max={MIN_MINUTES_CEILING}
                 step={1}
                 aria-describedby="filter-threshold-help"
                 value={filters.min_minutes ?? ""}
-                onChange={(e) => set({ min_minutes: parseThreshold(e.target.value) })}
+                onChange={(e) => set({ min_minutes: parseMinutesThreshold(e.target.value) })}
               />
             </label>
 
@@ -145,17 +154,23 @@ export function PlayerSearchFilters({
                 type="number"
                 inputMode="numeric"
                 className="input"
-                min={THRESHOLD_MIN}
-                max={THRESHOLD_MAX}
+                min={ROLEFIT_SCALE_MIN}
+                max={ROLEFIT_SCALE_MAX}
                 step={1}
                 aria-describedby="filter-threshold-help"
                 value={filters.rolefit_min ?? ""}
-                onChange={(e) => set({ rolefit_min: parseThreshold(e.target.value) })}
+                onChange={(e) => set({ rolefit_min: parseRoleFitThreshold(e.target.value) })}
               />
             </label>
           </div>
+          {/* One sentence, but now TWO stated contracts instead of a single 0-99
+              range that was only ever true of RoleFit. Measured to occupy the same
+              number of lines as the copy it replaces at both the mobile (324px) and
+              desktop (248px) rail widths, so correcting it moves nothing in the
+              rail. */}
           <p id="filter-threshold-help" className="text-[11px] leading-snug text-ink-soft">
-            Whole numbers {THRESHOLD_MIN}-{THRESHOLD_MAX}. Leave blank for no threshold.
+            Whole minutes {MIN_MINUTES_FLOOR}-{MIN_MINUTES_CEILING.toLocaleString("en-US")}; whole
+            RoleFit {ROLEFIT_SCALE_MIN}-{ROLEFIT_SCALE_MAX}. Blank for none.
           </p>
         </div>
 
@@ -181,8 +196,12 @@ export function PlayerSearchFilters({
           <select
             data-testid="sort-filter"
             className="input"
-            value={filters.sort ?? "rolefit_desc"}
-            onChange={(e) => onChange({ ...filters, sort: e.target.value })}
+            value={filters.sort ?? DEFAULT_SORT}
+            // `set`, like every other control: changing the ranking changes which
+            // players appear first, so holding the previous page number would show
+            // page 4 of a freshly reordered ledger. It used to bypass `set` and keep
+            // the stale page.
+            onChange={(e) => set({ sort: e.target.value })}
           >
             {SORT_OPTIONS.map((s) => (
               <option key={s.key} value={s.key}>

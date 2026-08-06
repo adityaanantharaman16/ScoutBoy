@@ -49,7 +49,7 @@ import ComparePage from "@/app/compare/page";
 // fixtures
 // ---------------------------------------------------------------------------
 function makeSearchCard(over: Partial<PlayerSearchCard> = {}): PlayerSearchCard {
-  return {
+  const card = {
     id: 1,
     canonical_name: "Card Player",
     season: "2023/24",
@@ -74,6 +74,21 @@ function makeSearchCard(over: Partial<PlayerSearchCard> = {}): PlayerSearchCard 
     expected_asking_high_eur: 2_000_000,
     ...over,
   } as PlayerSearchCard;
+  // These fixtures describe an UNFILTERED search, where the API's result role
+  // context is the player's own best role, so mirror it unless a case sets it
+  // explicitly. Role-filtered rows, where the two genuinely differ, are exercised
+  // in discovery-ledger.test.tsx.
+  return {
+    ...card,
+    best_role_confidence: over.best_role_confidence ?? card.confidence,
+    result_role: over.result_role !== undefined ? over.result_role : card.best_role,
+    result_role_display:
+      over.result_role_display !== undefined ? over.result_role_display : card.best_role_display,
+    result_role_score:
+      over.result_role_score !== undefined ? over.result_role_score : card.best_role_score,
+    result_role_confidence: over.result_role_confidence ?? card.confidence,
+    result_role_source: over.result_role_source ?? "best_role",
+  };
 }
 
 function summary(role: string, display: string, score: number, confidence = "high", isBest = false): RoleRatingSummary {
@@ -194,20 +209,20 @@ describe("Discovery results pane states", () => {
 
   it("shows a structural skeleton while loading (page identity preserved elsewhere)", () => {
     usePlayerSearchMock.mockReturnValue({ isLoading: true });
-    render(<PlayerSearchResults filters={filters} ageSummary="All Ages" onPage={noop} />);
+    render(<PlayerSearchResults filters={filters} ageSummary="All Ages" onPage={noop} onCanonicalPage={noop} />);
     expect(screen.getByTestId("ledger-skeleton")).toBeInTheDocument();
     expect(screen.getByTestId("ledger-skeleton")).toHaveAttribute("role", "status");
   });
 
   it("shows an honest empty state with no fabricated rows", () => {
     usePlayerSearchMock.mockReturnValue({ isLoading: false, isError: false, data: { items: [], total: 0, page: 1, page_size: 12, total_pages: 0 } });
-    render(<PlayerSearchResults filters={filters} ageSummary="All Ages" onPage={noop} />);
+    render(<PlayerSearchResults filters={filters} ageSummary="All Ages" onPage={noop} onCanonicalPage={noop} />);
     expect(screen.getByText(/No players match these filters/)).toBeInTheDocument();
   });
 
   it("shows an alert on request failure", () => {
     usePlayerSearchMock.mockReturnValue({ isLoading: false, isError: true, error: new Error("boom") });
-    render(<PlayerSearchResults filters={filters} ageSummary="All Ages" onPage={noop} />);
+    render(<PlayerSearchResults filters={filters} ageSummary="All Ages" onPage={noop} onCanonicalPage={noop} />);
     expect(screen.getByRole("alert")).toBeInTheDocument();
   });
 });

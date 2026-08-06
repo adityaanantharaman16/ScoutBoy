@@ -1,7 +1,9 @@
-// Discovery filter semantics: the age-threshold control and the bounded numeric
-// thresholds. Everything here is pure, so the rail, the URL hydration in
-// SearchExperience and the results summary all derive the same state from the
-// same rules instead of each re-deriving them.
+// Discovery filter semantics: the age-threshold control, the bounded numeric
+// thresholds, and the pagination/sort values a URL may supply. Everything here is
+// pure, so the rail, the URL hydration in SearchExperience and the results summary
+// all derive the same state from the same rules instead of each re-deriving them.
+
+import { DEFAULT_SORT, SORT_OPTION_KEYS } from "@/lib/constants";
 
 // ---------------------------------------------------------------------------
 // Age threshold
@@ -120,27 +122,58 @@ export function ageSummaryText(selection: AgeSelection): string {
 
 // ---------------------------------------------------------------------------
 // Bounded numeric thresholds (Min Minutes, Min RoleFit)
+//
+// TWO DOMAINS, TWO SETS OF BOUNDS. Minutes are minutes; RoleFit is the
+// authoritative 0-99 score. They briefly shared one `THRESHOLD_MAX = 99`, which
+// silently clamped a realistic 1,500-minute threshold down to 99 minutes and made
+// the rail's helper copy wrong. Nothing generic is exported any more: each domain
+// has its own named bounds and its own named parser, so reaching for the minutes
+// ceiling while meaning RoleFit (or the reverse) cannot type-check by accident.
 // ---------------------------------------------------------------------------
 
-/** Inclusive bounds shared by both Discovery numeric thresholds. */
-export const THRESHOLD_MIN = 0;
-export const THRESHOLD_MAX = 99;
+/** Inclusive bounds for a season-MINUTES threshold. See scoutboy_shared. */
+export const MIN_MINUTES_FLOOR = 0;
+export const MIN_MINUTES_CEILING = 10_000;
+
+/** Inclusive bounds of the authoritative RoleFit scale. Never a minutes bound. */
+export const ROLEFIT_SCALE_MIN = 0;
+export const ROLEFIT_SCALE_MAX = 99;
+
+/** The API's own page-size ceiling, mirrored so an invalid URL never reaches it. */
+export const PAGE_SIZE_CEILING = 100;
 
 /**
- * Deterministic threshold parsing for typed, pasted and URL-supplied values.
+ * Deterministic whole-number parsing for typed, pasted and URL-supplied values.
  *
- * Empty stays empty (`undefined` = no threshold), and zero stays zero — the two
- * are never conflated. Anything non-numeric or non-finite is rejected as "no
- * threshold" rather than reaching the API, and every finite value is rounded to a
- * whole number and clamped into 0-99, so a negative or over-99 value cannot leak
- * into a request.
+ * Empty stays empty (`undefined` = no threshold) and zero stays zero — the two are
+ * never conflated. Anything non-numeric or non-finite is rejected as "no threshold"
+ * rather than reaching the API, and every finite value is rounded and clamped into
+ * the caller's own inclusive range.
  */
-export function parseThreshold(raw: string | number | null | undefined): number | undefined {
+function parseBoundedWholeNumber(
+  raw: string | number | null | undefined,
+  floor: number,
+  ceiling: number,
+): number | undefined {
   if (raw == null) return undefined;
   if (typeof raw === "string" && raw.trim() === "") return undefined;
   const parsed = typeof raw === "number" ? raw : Number(raw);
   if (!Number.isFinite(parsed)) return undefined;
-  return Math.min(THRESHOLD_MAX, Math.max(THRESHOLD_MIN, Math.round(parsed)));
+  return Math.min(ceiling, Math.max(floor, Math.round(parsed)));
+}
+
+/** A `min_minutes` threshold: whole minutes, 0-10,000 inclusive. */
+export function parseMinutesThreshold(
+  raw: string | number | null | undefined,
+): number | undefined {
+  return parseBoundedWholeNumber(raw, MIN_MINUTES_FLOOR, MIN_MINUTES_CEILING);
+}
+
+/** A RoleFit bound: whole points on the 0-99 scale. Never accepts minutes. */
+export function parseRoleFitThreshold(
+  raw: string | number | null | undefined,
+): number | undefined {
+  return parseBoundedWholeNumber(raw, ROLEFIT_SCALE_MIN, ROLEFIT_SCALE_MAX);
 }
 
 /** Same rules for an age bound read out of a URL: whole years, never negative. */
@@ -149,4 +182,40 @@ export function parseAgeBound(raw: string | null | undefined): number | undefine
   const parsed = Number(raw);
   if (!Number.isFinite(parsed)) return undefined;
   return Math.max(0, Math.round(parsed));
+}
+
+// ---------------------------------------------------------------------------
+// Pagination and sort, parsed from the URL
+// ---------------------------------------------------------------------------
+
+/**
+ * A `page` from a URL: an integer of at least 1, or `undefined` so the caller's
+ * default applies. A fractional, zero, negative or non-numeric value is not
+ * forwarded — the API would reject it, and the rail would then show an error for
+ * something the user never chose.
+ */
+export function parsePage(raw: string | null | undefined): number | undefined {
+  if (raw == null || raw.trim() === "") return undefined;
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed < 1) return undefined;
+  return parsed;
+}
+
+/** A `page_size` from a URL: an integer within the API's accepted 1-100 range. */
+export function parsePageSize(raw: string | null | undefined): number | undefined {
+  if (raw == null || raw.trim() === "") return undefined;
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > PAGE_SIZE_CEILING) return undefined;
+  return parsed;
+}
+
+/**
+ * A `sort` from a URL, resolved to a value the visible Sort control can actually
+ * display. Anything else — an unknown key, or an API-only mode the select has no
+ * option for, such as `age_desc` — falls back to the default, so the control and
+ * the request the app sends can never disagree.
+ */
+export function parseSortOption(raw: string | null | undefined): string {
+  if (raw != null && (SORT_OPTION_KEYS as readonly string[]).includes(raw)) return raw;
+  return DEFAULT_SORT;
 }

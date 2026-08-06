@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 import { EmptyState, ErrorState, LedgerSkeleton } from "@/components/common";
 import {
   LedgerActionRail,
@@ -21,6 +23,15 @@ import { formatAge } from "@/lib/formatters";
 // is: RoleFit score/role as the hero, then three explicitly stacked status lines
 // (coverage + confidence, market, playstyles). Profile-only players never receive
 // a fabricated score, confidence, or empty badges.
+//
+// The hero and the confidence line read the APPLICABLE ROLE CONTEXT the API
+// resolved — the selected role when a role filter is active, the player's best role
+// otherwise — and never the `best_role_*` fields directly. That is what keeps the
+// visible role, score and confidence identical to the ones that filtered and
+// ordered the row. Reading `best_role_score` here is precisely the bug this
+// replaces: under `?role=touchline_winger` the ledger displayed each player's best
+// role while ranking them by the selected one, so the scores ran out of order.
+// Nothing is computed here; these are stored backend values.
 export function ResultCard({ p }: { p: PlayerSearchCard }) {
   const analyzed = p.has_rolefit_analysis;
   return (
@@ -40,14 +51,14 @@ export function ResultCard({ p }: { p: PlayerSearchCard }) {
         </LedgerIdentity>
         <LedgerRoleFitHero
           hasAnalysis={analyzed}
-          score={p.best_role_score}
-          role={p.best_role_display}
+          score={p.result_role_score}
+          role={p.result_role_display}
         />
       </LedgerHeader>
 
       <LedgerStatusStack
         evidenceStatus={p.evidence_status}
-        confidence={p.confidence}
+        confidence={p.result_role_confidence}
         hasAnalysis={analyzed}
         marketLabel={p.market_label}
         marketLow={p.expected_asking_low_eur}
@@ -66,13 +77,28 @@ export function PlayerSearchResults({
   filters,
   ageSummary,
   onPage,
+  onCanonicalPage,
 }: {
   filters: SearchFilters;
   /** The active age condition, phrased by the shared `ageSummaryText` helper. */
   ageSummary: string;
   onPage: (page: number) => void;
+  /**
+   * Called with the page the API actually served when it differs from the one
+   * requested, so the URL can be brought into line. See `syncCanonicalPage`.
+   */
+  onCanonicalPage: (page: number) => void;
 }) {
   const { data, isLoading, isError, error } = usePlayerSearch(filters);
+
+  const servedPage = data?.page;
+  const requestedPage = filters.page ?? 1;
+  useEffect(() => {
+    if (servedPage != null && servedPage !== requestedPage) onCanonicalPage(servedPage);
+    // `onCanonicalPage` closes over the current filters and is recreated each
+    // render; the served/requested pair is what decides whether to act.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [servedPage, requestedPage]);
 
   if (isLoading) return <LedgerSkeleton rows={6} label="Finding players…" />;
   if (isError) return <ErrorState message={(error as Error)?.message ?? "Failed to load players."} />;

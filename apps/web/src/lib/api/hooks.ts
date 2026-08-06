@@ -1,6 +1,8 @@
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 import { apiGet } from "./client";
+import type { operations } from "./schema.gen";
 import type {
   CompareResponse,
   Methodology,
@@ -13,28 +15,58 @@ import type {
   SimilarResponse,
 } from "./types";
 
-export interface SearchFilters {
-  q?: string;
-  scope?: string;
-  age_band?: string;
-  age_min?: number;
-  age_max?: number;
-  position_group?: string;
-  role?: string;
-  league?: string;
-  playstyle?: string;
-  min_minutes?: number;
-  rolefit_min?: number;
-  sort?: string;
-  page?: number;
-  page_size?: number;
+/** Every query parameter `GET /players` accepts, straight from the generated contract. */
+type PlayerSearchQuery = NonNullable<
+  operations["search_players_api_players_get"]["parameters"]["query"]
+>;
+
+/**
+ * The Discovery request, DERIVED from the generated operation rather than
+ * hand-listed beside it.
+ *
+ * The previous handwritten interface had silently fallen behind the API: `club`,
+ * `nationality`, `rolefit_max`, `value_min`, `value_max` and `universe` all existed
+ * as real parameters with no way to express them, and nothing would have caught a
+ * renamed or retyped one. Deriving from `operations` makes any such change a compile
+ * error here instead. Only the nullability differs: the client omits a parameter it
+ * has no value for rather than sending an explicit null.
+ */
+export type SearchFilters = {
+  [K in keyof PlayerSearchQuery]?: Exclude<PlayerSearchQuery[K], null>;
+};
+
+/** The one query-key shape for a player search, so callers can address a cached page. */
+export function playerSearchQueryKey(filters: SearchFilters) {
+  return ["players", filters] as const;
 }
 
 export function usePlayerSearch(filters: SearchFilters) {
-  return useQuery({
-    queryKey: ["players", filters],
-    queryFn: () => apiGet<Paginated<PlayerSearchCard>>("/players", filters as Record<string, unknown>),
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: playerSearchQueryKey(filters),
+    queryFn: () =>
+      apiGet<Paginated<PlayerSearchCard>>("/players", filters as Record<string, unknown>),
   });
+
+  /**
+   * Out-of-range page canonicalization, without a second round trip.
+   *
+   * A valid request for a page past the end is answered with the LAST available
+   * page, and the response says which page that was. The surface then rewrites the
+   * URL to it — which changes these filters, and so would normally start a fresh
+   * request for a page we are already holding, dropping the ledger to a skeleton on
+   * the way. Seeding the canonical key with the response we already have makes that
+   * render resolve from cache: no duplicate fetch, no skeleton flash, no scroll jump.
+   */
+  const served = query.data?.page;
+  useEffect(() => {
+    if (served == null || served === (filters.page ?? 1)) return;
+    queryClient.setQueryData(playerSearchQueryKey({ ...filters, page: served }), query.data);
+    // `query.data` is the value being copied; `served` identifies it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [served, filters, queryClient]);
+
+  return query;
 }
 
 export function usePlayer(id: number | null) {

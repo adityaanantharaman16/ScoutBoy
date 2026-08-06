@@ -103,6 +103,20 @@ class ContextPanel(BaseModel):
 
 
 class PlayerSearchCard(BaseModel):
+    """One Discovery result.
+
+    Two role contexts are reported side by side and never conflated:
+
+    * ``best_role*`` is the player's own highest stored role rating, independent of
+      the query. It always describes the best role, whatever was filtered.
+    * ``result_role*`` is the stored rating this result was actually filtered and
+      ordered by, and is what a row displays. With no ``role`` filter it is the
+      best-role rating; with ``role=<key>`` it is that role's stored rating.
+
+    ``result_role_source`` says which of the two the caller is looking at. Nothing
+    here is recomputed: every score and confidence is the stored value.
+    """
+
     id: int
     canonical_name: str
     season: str
@@ -114,6 +128,16 @@ class PlayerSearchCard(BaseModel):
     best_role: Optional[str] = None
     best_role_display: Optional[str] = None
     best_role_score: Optional[float] = None
+    best_role_confidence: str = "unknown"
+    result_role: Optional[str] = None
+    result_role_display: Optional[str] = None
+    result_role_score: Optional[float] = None
+    result_role_confidence: str = "unknown"
+    #: "best_role" or "selected_role" - which context result_role* represents.
+    result_role_source: str = "best_role"
+    #: The applicable role context's stored confidence. Equal to
+    #: result_role_confidence; retained because it predates the explicit context
+    #: fields and callers still read it as the row's headline confidence.
     confidence: str = "unknown"
     analysis_status: str = "profile_only"
     evidence_status: str = "profile_only"

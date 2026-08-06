@@ -4,14 +4,23 @@ import { useMemo } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 import { PageHeader, ScopeBanner } from "@/components/common";
-import { DEFAULT_SEARCH_SCOPE, SCOPE_BANNER, SEARCH_SCOPE_KEYS } from "@/lib/constants";
+import {
+  DEFAULT_SEARCH_SCOPE,
+  DEFAULT_SORT,
+  SCOPE_BANNER,
+  SEARCH_SCOPE_KEYS,
+} from "@/lib/constants";
 import {
   ageBounds,
   ageSelectionFromBounds,
   ageSummaryText,
   legacyAgeBandSelection,
   parseAgeBound,
-  parseThreshold,
+  parseMinutesThreshold,
+  parsePage,
+  parsePageSize,
+  parseRoleFitThreshold,
+  parseSortOption,
 } from "@/lib/filters";
 import type { SearchFilters } from "@/lib/api/hooks";
 
@@ -20,16 +29,10 @@ import { PlayerSearchResults } from "./PlayerSearchResults";
 
 const DEFAULT_FILTERS: SearchFilters = {
   scope: DEFAULT_SEARCH_SCOPE,
-  sort: "rolefit_desc",
+  sort: DEFAULT_SORT,
   page: 1,
   page_size: 12,
 };
-
-function numberParam(value: string | null): number | undefined {
-  if (!value) return undefined;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : undefined;
-}
 
 export function SearchExperience() {
   const pathname = usePathname();
@@ -67,13 +70,17 @@ export function SearchExperience() {
       role: searchParams.get("role") || undefined,
       league: searchParams.get("league") || undefined,
       playstyle: searchParams.get("playstyle") || undefined,
-      // Clamped on the way in as well as on the way out: a hand-crafted
-      // ?rolefit_min=-5 or ?min_minutes=500 never reaches the API unbounded.
-      min_minutes: parseThreshold(searchParams.get("min_minutes")),
-      rolefit_min: parseThreshold(searchParams.get("rolefit_min")),
-      sort: searchParams.get("sort") || DEFAULT_FILTERS.sort,
-      page: numberParam(searchParams.get("page")) ?? DEFAULT_FILTERS.page,
-      page_size: numberParam(searchParams.get("page_size")) ?? DEFAULT_FILTERS.page_size,
+      // Clamped on the way in as well as on the way out, through the parser for the
+      // right DOMAIN in each case: a hand-crafted ?rolefit_min=-5 or
+      // ?min_minutes=25000 never reaches the API unbounded, and a realistic
+      // ?min_minutes=1500 is no longer crushed to 99 by a RoleFit-shaped ceiling.
+      min_minutes: parseMinutesThreshold(searchParams.get("min_minutes")),
+      rolefit_min: parseRoleFitThreshold(searchParams.get("rolefit_min")),
+      // Unknown or unrepresentable values are replaced by the defaults rather than
+      // forwarded, so the API never sees a request the rail cannot also display.
+      sort: parseSortOption(searchParams.get("sort")),
+      page: parsePage(searchParams.get("page")) ?? DEFAULT_FILTERS.page,
+      page_size: parsePageSize(searchParams.get("page_size")) ?? DEFAULT_FILTERS.page_size,
     };
   }, [searchParams]);
 
@@ -114,6 +121,20 @@ export function SearchExperience() {
 
   const ageSummary = ageSummaryText(ageSelectionFromBounds(filters.age_min, filters.age_max));
 
+  /**
+   * The URL follows the page the API actually served.
+   *
+   * A shared or hand-edited `?page=99` is a valid request; the API answers it with
+   * the last page that exists and reports which one that was. Rewriting the URL to
+   * that page keeps the address honest and makes reload and back/forward land on the
+   * same ledger. It is the same replace-style write as any other filter change, so
+   * no history entry is added and the scroll position is untouched, and the response
+   * is already cached under the canonical page (see `usePlayerSearch`), so this does
+   * not re-fetch. It converges immediately: the canonical page IS in range, so the
+   * next response reports it unchanged and the effect stops firing.
+   */
+  const syncCanonicalPage = (page: number) => setFilters({ ...filters, page });
+
   return (
     <div>
       <ScopeBanner text={SCOPE_BANNER} />
@@ -141,6 +162,7 @@ export function SearchExperience() {
             filters={filters}
             ageSummary={ageSummary}
             onPage={(page) => setFilters({ ...filters, page })}
+            onCanonicalPage={syncCanonicalPage}
           />
         </section>
       </div>

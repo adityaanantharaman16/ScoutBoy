@@ -13,7 +13,7 @@ vi.mock("next/navigation", () => ({
 const SHORTLIST_KEY = "scoutboy.shortlist.v1";
 
 function makeCard(over: Partial<PlayerSearchCard> = {}): PlayerSearchCard {
-  return {
+  const card = {
     id: 7,
     canonical_name: "Anton Keller",
     season: "2023/24",
@@ -38,12 +38,30 @@ function makeCard(over: Partial<PlayerSearchCard> = {}): PlayerSearchCard {
     expected_asking_high_eur: 87_800_000,
     ...over,
   } as PlayerSearchCard;
+  // An unfiltered search, so the API's result role context mirrors the best role.
+  // `ROLE_FILTERED` below is what makes the two disagree.
+  return {
+    ...card,
+    best_role_confidence: over.best_role_confidence ?? card.confidence,
+    result_role: over.result_role !== undefined ? over.result_role : card.best_role,
+    result_role_display:
+      over.result_role_display !== undefined ? over.result_role_display : card.best_role_display,
+    result_role_score:
+      over.result_role_score !== undefined ? over.result_role_score : card.best_role_score,
+    result_role_confidence: over.result_role_confidence ?? card.confidence,
+    result_role_source: over.result_role_source ?? "best_role",
+  };
 }
 
 const PROFILE_ONLY: Partial<PlayerSearchCard> = {
   best_role: null,
   best_role_display: null,
   best_role_score: null,
+  best_role_confidence: "unknown",
+  result_role: null,
+  result_role_display: null,
+  result_role_score: null,
+  result_role_confidence: "unknown",
   confidence: "unknown",
   analysis_status: "profile_only",
   evidence_status: "profile_only",
@@ -53,6 +71,27 @@ const PROFILE_ONLY: Partial<PlayerSearchCard> = {
   market_label: null,
   expected_asking_low_eur: null,
   expected_asking_high_eur: null,
+};
+
+/**
+ * A row from a ROLE-FILTERED search, where the two contexts genuinely disagree:
+ * the API selected Touchline Winger (54.8, low confidence) while the player's own
+ * best role is Shadow Striker (88.4, high confidence).
+ *
+ * Every value differs on both axes, so a row reading the wrong field is visible in
+ * the score, the role caption AND the confidence segment.
+ */
+const ROLE_FILTERED: Partial<PlayerSearchCard> = {
+  best_role: "shadow_striker",
+  best_role_display: "Shadow Striker",
+  best_role_score: 88.4,
+  best_role_confidence: "high",
+  result_role: "touchline_winger",
+  result_role_display: "Touchline Winger",
+  result_role_score: 54.8,
+  result_role_confidence: "low",
+  result_role_source: "selected_role",
+  confidence: "low",
 };
 
 function renderRow(over: Partial<PlayerSearchCard> = {}) {
@@ -188,6 +227,66 @@ describe("Discovery status structure", () => {
       "status-line-market",
       "status-line-playstyles",
     ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// the applicable role context (Phase 8.1A)
+//
+// The row must display the SAME stored role rating the API filtered and ordered it
+// by. Reading `best_role_*` instead is the defect this replaces: a role-filtered
+// ledger showed each player's best role while being ranked by the selected one.
+// ---------------------------------------------------------------------------
+describe("Discovery row role context", () => {
+  it("displays the selected role's stored score, role and confidence when a role is filtered", () => {
+    renderRow(ROLE_FILTERED);
+
+    // the SELECTED role's figures, not the best role's
+    expect(screen.getByTestId("score-readout")).toHaveTextContent("54.8");
+    expect(screen.getByTestId("score-caption").textContent).toBe("Touchline Winger");
+    expect(screen.getByTestId("card-status")).toHaveTextContent("Low Confidence");
+    expect(
+      within(screen.getByTestId("card-status")).getByTestId("confidence-meter"),
+    ).toHaveAttribute("data-confidence", "low");
+    expect(screen.getByTestId("card-status")).toHaveAccessibleName(
+      "Evidence coverage: high. RoleFit confidence: low.",
+    );
+  });
+
+  it("never leaks the best-role score, role or confidence into a role-filtered row", () => {
+    renderRow(ROLE_FILTERED);
+    const row = screen.getByTestId("result-row");
+    expect(row).not.toHaveTextContent("88.4");
+    expect(row).not.toHaveTextContent("Shadow Striker");
+    expect(row).not.toHaveTextContent("High Confidence");
+  });
+
+  it("displays the best role when no role filter is active", () => {
+    renderRow();
+    expect(screen.getByTestId("score-readout")).toHaveTextContent("88.4");
+    expect(screen.getByTestId("score-caption").textContent).toBe("Shadow Striker");
+    expect(screen.getByTestId("card-status")).toHaveTextContent("High Confidence");
+  });
+
+  it("keeps a long selected role name wrapping on word boundaries in the hero track", () => {
+    renderRow({
+      ...ROLE_FILTERED,
+      result_role: "ball_winning_midfielder",
+      result_role_display: "Ball-Winning Midfielder",
+    });
+    const caption = screen.getByTestId("score-caption");
+    expect(caption.textContent).toBe("Ball-Winning Midfielder");
+    expect(
+      [...caption.querySelectorAll("span.whitespace-nowrap")].map((el) => el.textContent),
+    ).toEqual(["Ball-Winning", "Midfielder"]);
+  });
+
+  it("shows no score at all for an unrated row, in either context", () => {
+    renderRow(PROFILE_ONLY);
+    expect(screen.queryByTestId("score-readout")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Profile Only").length).toBeGreaterThan(0);
+    // a missing score is never rendered as a real zero
+    expect(screen.getByTestId("result-row")).not.toHaveTextContent("0.0");
   });
 });
 

@@ -6,10 +6,11 @@ import math
 from dataclasses import dataclass, field
 from typing import Optional
 
+from scoutboy_shared import DISCOVERABLE_POSITION_GROUPS, position_group_for
 from scoutboy_shared import MVP_UNIVERSE_KEY as UNIVERSE_KEY
-from scoutboy_shared import position_group_for
 from sqlalchemy.orm import Session
 
+from app.core.errors import QueryValidationError
 from app.models.orm import Player, RoleRating
 from app.models.schemas import (
     DataSource,
@@ -31,6 +32,27 @@ SEARCH_SCOPES = {"analyzed", "all_records", "high_coverage_u23"}
 AGE_BANDS = {"all", "u23", "24_26", "27_30", "31_plus"}
 UNIVERSE_ALIASES = {"mvp": "high_coverage_u23", "all": "all_records"}
 
+# The accepted player-search sort modes, and the one definition of the set. An
+# unknown value is rejected rather than silently falling back to RoleFit
+# descending, which used to make a typo look like a deliberate ranking.
+#
+# `age_desc` is API-only on purpose: the Discovery Sort control has never offered
+# it, but it is a legitimate documented capability for direct callers, so it stays.
+SEARCH_SORTS = (
+    "rolefit_desc",
+    "rolefit_asc",
+    "age_asc",
+    "age_desc",
+    "value_desc",
+    "value_asc",
+    "name_asc",
+)
+DEFAULT_SEARCH_SORT = "rolefit_desc"
+
+# Which role context a result's `result_role*` fields describe.
+RESULT_ROLE_BEST = "best_role"
+RESULT_ROLE_SELECTED = "selected_role"
+
 
 @dataclass
 class _Row:
@@ -48,6 +70,11 @@ class _Row:
     top_playstyles: list = field(default_factory=list)
     market: object = None
     is_high_coverage: bool = False
+    #: The stored rating this row is being judged by, resolved once per request by
+    #: `_apply_role_context`. Filtering, ordering and serialization all read this
+    #: one field, so the displayed role can never disagree with the ranked one.
+    result: Optional[RoleRating] = None
+    result_role_source: str = RESULT_ROLE_BEST
 
 
 def _load_rows(session: Session, season) -> list[_Row]:
@@ -68,6 +95,7 @@ def _load_rows(session: Session, season) -> list[_Row]:
         pg = appr.position_group or position_group_for(player.primary_position or "")
         pls = playstyles.get(pid, [])
         rlist = ratings.get(pid, [])
+        best = C.best_rating(rlist)
         rows.append(
             _Row(
                 player=player,
@@ -79,13 +107,25 @@ def _load_rows(session: Session, season) -> list[_Row]:
                 position_group=pg,
                 age=C.age_for(player.birth_date, season.end_date),
                 ratings=rlist,
-                best=C.best_rating(rlist),
+                best=best,
+                # No role context has been requested at load time, so a row starts
+                # out describing its own best role. `_apply_role_context` is what
+                # narrows it to a selected role.
+                result=best,
                 playstyle_keys={p.playstyle_key for p in pls if not p.is_concern},
                 top_playstyles=C.top_playstyle_names(pls),
                 market=markets.get(pid),
             )
         )
     return rows
+
+
+def _apply_role_context(rows: list[_Row], role: Optional[str]) -> None:
+    """Resolve, once per request, which stored rating each row is judged by."""
+    source = RESULT_ROLE_SELECTED if role else RESULT_ROLE_BEST
+    for row in rows:
+        row.result = C.applicable_rating(row.ratings, role)
+        row.result_role_source = source
 
 
 def _evidence_status(row: _Row) -> str:
@@ -100,6 +140,9 @@ def _to_card(row: _Row, season_label: str) -> PlayerSearchCard:
     m = row.market
     evidence = _evidence_status(row)
     has_analysis = bool(row.ratings)
+    names = C.role_display_map()
+    best, result = row.best, row.result
+    result_confidence = result.confidence if result else "unknown"
     return PlayerSearchCard(
         id=row.player.id,
         canonical_name=row.player.canonical_name,
@@ -109,10 +152,19 @@ def _to_card(row: _Row, season_label: str) -> PlayerSearchCard:
         league=row.league_name,
         primary_position=row.player.primary_position,
         position_group=row.position_group,
-        best_role=row.best.role_key if row.best else None,
-        best_role_display=C.role_display_map().get(row.best.role_key) if row.best else None,
-        best_role_score=row.best.final_score if row.best else None,
-        confidence=row.best.confidence if row.best else "unknown",
+        # The player's own best role, whatever was filtered. Never relabelled.
+        best_role=best.role_key if best else None,
+        best_role_display=names.get(best.role_key) if best else None,
+        best_role_score=best.final_score if best else None,
+        best_role_confidence=best.confidence if best else "unknown",
+        # The stored rating this result was filtered and ordered by, which is the
+        # same object `keep` and `sort_key` used.
+        result_role=result.role_key if result else None,
+        result_role_display=names.get(result.role_key) if result else None,
+        result_role_score=result.final_score if result else None,
+        result_role_confidence=result_confidence,
+        result_role_source=row.result_role_source,
+        confidence=result_confidence,
         analysis_status="analyzed" if has_analysis else "profile_only",
         evidence_status=evidence,
         has_rolefit_analysis=has_analysis,
@@ -132,6 +184,71 @@ def _normalize_scope(scope: Optional[str], universe: Optional[str]) -> str:
     if universe in UNIVERSE_ALIASES:
         return UNIVERSE_ALIASES[universe]
     return "analyzed"
+
+
+def _asking_low(row: _Row) -> Optional[float]:
+    """The lowest plausible expected ask, or None when it is unknown.
+
+    This is the explicit scalar used to order the asking-price sorts. The expected
+    ask is a range, and no midpoint, composite or hidden market score is invented
+    from it: one published endpoint of the stored interval does the ordering.
+    """
+    return getattr(row.market, "expected_asking_low_eur", None) if row.market else None
+
+
+def _asking_high(row: _Row) -> Optional[float]:
+    return getattr(row.market, "expected_asking_high_eur", None) if row.market else None
+
+
+def _passes_value_range(row: _Row, value_min: Optional[float], value_max: Optional[float]) -> bool:
+    """Absolute-EUR interval overlap against the stored expected-asking range.
+
+    `value_min` needs a known HIGH endpoint (the most a club might ask has to reach
+    the requested floor); `value_max` needs a known LOW endpoint (the least they
+    might ask has to sit under the requested ceiling). With both active the player's
+    interval must overlap the requested one, which requires both endpoints. A
+    missing required endpoint fails the predicate.
+    """
+    if value_min is not None:
+        high = _asking_high(row)
+        if high is None or high < value_min:
+            return False
+    if value_max is not None:
+        low = _asking_low(row)
+        if low is None or low > value_max:
+            return False
+    return True
+
+
+def _validate_query(
+    *,
+    sort: str,
+    position_group: Optional[str],
+    role: Optional[str],
+    value_min: Optional[float],
+    value_max: Optional[float],
+) -> None:
+    """Reject query values that can only be checked against the domain or config.
+
+    `scope`, `universe` and `age_band` are deliberately absent: their documented
+    compatibility behaviour is to fall back to a default, and changing that would
+    break links this project promised to keep working.
+    """
+    if sort not in SEARCH_SORTS:
+        raise QueryValidationError(
+            "sort", sort, f"Unknown sort. Accepted: {', '.join(SEARCH_SORTS)}."
+        )
+    if position_group is not None and position_group not in DISCOVERABLE_POSITION_GROUPS:
+        raise QueryValidationError(
+            "position_group",
+            position_group,
+            f"Unknown position group. Accepted: {', '.join(DISCOVERABLE_POSITION_GROUPS)}.",
+        )
+    # Roles come from configs/roles/*.yaml, so the configured set is the authority.
+    if role is not None and role not in C.role_display_map():
+        raise QueryValidationError("role", role, "Unknown role key.")
+    if value_min is not None and value_max is not None and value_min > value_max:
+        raise QueryValidationError("value_min", value_min, "value_min must not exceed value_max.")
 
 
 def _age_band_bounds(age_band: Optional[str]) -> tuple[Optional[float], Optional[float]]:
@@ -163,17 +280,25 @@ def search_players(
     playstyle=None,
     value_min=None,
     value_max=None,
-    sort="rolefit_desc",
+    sort=DEFAULT_SEARCH_SORT,
     scope=None,
     age_band=None,
     universe=None,
     page=1,
     page_size=20,
 ) -> Paginated[PlayerSearchCard]:
+    _validate_query(
+        sort=sort,
+        position_group=position_group,
+        role=role,
+        value_min=value_min,
+        value_max=value_max,
+    )
     season = repo.get_current_season(session)
     if season is None:
-        return Paginated(items=[], total=0, page=page, page_size=page_size, total_pages=0)
+        return Paginated(items=[], total=0, page=1, page_size=page_size, total_pages=0)
     rows = _load_rows(session, season)
+    _apply_role_context(rows, role)
 
     selected_scope = _normalize_scope(scope, universe)
     selected_age_band = age_band if age_band in AGE_BANDS else "all"
@@ -186,11 +311,14 @@ def search_players(
 
     band_min, band_max = _age_band_bounds(selected_age_band)
 
+    # Both read the row's already-resolved role context, so a RoleFit bound, the
+    # RoleFit ordering, the confidence tie-break and the serialized row are all
+    # talking about the same stored rating.
     def score_for(row: _Row) -> Optional[float]:
-        if role:
-            rr = next((r for r in row.ratings if r.role_key == role), None)
-            return rr.final_score if rr else None
-        return row.best.final_score if row.best else None
+        return row.result.final_score if row.result else None
+
+    def confidence_for(row: _Row) -> int:
+        return _CONF_ORDER.get(row.result.confidence if row.result else "unknown", 0)
 
     def keep(row: _Row) -> bool:
         if selected_scope == "analyzed" and not row.ratings:
@@ -214,7 +342,8 @@ def search_players(
                 return False
         if position_group and row.position_group != position_group:
             return False
-        if role and not any(r.role_key == role for r in row.ratings):
+        # A selected role qualifies a player only when that exact rating is stored.
+        if role and row.result is None:
             return False
         if (
             league
@@ -243,25 +372,31 @@ def search_players(
             return False
         if playstyle and playstyle not in row.playstyle_keys:
             return False
-        if value_min is not None and (
-            row.market is None or (row.market.expected_asking_high_eur or 0) < value_min
-        ):
-            return False
-        if value_max is not None and (
-            row.market is None or (row.market.expected_asking_low_eur or 0) > value_max
-        ):
+        # Absolute EUR against the stored expected-asking interval. A missing
+        # endpoint FAILS an active predicate: it is unknown, and unknown is not a
+        # cheap player. It was previously read as 0, which let players with no
+        # market information pass a value_max and fail a value_min for no reason
+        # other than the substitution.
+        if not _passes_value_range(row, value_min, value_max):
             return False
         return True
 
     filtered = [r for r in rows if keep(r)]
 
-    # deterministic sort with explicit tie-breaks
+    # Deterministic sort with explicit tie-breaks. Every mode ends with canonical
+    # name then player id, and no missing value is turned into a meaningful zero:
+    # unrated and price-unknown records carry a leading "known last" rank instead.
     def sort_key(row: _Row):
         s = score_for(row)
         rated = s is not None
-        score_value = s if s is not None else 0.0
-        conf = _CONF_ORDER.get(row.best.confidence if row.best else "unknown", 0)
-        asking = row.market.expected_asking_high_eur if row.market else 0.0
+        score_value = s if rated else 0.0
+        conf = confidence_for(row)
+        low = _asking_low(row)
+        priced = low is not None
+        # `not priced` first in BOTH price directions, so a player with no market
+        # information sorts after every known lower bound either way round.
+        price_rank = 0 if priced else 1
+        price_value = low if priced else 0.0
         name = row.player.canonical_name.lower()
         pid = row.player.id
         primary = {
@@ -269,23 +404,28 @@ def search_players(
             "rolefit_asc": (0 if rated else 1, score_value, -conf),
             "age_asc": (row.age if row.age is not None else 999,),
             "age_desc": (-(row.age if row.age is not None else -1),),
-            "value_desc": (-(asking or 0),),
-            "value_asc": (asking or 0,),
+            "value_desc": (price_rank, -price_value),
+            "value_asc": (price_rank, price_value),
             "name_asc": (name,),
-        }.get(sort, (0 if rated else 1, -score_value, -conf))
+        }[sort]
         return (*primary, name, pid)
 
     filtered.sort(key=sort_key)
 
     total = len(filtered)
-    start = (page - 1) * page_size
+    total_pages = math.ceil(total / page_size) if page_size else 0
+    # A valid request for a page past the end returns the last page that exists,
+    # never an empty ledger that would read as "no players match these filters".
+    # A genuinely empty result is page 1.
+    effective_page = min(page, total_pages) if total_pages else 1
+    start = (effective_page - 1) * page_size
     page_items = filtered[start : start + page_size]
     return Paginated(
         items=[_to_card(r, season.label) for r in page_items],
         total=total,
-        page=page,
+        page=effective_page,
         page_size=page_size,
-        total_pages=math.ceil(total / page_size) if page_size else 0,
+        total_pages=total_pages,
     )
 
 

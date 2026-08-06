@@ -79,6 +79,89 @@ one-sided threshold, because the control expresses a single direction by design.
 The stale `age_band` parameter is dropped from the URL as soon as the new control
 is used, and an explicit `age_min`/`age_max` on the same URL wins over it.
 
+## Selected-role result semantics
+
+Corrected in Phase 8.1A; see
+[docs/milestone_8_discovery_contract.md](milestone_8_discovery_contract.md).
+
+A Discovery result is always **about one stored role rating**, and that one rating
+qualifies it, bounds it, orders it and is what the row displays.
+
+| Query | Result role context |
+| ----------------------- | ------------------------------------------------ |
+| no `role`               | the player's own stored **best role**            |
+| `role=<key>`            | the **stored rating for that role**              |
+
+With `role=<key>`:
+
+- only players with a stored rating for that role qualify;
+- `rolefit_min` / `rolefit_max` apply to the selected role's stored score;
+- `sort=rolefit_desc` / `rolefit_asc` order by that score and break ties on that
+  rating's stored confidence;
+- the row shows that role, its stored score and its stored confidence.
+
+The response reports both contexts separately: `best_role`, `best_role_display`,
+`best_role_score` and `best_role_confidence` always describe the player's own best
+role, while `result_role`, `result_role_display`, `result_role_score` and
+`result_role_confidence` describe the context actually used.
+`result_role_source` is `best_role` or `selected_role`. `confidence` carries the
+applicable context's confidence and equals `result_role_confidence`.
+
+No `best_*` field is ever reused to carry a non-best role, nothing is recomputed, and
+a player's stored best role is never overwritten or relabelled by a filter.
+
+## Minimum minutes and RoleFit bounds
+
+Two different domains, two different ranges. They are not derived from one another.
+
+| Parameter                     | Range                      |
+| ----------------------------- | -------------------------- |
+| `min_minutes`                 | whole minutes, 0-10,000    |
+| `rolefit_min` / `rolefit_max` | RoleFit points, 0-99       |
+
+`min_minutes` supports realistic season thresholds such as 450, 900, 1,500 and 2,000.
+Empty means no minutes threshold; `0` is a real accepted value and is not confused
+with empty. 10,000 is a documented technical safety ceiling (`MINUTES_FILTER_MAX` in
+`scoutboy_shared`) rather than a football limit, and stored or displayed player
+minutes are never capped or altered by it. `-1` and `10001` are validation errors.
+
+`rolefit_min` / `rolefit_max` stay on the authoritative 0-99 RoleFit scale
+(`DISPLAY_SCALE_MIN` / `DISPLAY_SCALE_MAX`). The RoleFit calculation and display scale
+are unchanged.
+
+## Asking-price ordering
+
+`sort=value_asc` and `sort=value_desc` order by `expected_asking_low_eur` — the lowest
+plausible expected ask — as the explicit scalar. The expected ask is a range, and no
+midpoint, composite or hidden market score is invented from it.
+
+- ascending: known lower bounds from lowest to highest;
+- descending: known lower bounds from highest to lowest;
+- **a missing lower bound sorts after every known value in both directions**;
+- missing market information is never represented as EUR 0;
+- both directions finish with canonical-name then player-id tie-breaks.
+
+The API-only `value_min` / `value_max` predicates are absolute EUR, must be
+non-negative, and require the endpoint they depend on to be known: `value_min` needs
+an expected-asking high endpoint at or above it, `value_max` needs an expected-asking
+low endpoint at or below it, and an active range needs both endpoints plus an overlap
+with the requested interval. Missing information fails an active predicate rather than
+passing as zero. An active range with `value_min > value_max` is rejected.
+
+## Sort modes and pagination
+
+Accepted sort values are `rolefit_desc` (default), `rolefit_asc`, `age_asc`,
+`age_desc`, `value_desc`, `value_asc` and `name_asc`. An unknown value is a validation
+error, not a silent fallback to RoleFit descending. `age_desc` is deliberately
+API-only: the Discovery Sort control has no option for it, so a URL carrying it is not
+forwarded and the visible control always agrees with the request that was sent.
+
+`page` is a 1-based integer and `page_size` is 1-100. Any filter or sort change resets
+Discovery to page 1. A valid request for a page beyond the available pages returns the
+last available page and reports the page actually served; the browser URL is
+synchronized to it, so an out-of-range page is never presented as "no players match
+these filters". A genuinely empty result is page 1.
+
 ## Evidence states
 
 Search cards derive evidence from season-specific analysis and high-coverage membership:

@@ -551,10 +551,28 @@ def test_player_not_found_404(client):
 
 
 # ---------------------------------------------------------------------------
-# Bounded numeric query validation (0-99, inclusive)
+# Bounded numeric query validation
+#
+# Two separate domains, two separate ceilings: RoleFit stays on the authoritative
+# 0-99 scale, minutes run 0-10,000. The detailed minutes/RoleFit separation lives in
+# test_discovery_contract.py; what stays here is the shared out-of-range behaviour.
 # ---------------------------------------------------------------------------
-@pytest.mark.parametrize("param", ["min_minutes", "rolefit_min", "rolefit_max"])
-@pytest.mark.parametrize("value", ["-1", "100", "1000", "-0.5"])
+@pytest.mark.parametrize(
+    "param,value",
+    [
+        ("min_minutes", "-1"),
+        ("min_minutes", "-0.5"),
+        ("min_minutes", "10001"),
+        ("rolefit_min", "-1"),
+        ("rolefit_min", "100"),
+        ("rolefit_min", "1000"),
+        ("rolefit_min", "-0.5"),
+        ("rolefit_max", "-1"),
+        ("rolefit_max", "100"),
+        ("rolefit_max", "1000"),
+        ("rolefit_max", "-0.5"),
+    ],
+)
 def test_numeric_filters_reject_values_outside_the_permitted_range(client, param, value):
     """A directly crafted out-of-range request gets a predictable validation error
     rather than silently producing a misleading result set."""
@@ -564,8 +582,18 @@ def test_numeric_filters_reject_values_outside_the_permitted_range(client, param
     assert any(param in str(err.get("loc", "")) for err in body["detail"])
 
 
-@pytest.mark.parametrize("param", ["min_minutes", "rolefit_min", "rolefit_max"])
-@pytest.mark.parametrize("value", ["0", "99"])
+@pytest.mark.parametrize(
+    "param,value",
+    [
+        ("min_minutes", "0"),
+        ("min_minutes", "99"),
+        ("min_minutes", "10000"),
+        ("rolefit_min", "0"),
+        ("rolefit_min", "99"),
+        ("rolefit_max", "0"),
+        ("rolefit_max", "99"),
+    ],
+)
 def test_numeric_filters_accept_both_inclusive_bounds(client, param, value):
     assert client.get(f"/api/players?{param}={value}&page_size=5").status_code == 200
 
@@ -577,7 +605,7 @@ def test_zero_threshold_is_a_real_threshold_not_an_absent_one(client):
     assert zero["total"] == absent["total"]
 
     # ...and a real threshold still narrows, proving the value reaches the filter.
-    high = client.get("/api/players?scope=all_records&min_minutes=99&page_size=100").json()
+    high = client.get("/api/players?scope=all_records&min_minutes=1500&page_size=100").json()
     assert high["total"] <= zero["total"]
 
 

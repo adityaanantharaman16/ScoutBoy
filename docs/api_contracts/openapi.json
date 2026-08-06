@@ -75,8 +75,10 @@
                   "type": "null"
                 }
               ],
+              "description": "'ATT', 'MID', 'DEF' or 'GK'. Validated against the domain's discoverable position groups; an unknown value is a 422.",
               "title": "Position Group"
-            }
+            },
+            "description": "'ATT', 'MID', 'DEF' or 'GK'. Validated against the domain's discoverable position groups; an unknown value is a 422."
           },
           {
             "name": "role",
@@ -91,8 +93,10 @@
                   "type": "null"
                 }
               ],
+              "description": "A configured role key. Only players with a STORED rating for it qualify, and the result's role context becomes that role: its stored score and confidence do the filtering, the ordering, the confidence tie-break and the display. An unknown role key is a 422.",
               "title": "Role"
-            }
+            },
+            "description": "A configured role key. Only players with a STORED rating for it qualify, and the result's role context becomes that role: its stored score and confidence do the filtering, the ordering, the confidence tie-break and the display. An unknown role key is a 422."
           },
           {
             "name": "league",
@@ -150,15 +154,17 @@
               "anyOf": [
                 {
                   "type": "integer",
-                  "maximum": 99,
+                  "maximum": 10000,
                   "minimum": 0
                 },
                 {
                   "type": "null"
                 }
               ],
+              "description": "Whole season minutes, 0-10000 inclusive. Omit for no minutes threshold; 0 is a real accepted value, not 'unset'. Unrelated to the RoleFit scale.",
               "title": "Min Minutes"
-            }
+            },
+            "description": "Whole season minutes, 0-10000 inclusive. Omit for no minutes threshold; 0 is a real accepted value, not 'unset'. Unrelated to the RoleFit scale."
           },
           {
             "name": "rolefit_min",
@@ -175,8 +181,10 @@
                   "type": "null"
                 }
               ],
+              "description": "Applicable-role-context RoleFit floor on the authoritative 0-99 scale.",
               "title": "Rolefit Min"
-            }
+            },
+            "description": "Applicable-role-context RoleFit floor on the authoritative 0-99 scale."
           },
           {
             "name": "rolefit_max",
@@ -193,8 +201,10 @@
                   "type": "null"
                 }
               ],
+              "description": "Applicable-role-context RoleFit ceiling on the authoritative 0-99 scale.",
               "title": "Rolefit Max"
-            }
+            },
+            "description": "Applicable-role-context RoleFit ceiling on the authoritative 0-99 scale."
           },
           {
             "name": "playstyle",
@@ -219,14 +229,17 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "number"
+                  "type": "number",
+                  "minimum": 0
                 },
                 {
                   "type": "null"
                 }
               ],
+              "description": "Absolute EUR. Requires a KNOWN expected-asking high endpoint, which must reach this floor; a player with unknown market information fails rather than being read as 0.",
               "title": "Value Min"
-            }
+            },
+            "description": "Absolute EUR. Requires a KNOWN expected-asking high endpoint, which must reach this floor; a player with unknown market information fails rather than being read as 0."
           },
           {
             "name": "value_max",
@@ -235,14 +248,17 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "number"
+                  "type": "number",
+                  "minimum": 0
                 },
                 {
                   "type": "null"
                 }
               ],
+              "description": "Absolute EUR. Requires a KNOWN expected-asking low endpoint at or below this ceiling. Rejected when value_min exceeds value_max.",
               "title": "Value Max"
-            }
+            },
+            "description": "Absolute EUR. Requires a KNOWN expected-asking low endpoint at or below this ceiling. Rejected when value_min exceeds value_max."
           },
           {
             "name": "sort",
@@ -250,9 +266,11 @@
             "required": false,
             "schema": {
               "type": "string",
+              "description": "One of: rolefit_desc, rolefit_asc, age_asc, age_desc, value_desc, value_asc, name_asc. Unknown values are a 422 rather than a silent fallback. RoleFit modes order by the applicable role context's stored score and break ties on its stored confidence; the asking-price modes order by expected_asking_low_eur with unknown lower bounds last in both directions. 'age_desc' is API-only: the Discovery Sort control does not offer it.",
               "default": "rolefit_desc",
               "title": "Sort"
-            }
+            },
+            "description": "One of: rolefit_desc, rolefit_asc, age_asc, age_desc, value_desc, value_asc, name_asc. Unknown values are a 422 rather than a silent fallback. RoleFit modes order by the applicable role context's stored score and break ties on its stored confidence; the asking-price modes order by expected_asking_low_eur with unknown lower bounds last in both directions. 'age_desc' is API-only: the Discovery Sort control does not offer it."
           },
           {
             "name": "scope",
@@ -315,9 +333,11 @@
             "schema": {
               "type": "integer",
               "minimum": 1,
+              "description": "1-based. A page past the end of a non-empty result set returns the last available page, and the response reports the page actually served.",
               "default": 1,
               "title": "Page"
-            }
+            },
+            "description": "1-based. A page past the end of a non-empty result set returns the last available page, and the response reports the page actually served."
           },
           {
             "name": "page_size",
@@ -2963,6 +2983,54 @@
             ],
             "title": "Best Role Score"
           },
+          "best_role_confidence": {
+            "type": "string",
+            "title": "Best Role Confidence",
+            "default": "unknown"
+          },
+          "result_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Role"
+          },
+          "result_role_display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Role Display"
+          },
+          "result_role_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Role Score"
+          },
+          "result_role_confidence": {
+            "type": "string",
+            "title": "Result Role Confidence",
+            "default": "unknown"
+          },
+          "result_role_source": {
+            "type": "string",
+            "title": "Result Role Source",
+            "default": "best_role"
+          },
           "confidence": {
             "type": "string",
             "title": "Confidence",
@@ -3058,7 +3126,8 @@
           "canonical_name",
           "season"
         ],
-        "title": "PlayerSearchCard"
+        "title": "PlayerSearchCard",
+        "description": "One Discovery result.\n\nTwo role contexts are reported side by side and never conflated:\n\n* ``best_role*`` is the player's own highest stored role rating, independent of\n  the query. It always describes the best role, whatever was filtered.\n* ``result_role*`` is the stored rating this result was actually filtered and\n  ordered by, and is what a row displays. With no ``role`` filter it is the\n  best-role rating; with ``role=<key>`` it is that role's stored rating.\n\n``result_role_source`` says which of the two the caller is looking at. Nothing\nhere is recomputed: every score and confidence is the stored value."
       },
       "PlaystyleBadge": {
         "properties": {

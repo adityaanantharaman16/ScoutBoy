@@ -127,6 +127,24 @@ def best_rating(ratings: list[RoleRating]) -> Optional[RoleRating]:
     return sorted(ratings, key=lambda r: (-r.final_score, r.role_key))[0]
 
 
+def applicable_rating(
+    ratings: list[RoleRating], role_key: Optional[str] = None
+) -> Optional[RoleRating]:
+    """The one stored rating a role-aware query is about.
+
+    With an explicit ``role_key`` that is the stored rating for exactly that role,
+    or ``None`` when the player has none (which is what disqualifies them from a
+    role-filtered result). With no role it is the player's stored best rating.
+
+    This is the single definition of "the applicable rating": filtering, ordering
+    and serialization all resolve it through here, so they cannot drift into three
+    slightly different readings of the same query.
+    """
+    if role_key:
+        return next((r for r in ratings if r.role_key == role_key), None)
+    return best_rating(ratings)
+
+
 def playstyle_badges(playstyles) -> tuple[list[PlaystyleBadge], list[PlaystyleBadge]]:
     positives, concerns = [], []
     meta = playstyle_meta_map()

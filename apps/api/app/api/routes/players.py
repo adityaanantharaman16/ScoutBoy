@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
-from scoutboy_shared import DISPLAY_SCALE_MAX
+from scoutboy_shared import DISPLAY_SCALE_MAX, MINUTES_FILTER_MAX
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
@@ -26,9 +26,18 @@ from app.services import (
 
 router = APIRouter(prefix="/players", tags=["players"])
 
-# Inclusive upper bound for the numeric Discovery filters. Derived from the shared
-# RoleFit scale (0-99) so the filter range and the scoring range are one decision.
-SCORE_FILTER_MAX = int(DISPLAY_SCALE_MAX)
+# Two SEPARATE domains, each with its own inclusive ceiling. They were briefly one
+# constant, which capped the minutes filter at 99 and made a realistic threshold
+# such as 450 a validation error.
+#
+# RoleFit: the authoritative 0-99 scoring scale, so a bound can never ask for a
+# score the engine cannot produce.
+ROLEFIT_FILTER_MAX = int(DISPLAY_SCALE_MAX)
+# Minutes: a technical safety ceiling in minutes, defined in the shared package and
+# unrelated to the RoleFit scale. Stored/displayed minutes are never capped by it.
+MIN_MINUTES_FILTER_MAX = MINUTES_FILTER_MAX
+# Largest page the API will serve in one request.
+PAGE_SIZE_MAX = 100
 
 
 @router.get("", response_model=Paginated[PlayerSearchCard])
@@ -36,23 +45,85 @@ def search_players(
     q: Optional[str] = None,
     age_min: Optional[float] = None,
     age_max: Optional[float] = None,
-    position_group: Optional[str] = None,
-    role: Optional[str] = None,
+    position_group: Optional[str] = Query(
+        None,
+        description=(
+            "'ATT', 'MID', 'DEF' or 'GK'. Validated against the domain's "
+            "discoverable position groups; an unknown value is a 422."
+        ),
+    ),
+    role: Optional[str] = Query(
+        None,
+        description=(
+            "A configured role key. Only players with a STORED rating for it "
+            "qualify, and the result's role context becomes that role: its stored "
+            "score and confidence do the filtering, the ordering, the confidence "
+            "tie-break and the display. An unknown role key is a 422."
+        ),
+    ),
     league: Optional[str] = None,
     club: Optional[str] = None,
     nationality: Optional[str] = None,
-    # The two Discovery numeric thresholds and their RoleFit ceiling share one
-    # inclusive 0-99 range, declared on the route so a directly crafted request
-    # outside it gets a 422 rather than silently producing a misleading result set.
-    # `SCORE_FILTER_MAX` is the shared RoleFit scale bound, so the filter ceiling
-    # can never drift away from what the engine can actually produce.
-    min_minutes: Optional[int] = Query(None, ge=0, le=SCORE_FILTER_MAX),
-    rolefit_min: Optional[float] = Query(None, ge=0, le=SCORE_FILTER_MAX),
-    rolefit_max: Optional[float] = Query(None, ge=0, le=SCORE_FILTER_MAX),
+    # Bounds are declared here so a directly crafted out-of-range request gets a
+    # 422 rather than silently producing a misleading result set. Minutes and
+    # RoleFit carry SEPARATE ceilings: see the module constants.
+    min_minutes: Optional[int] = Query(
+        None,
+        ge=0,
+        le=MIN_MINUTES_FILTER_MAX,
+        description=(
+            f"Whole season minutes, 0-{MIN_MINUTES_FILTER_MAX} inclusive. Omit for "
+            "no minutes threshold; 0 is a real accepted value, not 'unset'. "
+            "Unrelated to the RoleFit scale."
+        ),
+    ),
+    rolefit_min: Optional[float] = Query(
+        None,
+        ge=0,
+        le=ROLEFIT_FILTER_MAX,
+        description=(
+            f"Applicable-role-context RoleFit floor on the authoritative "
+            f"0-{ROLEFIT_FILTER_MAX} scale."
+        ),
+    ),
+    rolefit_max: Optional[float] = Query(
+        None,
+        ge=0,
+        le=ROLEFIT_FILTER_MAX,
+        description=(
+            f"Applicable-role-context RoleFit ceiling on the authoritative "
+            f"0-{ROLEFIT_FILTER_MAX} scale."
+        ),
+    ),
     playstyle: Optional[str] = None,
-    value_min: Optional[float] = None,
-    value_max: Optional[float] = None,
-    sort: str = "rolefit_desc",
+    value_min: Optional[float] = Query(
+        None,
+        ge=0,
+        description=(
+            "Absolute EUR. Requires a KNOWN expected-asking high endpoint, which "
+            "must reach this floor; a player with unknown market information fails "
+            "rather than being read as 0."
+        ),
+    ),
+    value_max: Optional[float] = Query(
+        None,
+        ge=0,
+        description=(
+            "Absolute EUR. Requires a KNOWN expected-asking low endpoint at or "
+            "below this ceiling. Rejected when value_min exceeds value_max."
+        ),
+    ),
+    sort: str = Query(
+        players_service.DEFAULT_SEARCH_SORT,
+        description=(
+            "One of: " + ", ".join(players_service.SEARCH_SORTS) + ". Unknown values "
+            "are a 422 rather than a silent fallback. RoleFit modes order by the "
+            "applicable role context's stored score and break ties on its stored "
+            "confidence; the asking-price modes order by expected_asking_low_eur "
+            "with unknown lower bounds last in both directions. 'age_desc' is "
+            "API-only: the Discovery Sort control does not offer it."
+        ),
+    ),
     scope: Optional[str] = Query(
         None,
         description=(
@@ -73,8 +144,15 @@ def search_players(
         None,
         description="Legacy alias: 'mvp' maps to high_coverage_u23; 'all' maps to all_records. Ignored when scope is supplied.",
     ),
-    page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page: int = Query(
+        1,
+        ge=1,
+        description=(
+            "1-based. A page past the end of a non-empty result set returns the "
+            "last available page, and the response reports the page actually served."
+        ),
+    ),
+    page_size: int = Query(20, ge=1, le=PAGE_SIZE_MAX),
     db: Session = Depends(get_db),
 ):
     return players_service.search_players(

@@ -944,7 +944,21 @@ export interface components {
              */
             concerns: components["schemas"]["PlaystyleBadge"][];
         };
-        /** PlayerSearchCard */
+        /**
+         * PlayerSearchCard
+         * @description One Discovery result.
+         *
+         *     Two role contexts are reported side by side and never conflated:
+         *
+         *     * ``best_role*`` is the player's own highest stored role rating, independent of
+         *       the query. It always describes the best role, whatever was filtered.
+         *     * ``result_role*`` is the stored rating this result was actually filtered and
+         *       ordered by, and is what a row displays. With no ``role`` filter it is the
+         *       best-role rating; with ``role=<key>`` it is that role's stored rating.
+         *
+         *     ``result_role_source`` says which of the two the caller is looking at. Nothing
+         *     here is recomputed: every score and confidence is the stored value.
+         */
         PlayerSearchCard: {
             /** Id */
             id: number;
@@ -968,6 +982,27 @@ export interface components {
             best_role_display?: string | null;
             /** Best Role Score */
             best_role_score?: number | null;
+            /**
+             * Best Role Confidence
+             * @default unknown
+             */
+            best_role_confidence: string;
+            /** Result Role */
+            result_role?: string | null;
+            /** Result Role Display */
+            result_role_display?: string | null;
+            /** Result Role Score */
+            result_role_score?: number | null;
+            /**
+             * Result Role Confidence
+             * @default unknown
+             */
+            result_role_confidence: string;
+            /**
+             * Result Role Source
+             * @default best_role
+             */
+            result_role_source: string;
             /**
              * Confidence
              * @default unknown
@@ -1324,17 +1359,25 @@ export interface operations {
                 q?: string | null;
                 age_min?: number | null;
                 age_max?: number | null;
+                /** @description 'ATT', 'MID', 'DEF' or 'GK'. Validated against the domain's discoverable position groups; an unknown value is a 422. */
                 position_group?: string | null;
+                /** @description A configured role key. Only players with a STORED rating for it qualify, and the result's role context becomes that role: its stored score and confidence do the filtering, the ordering, the confidence tie-break and the display. An unknown role key is a 422. */
                 role?: string | null;
                 league?: string | null;
                 club?: string | null;
                 nationality?: string | null;
+                /** @description Whole season minutes, 0-10000 inclusive. Omit for no minutes threshold; 0 is a real accepted value, not 'unset'. Unrelated to the RoleFit scale. */
                 min_minutes?: number | null;
+                /** @description Applicable-role-context RoleFit floor on the authoritative 0-99 scale. */
                 rolefit_min?: number | null;
+                /** @description Applicable-role-context RoleFit ceiling on the authoritative 0-99 scale. */
                 rolefit_max?: number | null;
                 playstyle?: string | null;
+                /** @description Absolute EUR. Requires a KNOWN expected-asking high endpoint, which must reach this floor; a player with unknown market information fails rather than being read as 0. */
                 value_min?: number | null;
+                /** @description Absolute EUR. Requires a KNOWN expected-asking low endpoint at or below this ceiling. Rejected when value_min exceeds value_max. */
                 value_max?: number | null;
+                /** @description One of: rolefit_desc, rolefit_asc, age_asc, age_desc, value_desc, value_asc, name_asc. Unknown values are a 422 rather than a silent fallback. RoleFit modes order by the applicable role context's stored score and break ties on its stored confidence; the asking-price modes order by expected_asking_low_eur with unknown lower bounds last in both directions. 'age_desc' is API-only: the Discovery Sort control does not offer it. */
                 sort?: string;
                 /** @description 'analyzed' (default), 'all_records', or 'high_coverage_u23'. Still a supported API capability; the Discovery UI no longer exposes a selector for it and always requests the default. */
                 scope?: string | null;
@@ -1342,6 +1385,7 @@ export interface operations {
                 age_band?: string | null;
                 /** @description Legacy alias: 'mvp' maps to high_coverage_u23; 'all' maps to all_records. Ignored when scope is supplied. */
                 universe?: string | null;
+                /** @description 1-based. A page past the end of a non-empty result set returns the last available page, and the response reports the page actually served. */
                 page?: number;
                 page_size?: number;
             };

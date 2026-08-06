@@ -44,6 +44,12 @@ function card(over: Partial<PlayerSearchCard> = {}): PlayerSearchCard {
     best_role: "shadow_striker",
     best_role_display: "Shadow Striker",
     best_role_score: 88.4,
+    best_role_confidence: "high",
+    result_role: "shadow_striker",
+    result_role_display: "Shadow Striker",
+    result_role_score: 88.4,
+    result_role_confidence: "high",
+    result_role_source: "best_role",
     confidence: "high",
     analysis_status: "analyzed",
     evidence_status: "high_coverage",
@@ -78,13 +84,16 @@ function lastRequest() {
   return usePlayerSearchMock.mock.calls.at(-1)![0];
 }
 
+// The default response reports the page the default request asked for (1 of 4), so
+// no test is incidentally exercising the out-of-range page canonicalization. The
+// cases that DO exercise it set their own mock.
 beforeEach(() => {
   replaceStateSpy.mockClear();
   usePlayerSearchMock.mockReset();
   usePlayerSearchMock.mockReturnValue({
     isLoading: false,
     isError: false,
-    data: { items: [card(), card({ id: 2, canonical_name: "Jack Whitmore" })], total: 37, page: 2, page_size: 12, total_pages: 4 },
+    data: { items: [card(), card({ id: 2, canonical_name: "Jack Whitmore" })], total: 37, page: 1, page_size: 12, total_pages: 4 },
   });
 });
 
@@ -323,20 +332,57 @@ describe("Legacy age_band URLs", () => {
 
 // ---------------------------------------------------------------------------
 // Bounded numeric thresholds
+//
+// Minutes and RoleFit are SEPARATE domains with separate ceilings. They briefly
+// shared one 0-99 bound, which silently rewrote a realistic 1,500-minute threshold
+// as 99 minutes and made the rail's helper copy describe a contract the API did not
+// have. Every case below is asserted per input so the two cannot re-converge.
 // ---------------------------------------------------------------------------
 describe("Discovery numeric thresholds", () => {
-  it("declares the 0-99 range semantically on both inputs", () => {
+  it("declares its own range on each input: minutes 0-10,000, RoleFit 0-99", () => {
     mountDiscovery();
-    for (const label of ["Min minutes", "Min RoleFit"]) {
-      const input = screen.getByLabelText(label);
-      expect(input).toHaveAttribute("type", "number");
-      expect(input).toHaveAttribute("min", "0");
-      expect(input).toHaveAttribute("max", "99");
-      expect(input).toHaveAttribute("step", "1");
-    }
+    const minutes = screen.getByLabelText("Min minutes");
+    expect(minutes).toHaveAttribute("type", "number");
+    expect(minutes).toHaveAttribute("min", "0");
+    expect(minutes).toHaveAttribute("max", "10000");
+    expect(minutes).toHaveAttribute("step", "1");
+
+    const rolefit = screen.getByLabelText("Min RoleFit");
+    expect(rolefit).toHaveAttribute("type", "number");
+    expect(rolefit).toHaveAttribute("min", "0");
+    expect(rolefit).toHaveAttribute("max", "99");
+    expect(rolefit).toHaveAttribute("step", "1");
   });
 
-  it("accepts the bounds and preserves a typed zero as zero", () => {
+  it("states both contracts accurately in the shared helper copy", () => {
+    mountDiscovery();
+    const help = document.getElementById("filter-threshold-help")!;
+    expect(help.textContent).toContain("Whole minutes 0-10,000");
+    expect(help.textContent).toContain("whole RoleFit 0-99");
+    expect(help.textContent).toMatch(/blank for none/i);
+    // both inputs point at it, and it no longer claims one 0-99 range for both
+    expect(screen.getByLabelText("Min minutes")).toHaveAttribute(
+      "aria-describedby",
+      "filter-threshold-help",
+    );
+    expect(screen.getByLabelText("Min RoleFit")).toHaveAttribute(
+      "aria-describedby",
+      "filter-threshold-help",
+    );
+    expect(help.textContent).not.toMatch(/^Whole numbers 0-99/);
+  });
+
+  it.each([0, 450, 900, 1500, 2000, 10000])(
+    "accepts the realistic minute threshold %i unchanged",
+    (value) => {
+      mountDiscovery();
+      fireEvent.change(screen.getByLabelText("Min minutes"), { target: { value: String(value) } });
+      if (value === 0) expect(lastUrl()).toContain("min_minutes=0");
+      else expect(lastUrl()).toContain(`min_minutes=${value}`);
+    },
+  );
+
+  it("accepts the RoleFit bounds and preserves a typed zero as zero", () => {
     mountDiscovery();
     fireEvent.change(screen.getByLabelText("Min RoleFit"), { target: { value: "0" } });
     expect(lastUrl()).toContain("rolefit_min=0");
@@ -355,26 +401,172 @@ describe("Discovery numeric thresholds", () => {
     expect(lastUrl()).not.toContain("rolefit_min");
   });
 
-  it("clamps typed values outside 0-99 instead of sending them", () => {
+  it("clamps each input to its OWN ceiling, never the other's", () => {
     mountDiscovery();
+    // RoleFit stops at 99 and must not accept the minutes ceiling
     fireEvent.change(screen.getByLabelText("Min RoleFit"), { target: { value: "150" } });
     expect(lastUrl()).toContain("rolefit_min=99");
+    fireEvent.change(screen.getByLabelText("Min RoleFit"), { target: { value: "10000" } });
+    expect(lastUrl()).toContain("rolefit_min=99");
+
+    // minutes stop at 10,000 and must NOT be crushed to the RoleFit ceiling
+    fireEvent.change(screen.getByLabelText("Min minutes"), { target: { value: "25000" } });
+    expect(lastUrl()).toContain("min_minutes=10000");
+    fireEvent.change(screen.getByLabelText("Min minutes"), { target: { value: "1500" } });
+    expect(lastUrl()).toContain("min_minutes=1500");
+    expect(lastUrl()).not.toContain("min_minutes=99");
 
     fireEvent.change(screen.getByLabelText("Min minutes"), { target: { value: "-5" } });
     expect(lastUrl()).toContain("min_minutes=0");
   });
 
-  it("clamps URL-supplied values before they reach the request", () => {
+  it("hydrates URL-supplied values through the right domain's rules", () => {
+    // a realistic minutes threshold survives hydration intact
+    mountDiscovery("min_minutes=1500&rolefit_min=70");
+    expect(lastRequest()).toMatchObject({ min_minutes: 1500, rolefit_min: 70 });
+    expect(screen.getByLabelText("Min minutes")).toHaveValue(1500);
+    expect(screen.getByLabelText("Min RoleFit")).toHaveValue(70);
+  });
+
+  it("clamps out-of-range URL values per domain before they reach the request", () => {
     mountDiscovery("rolefit_min=250&min_minutes=-3");
     expect(lastRequest()).toMatchObject({ rolefit_min: 99, min_minutes: 0 });
     expect(screen.getByLabelText("Min RoleFit")).toHaveValue(99);
     expect(screen.getByLabelText("Min minutes")).toHaveValue(0);
+
+    mountDiscovery("min_minutes=99999");
+    expect(lastRequest()).toMatchObject({ min_minutes: 10000 });
   });
 
   it("rejects a non-finite URL value as no threshold", () => {
     mountDiscovery("rolefit_min=Infinity&min_minutes=abc");
     expect(lastRequest().rolefit_min).toBeUndefined();
     expect(lastRequest().min_minutes).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Sort: page reset, and never forwarding a value the control cannot show
+// ---------------------------------------------------------------------------
+describe("Discovery sort control", () => {
+  it("resets to page 1 when the ranking changes", () => {
+    mountDiscovery("page=3");
+    fireEvent.change(screen.getByTestId("sort-filter"), { target: { value: "name_asc" } });
+    expect(lastUrl()).toContain("sort=name_asc");
+    // page 1 is the default and is therefore absent from the URL entirely
+    expect(lastUrl()).not.toContain("page=");
+  });
+
+  it("keeps the rest of the filter state while resetting the page", () => {
+    mountDiscovery("page=4&role=inside_forward&min_minutes=900");
+    fireEvent.change(screen.getByTestId("sort-filter"), { target: { value: "value_asc" } });
+    expect(lastUrl()).toContain("role=inside_forward");
+    expect(lastUrl()).toContain("min_minutes=900");
+    expect(lastUrl()).not.toContain("page=");
+  });
+
+  it("forwards a representable URL sort unchanged", () => {
+    mountDiscovery("sort=value_desc");
+    expect(lastRequest()).toMatchObject({ sort: "value_desc" });
+    expect(screen.getByTestId("sort-filter")).toHaveValue("value_desc");
+  });
+
+  it.each(["not_a_sort", "age_desc", ""])(
+    "never forwards the unknown or unrepresentable sort %s",
+    (sort) => {
+      mountDiscovery(`sort=${sort}`);
+      // `age_desc` is a real API-only mode, but the control has no option for it, so
+      // forwarding it would leave the visible Sort disagreeing with the request.
+      expect(lastRequest()).toMatchObject({ sort: "rolefit_desc" });
+      expect(screen.getByTestId("sort-filter")).toHaveValue("rolefit_desc");
+    },
+  );
+
+  it("always shows the sort it actually requested", () => {
+    for (const sort of ["rolefit_asc", "age_asc", "name_asc"]) {
+      const view = mountDiscovery(`sort=${sort}`);
+      expect(screen.getByTestId("sort-filter")).toHaveValue(lastRequest().sort);
+      expect(lastRequest().sort).toBe(sort);
+      view.unmount();
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Pagination hydration and canonicalization
+// ---------------------------------------------------------------------------
+describe("Discovery pagination", () => {
+  it("forwards a valid page and page size", () => {
+    mountDiscovery("page=3&page_size=24");
+    expect(lastRequest()).toMatchObject({ page: 3, page_size: 24 });
+  });
+
+  it.each(["0", "-2", "1.5", "abc", "Infinity"])(
+    "does not forward the invalid page %s",
+    (page) => {
+      mountDiscovery(`page=${page}`);
+      expect(lastRequest().page).toBe(1);
+    },
+  );
+
+  it.each(["0", "-1", "101", "12.5", "abc"])(
+    "does not forward the invalid page size %s",
+    (pageSize) => {
+      mountDiscovery(`page_size=${pageSize}`);
+      expect(lastRequest().page_size).toBe(12);
+    },
+  );
+
+  it("accepts the API's maximum page size", () => {
+    mountDiscovery("page_size=100");
+    expect(lastRequest()).toMatchObject({ page_size: 100 });
+  });
+
+  it("synchronizes the URL with the canonical page the API served", () => {
+    // a valid but out-of-range request: the API answered with the last page
+    usePlayerSearchMock.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: { items: [card()], total: 37, page: 4, page_size: 12, total_pages: 4 },
+    });
+    mountDiscovery("page=99");
+
+    expect(lastUrl()).toContain("page=4");
+    expect(lastUrl()).not.toContain("page=99");
+    // and it is emphatically NOT presented as "no players match these filters"
+    expect(screen.getByTestId("results-ledger")).toBeInTheDocument();
+    expect(screen.queryByText(/No players match these filters/)).not.toBeInTheDocument();
+  });
+
+  it("writes nothing when the served page is the requested one", () => {
+    usePlayerSearchMock.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: { items: [card()], total: 37, page: 2, page_size: 12, total_pages: 4 },
+    });
+    mountDiscovery("page=2");
+    expect(replaceStateSpy).not.toHaveBeenCalled();
+  });
+
+  it("does not loop once the canonical page is in range", () => {
+    usePlayerSearchMock.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: { items: [card()], total: 37, page: 4, page_size: 12, total_pages: 4 },
+    });
+    mountDiscovery("page=4");
+    expect(replaceStateSpy).not.toHaveBeenCalled();
+  });
+
+  it("reports page 1 for a genuinely empty result without a page rewrite", () => {
+    usePlayerSearchMock.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: { items: [], total: 0, page: 1, page_size: 12, total_pages: 0 },
+    });
+    mountDiscovery();
+    expect(screen.getByText(/No players match these filters/)).toBeInTheDocument();
+    expect(replaceStateSpy).not.toHaveBeenCalled();
   });
 });
 
@@ -422,7 +614,13 @@ describe("Discovery results ledger header", () => {
   });
 
   it("reports count, age condition, season, page and Ranked ledger — and no scope", () => {
-    mountDiscovery();
+    // a later page, requested and served, so the reported page is the served one
+    usePlayerSearchMock.mockReturnValue({
+      isLoading: false,
+      isError: false,
+      data: { items: [card()], total: 37, page: 2, page_size: 12, total_pages: 4 },
+    });
+    mountDiscovery("page=2");
     const summary = screen.getByTestId("result-count");
     expect(summary).toHaveTextContent("37 players");
     expect(summary).toHaveTextContent("All Ages");

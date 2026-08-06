@@ -193,6 +193,13 @@ function searchCard(over: Partial<PlayerSearchCard> = {}): PlayerSearchCard {
     best_role: "shadow_striker",
     best_role_display: "Shadow Striker",
     best_role_score: 88.4,
+    best_role_confidence: "high",
+    // Unfiltered search: the result role context is the best role.
+    result_role: "shadow_striker",
+    result_role_display: "Shadow Striker",
+    result_role_score: 88.4,
+    result_role_confidence: "high",
+    result_role_source: "best_role",
     confidence: "high",
     analysis_status: "analyzed",
     evidence_status: "high_coverage",

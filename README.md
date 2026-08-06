@@ -21,8 +21,14 @@ transparent market-value ranges — and it can always show *why* a score, badge,
 
 ## What it does
 
-1. **Search / browse** player profiles with filters for age threshold, position, role,
-   league, minutes, RoleFit range, playstyle, and sort.
+1. **Search / browse** player profiles. The Discovery rail exposes six filter groups:
+   free-text search (name / club / league), an age threshold, position group, role,
+   paired minimum-minutes / minimum-RoleFit thresholds, and sort. `league` and
+   `playstyle` can also be supplied in a Discovery page URL, although neither has a
+   production control. `club`, `nationality`, `rolefit_max` and the expected-asking
+   `value_min` / `value_max` predicates are supported by direct `/api/players` requests;
+   the production page does not hydrate them from its URL. See
+   [Discover filters](#discover-filters).
 2. **Player card** — identity, face stats, sub-stats, role-specific **RoleFit ratings**, playstyle
    badges, **market panel** (public value vs model value vs expected asking price), strengths &
    concerns, context, and a **"why this score" audit** accordion.
@@ -75,10 +81,11 @@ make recompute-ratings        # compute RoleFit + playstyles + market values
 make dev                      # API on :8000, web on http://localhost:3000
 ```
 
-Open http://localhost:3000. Discover defaults to **Analyzed** players across all ages. Switch to
-**All records** for the broader directory or **High-coverage U23** for the original strict cohort.
-Search → open a card → expand "why these scores" → view a leaderboard → compare two players →
-read the methodology page.
+Open http://localhost:3000. Discover shows **Analyzed** players across all ages; the rail has no
+scope selector, and the broader `all_records` / `high_coverage_u23` pools remain reachable as API
+parameters rather than as a control (see [Discover scopes](#discover-scopes)).
+Search → narrow with the rail → open a card → expand "why these scores" → view a leaderboard →
+compare two players → read the methodology page.
 
 ### Real data v0 (Milestone 2)
 
@@ -139,6 +146,74 @@ The legacy `age_band` parameter is still accepted and is normalized into those b
 [docs/discover_scope_change.md](docs/discover_scope_change.md). Unknown ages appear only when
 no age bound is active. Defender and goalkeeper records can be discovered, but ScoutBoy does
 not currently model defender or goalkeeper RoleFit ratings.
+
+### Discover filters
+
+**RoleFit is role-specific.** It is never a universal player overall, and the frontend only ever
+displays stored backend ratings.
+
+#### Selected-role results
+
+With no `role` filter, a result's role context is the player's own stored **best role**. With
+`role=<key>`, the context becomes that role's **stored** rating, and one rating does all four
+jobs — qualifying, bounding, ordering and display:
+
+- only players with a stored rating for that role qualify at all;
+- `rolefit_min` / `rolefit_max` apply to the selected role's score;
+- `sort=rolefit_desc|rolefit_asc` orders by it, breaking ties on **its** confidence;
+- the row displays that role, its score and its confidence.
+
+The response reports both contexts separately and never conflates them:
+
+| Field | Meaning |
+| --- | --- |
+| `best_role`, `best_role_display`, `best_role_score`, `best_role_confidence` | the player's own highest stored rating, whatever was filtered |
+| `result_role`, `result_role_display`, `result_role_score`, `result_role_confidence` | the stored rating that filtered and ordered **this** result |
+| `result_role_source` | `best_role` or `selected_role` |
+| `confidence` | the applicable role context's confidence (equal to `result_role_confidence`) |
+
+Nothing is recomputed and no `best_*` field is ever reused to carry a non-best role. Unrated
+players keep `null` scores; a missing score is never a zero.
+
+#### Minutes and RoleFit are separate domains
+
+| Filter | Range | Notes |
+| --- | --- | --- |
+| `min_minutes` | whole minutes, **0-10,000** inclusive | Supports realistic thresholds (450, 900, 1,500, 2,000). Omit for no threshold; `0` is a real accepted value, not "unset". 10,000 is a documented technical safety ceiling (`MINUTES_FILTER_MAX`), not a football limit, and stored or displayed minutes are never capped by it. |
+| `rolefit_min` / `rolefit_max` | **0-99** inclusive | The authoritative RoleFit scale (`DISPLAY_SCALE_MIN`/`MAX`). |
+
+The two ceilings are separate constants on both sides of the wire. Out-of-range values are a
+`422` rather than a silently narrowed result set, and the frontend clamps typed, pasted and
+URL-supplied values through the parser for the matching domain.
+
+#### Sort modes
+
+Accepted: `rolefit_desc` (default), `rolefit_asc`, `age_asc`, `age_desc`, `value_desc`,
+`value_asc`, `name_asc`. An unknown value is a `422`, never a silent fallback. `age_desc` is
+**API-only** — the Sort control has no option for it, so a URL carrying it falls back to the
+default rather than leaving the visible control disagreeing with the request.
+
+Every mode ends with explicit `canonical_name` then `player_id` tie-breaks, and no missing value
+is turned into a meaningful zero:
+
+- the asking-price modes order by `expected_asking_low_eur`, the lowest plausible expected ask.
+  No midpoint or composite market score is invented from the range. Players whose lower bound is
+  unknown sort **after every known value in both directions**, and are never shown as €0;
+- unrated players sort after rated ones in either RoleFit direction, wherever the selected scope
+  admits them.
+
+The API-only `value_min` / `value_max` predicates are absolute EUR and require the endpoint they
+depend on to be **known**: `value_min` needs an expected-asking high at or above it, `value_max`
+needs an expected-asking low at or below it, and an active range needs both plus an overlap.
+Missing market information fails an active predicate instead of passing as zero. `value_min`
+above `value_max` is rejected.
+
+#### Pagination
+
+`page` is a 1-based integer; `page_size` is 1-100. Any filter or sort change resets Discovery to
+page 1. A valid request for a page past the end returns the **last available page** and reports
+the page it served, which the browser URL is then synchronized to — an out-of-range page never
+masquerades as "no players match these filters". A genuinely empty result is page 1.
 
 ### StatsBomb Open Data normalized import
 
@@ -240,6 +315,18 @@ Fixture evaluation is byte-stable (a regression gate); pilot evaluation is read-
 The pilot is a Bayer Leverkusen-centered StatsBomb slice, not full Bundesliga/European validation.
 The Methodology page and `GET /api/methodology` surface a compact calibration status block. See
 [docs/milestone_6_rating_calibration.md](docs/milestone_6_rating_calibration.md).
+
+---
+
+## Discovery contract correctness (Milestone 8, Phase 8.1A)
+
+A bounded correctness phase over the existing Discovery surface: no redesign, no new controls. It
+makes the contract internally truthful — the role, score and confidence a result displays are the
+same stored role rating that filtered and ordered it — and separates the minutes filter from the
+RoleFit scale, makes asking-price ordering missing-safe, validates the sort / position-group / role
+enumerations, and canonicalizes out-of-range pagination. The semantics are documented under
+[Discover filters](#discover-filters); the audited causes are recorded in
+[docs/milestone_8_discovery_contract.md](docs/milestone_8_discovery_contract.md).
 
 ---
 
