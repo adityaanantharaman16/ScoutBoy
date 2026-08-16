@@ -10,6 +10,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     UniqueConstraint,
@@ -92,6 +93,11 @@ class Appearance(Base, TimestampMixin):
         UniqueConstraint(
             "player_id", "team_id", "competition_id", "season_id", name="uq_appearance"
         ),
+        # Discovery reads one season's appearances and then, per candidate, asks
+        # whether that player has a higher-minutes appearance. Season alone leaves
+        # the second lookup scanning the whole season; the composite makes it a seek.
+        # See docs/milestone_8_discovery_contract.md for the measured plans.
+        Index("ix_appearances_season_player", "season_id", "player_id"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)

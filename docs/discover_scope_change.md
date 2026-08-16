@@ -162,6 +162,12 @@ last available page and reports the page actually served; the browser URL is
 synchronized to it, so an out-of-range page is never presented as "no players match
 these filters". A genuinely empty result is page 1.
 
+Since Phase 8.1B these semantics are executed by the database rather than in Python:
+the total is a distinct-player count, the effective page is chosen from it, and only
+that page is retrieved with `LIMIT`/`OFFSET`. Every behaviour on this page is unchanged
+— see [docs/milestone_8_discovery_contract.md](milestone_8_discovery_contract.md) for
+the query architecture and the equivalence evidence.
+
 ## Evidence states
 
 Search cards derive evidence from season-specific analysis and high-coverage membership:

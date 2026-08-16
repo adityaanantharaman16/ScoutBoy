@@ -328,6 +328,38 @@ enumerations, and canonicalizes out-of-range pagination. The semantics are docum
 [Discover filters](#discover-filters); the audited causes are recorded in
 [docs/milestone_8_discovery_contract.md](docs/milestone_8_discovery_contract.md).
 
+## Database-side Discovery queries (Milestone 8, Phase 8.1B)
+
+A behaviour-preserving query rewrite over the same surface: the contract, the API and the UI are
+unchanged. Discovery used to load every player-season of the current season into Python, filter and
+sort the list, then slice a page out of it. The database now selects the qualifying rows, resolves
+the one stored role rating each row is judged by, applies every predicate, applies the approved
+ordering and tie-breaks, counts the distinct qualifying players and returns only the requested
+page; card enrichment is a single bulk query for that page's ids.
+
+A request costs a constant **four** SQL statements — season, count, page, page playstyles — and two
+for an empty result, whether the cohort holds 24 players or 5,000. Equivalence with the previous
+implementation is held by a 511-case differential matrix against a transcription of the old
+in-Python code, and by a control run in which the pre-change and post-change APIs, served from the
+same database, returned byte-identical JSON for 448 request variants. Missing values keep explicit
+"known first" ordering rather than relying on the database's default NULL placement, age bounds
+become birth-date boundaries derived in Python so no dialect-specific date arithmetic reaches a
+predicate, and the name tie-break is collated to code-point order so SQLite and PostgreSQL agree.
+
+Case-insensitive matching and the name ordering key keep Python's `str.lower()` semantics, which
+neither database's own `lower()` provides — SQLite's is ASCII-only and PostgreSQL's follows the
+database's `LC_CTYPE`. Discovery therefore lowercases explicitly: a deterministic `str.lower()`
+connection function on SQLite, and PostgreSQL 16's ICU root collation on PostgreSQL. Both apply
+Unicode full case mapping, so accented, dotted-`İ`, sharp-`ẞ`, Kelvin-sign and Greek final-sigma
+names match and sort as they always did, and `%`, `_` and the escape character in a search stay
+literal.
+
+One body of parity assertions runs on both databases, and the PostgreSQL run is what caught an
+untyped-NULL defect SQLite had tolerated. Four `(season_id, player_id)` composite indexes were
+added with a migration, justified by recorded query plans. Details, evidence and limitations —
+including the measured, name-irrelevant residual between ICU's Unicode tables and CPython's — are
+in [docs/milestone_8_discovery_contract.md](docs/milestone_8_discovery_contract.md).
+
 ---
 
 ## Commands (`make help` for all)
@@ -477,8 +509,12 @@ auditing, and a full-stack container smoke. See [CONTRIBUTING.md](CONTRIBUTING.m
   shown separately from full-season Transfermarkt minutes.
 - Opposition quality is a league-strength proxy; role usage is nominal (no positional-split data).
 - Market values are **ranges** from a transparent rule-based model — never exact figures.
-- Search/leaderboard read models are computed in-process (fine for the prototype; precompute/index
-  when scaling, per the plan's performance note).
+- Discovery search runs its candidate selection, predicates, ordering, counting and pagination in
+  the database (Phase 8.1B), so a request costs a constant four statements and reads only the page
+  it serves. The leaderboard, comparison and dossier-similarity read models are still computed
+  in-process; similarity in particular needs the whole position-group cohort in memory. The volume
+  evidence for Discovery is a deterministic 5,000-record SQLite fixture, which is not a production
+  capacity claim.
 - There is no end-user authentication or public rate limiting. Admin routes use a shared token;
   it is optional only in development/test and mandatory in production mode.
 - The containers and CI make delivery reproducible, but this remains a production-shaped portfolio

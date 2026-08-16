@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from sqlalchemy import JSON, Boolean, Float, ForeignKey, String
+from sqlalchemy import JSON, Boolean, Float, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base, TimestampMixin
@@ -10,6 +10,12 @@ from .base import Base, TimestampMixin
 
 class MarketValue(Base, TimestampMixin):
     __tablename__ = "market_values"
+    __table_args__ = (
+        # Discovery attaches each candidate's market row with a season-scoped,
+        # player-correlated lookup, and the asking-price predicates and sorts read
+        # it. See docs/milestone_8_discovery_contract.md for the measured plans.
+        Index("ix_market_values_season_player", "season_id", "player_id"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     player_id: Mapped[int] = mapped_column(ForeignKey("players.id", ondelete="CASCADE"), index=True)

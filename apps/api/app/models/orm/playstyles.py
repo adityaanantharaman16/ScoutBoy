@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from sqlalchemy import JSON, Boolean, ForeignKey, String, Text
+from sqlalchemy import JSON, Boolean, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base, TimestampMixin
@@ -24,6 +24,12 @@ class PlaystyleDefinition(Base, TimestampMixin):
 
 class PlayerPlaystyle(Base, TimestampMixin):
     __tablename__ = "player_playstyles"
+    __table_args__ = (
+        # Discovery tests the positive-playstyle predicate per candidate and then
+        # bulk-loads the page's badges, both season-scoped and player-keyed. See
+        # docs/milestone_8_discovery_contract.md for the measured plans.
+        Index("ix_player_playstyles_season_player", "season_id", "player_id"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     player_id: Mapped[int] = mapped_column(ForeignKey("players.id", ondelete="CASCADE"), index=True)

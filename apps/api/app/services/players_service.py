@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
+from datetime import date, timedelta
 from typing import Optional
 
 from scoutboy_shared import DISCOVERABLE_POSITION_GROUPS, position_group_for
@@ -23,11 +24,11 @@ from app.models.schemas import (
     SimilarResponse,
     StrengthConcern,
 )
+from app.repositories import discovery_repo
 from app.repositories import players_repo as repo
 
 from . import _common as C
 
-_CONF_ORDER = {"unknown": 0, "low": 1, "medium": 2, "high": 3}
 SEARCH_SCOPES = {"analyzed", "all_records", "high_coverage_u23"}
 AGE_BANDS = {"all", "u23", "24_26", "27_30", "31_plus"}
 UNIVERSE_ALIASES = {"mvp": "high_coverage_u23", "all": "all_records"}
@@ -56,6 +57,15 @@ RESULT_ROLE_SELECTED = "selected_role"
 
 @dataclass
 class _Row:
+    """One player-season assembled in Python, for the dossier's similarity groups.
+
+    Discovery no longer uses this: since Phase 8.1B its candidate selection,
+    predicates, ordering, counting and pagination all run in SQL (see
+    `repositories.discovery_repo`). `find_similar` still needs the whole
+    position-group cohort in memory to score cosine similarity against every
+    candidate, so the full-cohort assembly below stays for that one caller.
+    """
+
     player: Player
     club: Optional[str]
     club_slug: Optional[str]
@@ -70,11 +80,6 @@ class _Row:
     top_playstyles: list = field(default_factory=list)
     market: object = None
     is_high_coverage: bool = False
-    #: The stored rating this row is being judged by, resolved once per request by
-    #: `_apply_role_context`. Filtering, ordering and serialization all read this
-    #: one field, so the displayed role can never disagree with the ranked one.
-    result: Optional[RoleRating] = None
-    result_role_source: str = RESULT_ROLE_BEST
 
 
 def _load_rows(session: Session, season) -> list[_Row]:
@@ -108,10 +113,6 @@ def _load_rows(session: Session, season) -> list[_Row]:
                 age=C.age_for(player.birth_date, season.end_date),
                 ratings=rlist,
                 best=best,
-                # No role context has been requested at load time, so a row starts
-                # out describing its own best role. `_apply_role_context` is what
-                # narrows it to a selected role.
-                result=best,
                 playstyle_keys={p.playstyle_key for p in pls if not p.is_concern},
                 top_playstyles=C.top_playstyle_names(pls),
                 market=markets.get(pid),
@@ -120,61 +121,67 @@ def _load_rows(session: Session, season) -> list[_Row]:
     return rows
 
 
-def _apply_role_context(rows: list[_Row], role: Optional[str]) -> None:
-    """Resolve, once per request, which stored rating each row is judged by."""
-    source = RESULT_ROLE_SELECTED if role else RESULT_ROLE_BEST
-    for row in rows:
-        row.result = C.applicable_rating(row.ratings, role)
-        row.result_role_source = source
-
-
-def _evidence_status(row: _Row) -> str:
-    if row.is_high_coverage:
+def _evidence_status(*, is_high_coverage: bool, has_analysis: bool) -> str:
+    if is_high_coverage:
         return "high_coverage"
-    if row.ratings:
+    if has_analysis:
         return "analyzed_limited"
     return "profile_only"
 
 
-def _to_card(row: _Row, season_label: str) -> PlayerSearchCard:
-    m = row.market
-    evidence = _evidence_status(row)
-    has_analysis = bool(row.ratings)
+def _card_from_row(
+    row: discovery_repo.DiscoveryRow,
+    playstyles: list,
+    *,
+    season_label: str,
+    season_end: Optional[date],
+    result_role_source: str,
+) -> PlayerSearchCard:
+    """Serialize one database-selected Discovery row.
+
+    Every score and confidence is a stored value read straight off the row the query
+    selected, so the displayed role context is by construction the one that qualified,
+    bounded and ordered it. Nothing is rescored, and no unknown becomes a zero.
+    """
     names = C.role_display_map()
-    best, result = row.best, row.result
-    result_confidence = result.confidence if result else "unknown"
+    has_analysis = row.has_any_rating
+    minutes = row.minutes or 0
+    result_confidence = row.result_confidence if row.result_role is not None else "unknown"
     return PlayerSearchCard(
-        id=row.player.id,
-        canonical_name=row.player.canonical_name,
+        id=row.player_id,
+        canonical_name=row.canonical_name,
         season=season_label,
-        age=row.age,
+        age=C.age_for(row.birth_date, season_end),
         club=row.club,
-        league=row.league_name,
-        primary_position=row.player.primary_position,
-        position_group=row.position_group,
+        league=row.league,
+        primary_position=row.primary_position,
+        position_group=(
+            row.appearance_position_group or position_group_for(row.primary_position or "")
+        ),
         # The player's own best role, whatever was filtered. Never relabelled.
-        best_role=best.role_key if best else None,
-        best_role_display=names.get(best.role_key) if best else None,
-        best_role_score=best.final_score if best else None,
-        best_role_confidence=best.confidence if best else "unknown",
-        # The stored rating this result was filtered and ordered by, which is the
-        # same object `keep` and `sort_key` used.
-        result_role=result.role_key if result else None,
-        result_role_display=names.get(result.role_key) if result else None,
-        result_role_score=result.final_score if result else None,
+        best_role=row.best_role,
+        best_role_display=names.get(row.best_role) if row.best_role else None,
+        best_role_score=row.best_score,
+        best_role_confidence=row.best_confidence if has_analysis else "unknown",
+        # The stored rating the query filtered and ordered by.
+        result_role=row.result_role,
+        result_role_display=names.get(row.result_role) if row.result_role else None,
+        result_role_score=row.result_score,
         result_role_confidence=result_confidence,
-        result_role_source=row.result_role_source,
+        result_role_source=result_role_source,
         confidence=result_confidence,
         analysis_status="analyzed" if has_analysis else "profile_only",
-        evidence_status=evidence,
+        evidence_status=_evidence_status(
+            is_high_coverage=row.is_high_coverage, has_analysis=has_analysis
+        ),
         has_rolefit_analysis=has_analysis,
         is_high_coverage=row.is_high_coverage,
-        top_playstyles=row.top_playstyles,
-        minutes=row.minutes,
-        represented_minutes=row.minutes,
-        market_label=getattr(m, "label", None),
-        expected_asking_low_eur=getattr(m, "expected_asking_low_eur", None),
-        expected_asking_high_eur=getattr(m, "expected_asking_high_eur", None),
+        top_playstyles=C.top_playstyle_names(playstyles),
+        minutes=minutes,
+        represented_minutes=minutes,
+        market_label=row.market_label,
+        expected_asking_low_eur=row.asking_low,
+        expected_asking_high_eur=row.asking_high,
     )
 
 
@@ -184,40 +191,6 @@ def _normalize_scope(scope: Optional[str], universe: Optional[str]) -> str:
     if universe in UNIVERSE_ALIASES:
         return UNIVERSE_ALIASES[universe]
     return "analyzed"
-
-
-def _asking_low(row: _Row) -> Optional[float]:
-    """The lowest plausible expected ask, or None when it is unknown.
-
-    This is the explicit scalar used to order the asking-price sorts. The expected
-    ask is a range, and no midpoint, composite or hidden market score is invented
-    from it: one published endpoint of the stored interval does the ordering.
-    """
-    return getattr(row.market, "expected_asking_low_eur", None) if row.market else None
-
-
-def _asking_high(row: _Row) -> Optional[float]:
-    return getattr(row.market, "expected_asking_high_eur", None) if row.market else None
-
-
-def _passes_value_range(row: _Row, value_min: Optional[float], value_max: Optional[float]) -> bool:
-    """Absolute-EUR interval overlap against the stored expected-asking range.
-
-    `value_min` needs a known HIGH endpoint (the most a club might ask has to reach
-    the requested floor); `value_max` needs a known LOW endpoint (the least they
-    might ask has to sit under the requested ceiling). With both active the player's
-    interval must overlap the requested one, which requires both endpoints. A
-    missing required endpoint fails the predicate.
-    """
-    if value_min is not None:
-        high = _asking_high(row)
-        if high is None or high < value_min:
-            return False
-    if value_max is not None:
-        low = _asking_low(row)
-        if low is None or low > value_max:
-            return False
-    return True
 
 
 def _validate_query(
@@ -263,6 +236,116 @@ def _age_band_bounds(age_band: Optional[str]) -> tuple[Optional[float], Optional
     return None, None
 
 
+# ---------------------------------------------------------------------------
+# Age bounds as birth-date boundaries
+#
+# Age is `round((season_end - birth_date).days / 365.25, 1)`: a step function of a
+# whole number of days, and non-decreasing in that day count. So every age bound has
+# an exact equivalent birth-date boundary, which the database can compare against a
+# stored date with no dialect-specific date arithmetic at all. The rounding stays in
+# Python, where it always was, so the displayed age and the applied filter are derived
+# from the very same expression.
+# ---------------------------------------------------------------------------
+_DAYS_PER_YEAR = 365.25
+#: Beyond this many years no representable birth date exists (`date.min` is ~2,000
+#: years back), so a bound past it is decided without touching the day arithmetic.
+#: This is also what keeps an absurd or infinite bound from overflowing.
+_AGE_SPAN_LIMIT = 12_000.0
+
+
+def _rounded_age_for_days(days: int) -> float:
+    """The one definition of a rounded age, shared by the filter and the display."""
+    return round(days / _DAYS_PER_YEAR, 1)
+
+
+def _days_for_age_floor(age_min: float) -> int:
+    """Fewest whole days whose rounded age still reaches `age_min`.
+
+    Found by stepping around a closed-form estimate rather than solving the rounding
+    boundary algebraically, so the answer is defined by `_rounded_age_for_days` itself
+    and cannot drift from it. The rounded age is monotone in `days`, so the two short
+    scans below are exact and terminate within a few dozen steps.
+    """
+    days = int((age_min - 0.1) * _DAYS_PER_YEAR) - 2
+    while _rounded_age_for_days(days) >= age_min:
+        days -= 1
+    while _rounded_age_for_days(days) < age_min:
+        days += 1
+    return days
+
+
+def _days_for_age_ceiling(age_max: float) -> int:
+    """Most whole days whose rounded age still sits at or under `age_max`."""
+    days = int((age_max + 0.1) * _DAYS_PER_YEAR) + 2
+    while _rounded_age_for_days(days) <= age_max:
+        days += 1
+    while _rounded_age_for_days(days) > age_max:
+        days -= 1
+    return days
+
+
+def _birth_date_window(
+    season_end: Optional[date],
+    floors: list,
+    ceilings: list,
+) -> tuple[Optional[date], Optional[date], bool, bool]:
+    """Translate age bounds into a birth-date window.
+
+    Returns `(birth_on_or_before, birth_on_or_after, any_bound_active,
+    unsatisfiable)`. An older player has an earlier birth date, so an age FLOOR
+    becomes a latest-allowed birth date and an age CEILING becomes an earliest-allowed
+    one. Several bounds may be active at once (`age_min`/`age_max` plus a legacy
+    `age_band`); they intersect, exactly as the previous independent comparisons did.
+
+    A record with no birth date is deliberately left out of the window entirely: it
+    stays visible while no bound is active and fails every active one.
+    """
+    active = bool(floors or ceilings)
+    if not active:
+        return None, None, False, False
+    # With no season end date no age is knowable, so every age was previously unknown
+    # and every active bound excluded every record.
+    if season_end is None:
+        return None, None, True, True
+
+    oldest_days = (season_end - date.min).days
+    youngest_days = (season_end - date.max).days
+    before: Optional[date] = None
+    after: Optional[date] = None
+
+    for value in floors:
+        if value != value:  # NaN: every comparison was false, so nothing was excluded
+            continue
+        if value > _AGE_SPAN_LIMIT:
+            return None, None, True, True
+        if value < -_AGE_SPAN_LIMIT:
+            continue
+        days = _days_for_age_floor(value)
+        if days > oldest_days:
+            return None, None, True, True
+        if days < youngest_days:
+            continue
+        boundary = season_end - timedelta(days=days)
+        before = boundary if before is None else min(before, boundary)
+
+    for value in ceilings:
+        if value != value:
+            continue
+        if value < -_AGE_SPAN_LIMIT:
+            return None, None, True, True
+        if value > _AGE_SPAN_LIMIT:
+            continue
+        days = _days_for_age_ceiling(value)
+        if days < youngest_days:
+            return None, None, True, True
+        if days > oldest_days:
+            continue
+        boundary = season_end - timedelta(days=days)
+        after = boundary if after is None else max(after, boundary)
+
+    return before, after, True, False
+
+
 def search_players(
     session: Session,
     *,
@@ -287,6 +370,14 @@ def search_players(
     page=1,
     page_size=20,
 ) -> Paginated[PlayerSearchCard]:
+    """One page of Discovery results, selected and ordered by the database.
+
+    The database does the work: it identifies the qualifying player-season rows,
+    resolves the one stored role rating each row is judged by, applies every
+    predicate, applies the approved ordering and tie-breaks, counts the distinct
+    qualifying players and returns only the requested page. This function normalizes
+    the request, canonicalizes the page against the total, and serializes.
+    """
     _validate_query(
         sort=sort,
         position_group=position_group,
@@ -297,131 +388,73 @@ def search_players(
     season = repo.get_current_season(session)
     if season is None:
         return Paginated(items=[], total=0, page=1, page_size=page_size, total_pages=0)
-    rows = _load_rows(session, season)
-    _apply_role_context(rows, role)
 
     selected_scope = _normalize_scope(scope, universe)
     selected_age_band = age_band if age_band in AGE_BANDS else "all"
-
-    high_coverage_ids: set = set()
-    if repo.universe_materialized(session, season.id, UNIVERSE_KEY):
-        high_coverage_ids = repo.eligible_universe_ids(session, season.id, UNIVERSE_KEY)
-    for row in rows:
-        row.is_high_coverage = row.player.id in high_coverage_ids
-
     band_min, band_max = _age_band_bounds(selected_age_band)
+    birth_before, birth_after, age_active, age_impossible = _birth_date_window(
+        season.end_date,
+        [v for v in (age_min, band_min) if v is not None],
+        [v for v in (age_max, band_max) if v is not None],
+    )
 
-    # Both read the row's already-resolved role context, so a RoleFit bound, the
-    # RoleFit ordering, the confidence tie-break and the serialized row are all
-    # talking about the same stored rating.
-    def score_for(row: _Row) -> Optional[float]:
-        return row.result.final_score if row.result else None
+    filters = discovery_repo.DiscoveryFilters(
+        season_id=season.id,
+        universe_key=UNIVERSE_KEY,
+        scope=selected_scope,
+        q=q,
+        position_group=position_group,
+        role=role,
+        league=league,
+        club=club,
+        nationality=nationality,
+        min_minutes=min_minutes,
+        rolefit_min=rolefit_min,
+        rolefit_max=rolefit_max,
+        playstyle=playstyle,
+        value_min=value_min,
+        value_max=value_max,
+        birth_on_or_before=birth_before,
+        birth_on_or_after=birth_after,
+        age_bound_active=age_active,
+        age_bound_unsatisfiable=age_impossible,
+        season_end=season.end_date,
+    )
 
-    def confidence_for(row: _Row) -> int:
-        return _CONF_ORDER.get(row.result.confidence if row.result else "unknown", 0)
-
-    def keep(row: _Row) -> bool:
-        if selected_scope == "analyzed" and not row.ratings:
-            return False
-        if selected_scope == "high_coverage_u23" and row.player.id not in high_coverage_ids:
-            return False
-        if q:
-            ql = q.lower()
-            hay = " ".join(
-                filter(
-                    None,
-                    [
-                        row.player.canonical_name,
-                        row.club,
-                        row.league_name,
-                        row.player.primary_position,
-                    ],
-                )
-            ).lower()
-            if ql not in hay:
-                return False
-        if position_group and row.position_group != position_group:
-            return False
-        # A selected role qualifies a player only when that exact rating is stored.
-        if role and row.result is None:
-            return False
-        if (
-            league
-            and league.lower()
-            not in " ".join(filter(None, [row.league_slug, row.league_name])).lower()
-        ):
-            return False
-        if club and club.lower() not in " ".join(filter(None, [row.club_slug, row.club])).lower():
-            return False
-        if nationality and (row.player.nationality or "").lower() != nationality.lower():
-            return False
-        if min_minutes is not None and row.minutes < min_minutes:
-            return False
-        if age_min is not None and (row.age is None or row.age < age_min):
-            return False
-        if age_max is not None and (row.age is None or row.age > age_max):
-            return False
-        if band_min is not None and (row.age is None or row.age < band_min):
-            return False
-        if band_max is not None and (row.age is None or row.age > band_max):
-            return False
-        s = score_for(row)
-        if rolefit_min is not None and (s is None or s < rolefit_min):
-            return False
-        if rolefit_max is not None and (s is None or s > rolefit_max):
-            return False
-        if playstyle and playstyle not in row.playstyle_keys:
-            return False
-        # Absolute EUR against the stored expected-asking interval. A missing
-        # endpoint FAILS an active predicate: it is unknown, and unknown is not a
-        # cheap player. It was previously read as 0, which let players with no
-        # market information pass a value_max and fail a value_min for no reason
-        # other than the substitution.
-        if not _passes_value_range(row, value_min, value_max):
-            return False
-        return True
-
-    filtered = [r for r in rows if keep(r)]
-
-    # Deterministic sort with explicit tie-breaks. Every mode ends with canonical
-    # name then player id, and no missing value is turned into a meaningful zero:
-    # unrated and price-unknown records carry a leading "known last" rank instead.
-    def sort_key(row: _Row):
-        s = score_for(row)
-        rated = s is not None
-        score_value = s if rated else 0.0
-        conf = confidence_for(row)
-        low = _asking_low(row)
-        priced = low is not None
-        # `not priced` first in BOTH price directions, so a player with no market
-        # information sorts after every known lower bound either way round.
-        price_rank = 0 if priced else 1
-        price_value = low if priced else 0.0
-        name = row.player.canonical_name.lower()
-        pid = row.player.id
-        primary = {
-            "rolefit_desc": (0 if rated else 1, -score_value, -conf),
-            "rolefit_asc": (0 if rated else 1, score_value, -conf),
-            "age_asc": (row.age if row.age is not None else 999,),
-            "age_desc": (-(row.age if row.age is not None else -1),),
-            "value_desc": (price_rank, -price_value),
-            "value_asc": (price_rank, price_value),
-            "name_asc": (name,),
-        }[sort]
-        return (*primary, name, pid)
-
-    filtered.sort(key=sort_key)
-
-    total = len(filtered)
+    total = discovery_repo.count_players(session, filters)
     total_pages = math.ceil(total / page_size) if page_size else 0
     # A valid request for a page past the end returns the last page that exists,
     # never an empty ledger that would read as "no players match these filters".
-    # A genuinely empty result is page 1.
+    # A genuinely empty result is page 1. The total is known before any row is
+    # fetched, so this costs no extra candidate scan.
     effective_page = min(page, total_pages) if total_pages else 1
-    start = (effective_page - 1) * page_size
-    page_items = filtered[start : start + page_size]
+
+    rows: list = []
+    if total_pages:
+        rows = discovery_repo.fetch_page(
+            session,
+            filters,
+            sort=sort,
+            limit=page_size,
+            offset=(effective_page - 1) * page_size,
+        )
+    # Card enrichment is bounded to the page: playstyles are the only card data the
+    # candidate row does not already carry, and they load for these ids alone.
+    playstyles = discovery_repo.playstyles_for_players(
+        session, season.id, [row.player_id for row in rows]
+    )
+    result_role_source = RESULT_ROLE_SELECTED if role else RESULT_ROLE_BEST
     return Paginated(
-        items=[_to_card(r, season.label) for r in page_items],
+        items=[
+            _card_from_row(
+                row,
+                playstyles.get(row.player_id, []),
+                season_label=season.label,
+                season_end=season.end_date,
+                result_role_source=result_role_source,
+            )
+            for row in rows
+        ],
         total=total,
         page=effective_page,
         page_size=page_size,

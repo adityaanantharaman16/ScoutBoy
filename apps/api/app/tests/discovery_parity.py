@@ -1,0 +1,532 @@
+"""Dialect-agnostic Discovery assertions, run on SQLite and on PostgreSQL.
+
+Phase 8.1B moved Discovery's candidate selection, predicates, ordering, counting and
+pagination into SQL. ADR 0001 keeps SQLite for local development and tests and
+PostgreSQL for the full stack and production, so every semantic this phase relies on
+has to hold on both. `assert_discovery_parity` is the single body of assertions; the
+SQLite suite and the PostgreSQL smoke both call it, so a divergence fails one of them
+rather than reaching production.
+
+The caller owns the transaction: this function writes a cohort and flips the current
+season, and expects to be rolled back.
+"""
+
+from __future__ import annotations
+
+from scoutboy_shared import POSITIONS, position_group_for
+from sqlalchemy import literal, select
+
+from app.models.orm import Player
+from app.repositories import discovery_repo
+from app.services import players_service
+
+from .discovery_cohort import (
+    FILTER_CASES,
+    OTHER_ROLE,
+    SELECTED_ROLE,
+    SORTS,
+    build_cohort,
+    load_reference_rows,
+    reference_search,
+)
+
+#: Large enough to hold the whole characterization cohort on one page, so an ordering
+#: assertion sees the complete sequence rather than a window of it.
+WHOLE_COHORT = 100
+
+
+def _search(session, **kwargs):
+    return players_service.search_players(session, page_size=WHOLE_COHORT, **kwargs)
+
+
+def _ids(body):
+    return [item.id for item in body.items]
+
+
+def assert_discovery_parity(session) -> dict:
+    """Assert every Discovery semantic this phase depends on. Returns a summary."""
+    cohort = build_cohort(session)
+    reference_rows = load_reference_rows(session, cohort.season_id, cohort.season_end)
+    summary = {
+        "dialect": session.get_bind().dialect.name,
+        "cohort_players": len(reference_rows),
+        "matrix_cases": 0,
+    }
+
+    _assert_rounded_age_matches_python(session, cohort)
+    _assert_position_group_case_matches_domain(session, cohort)
+    _assert_unicode_lower_matches_python(session)
+    summary["matrix_cases"] = _assert_matches_reference(session, reference_rows)
+    _assert_unicode_search_matches_python(session, cohort)
+    _assert_like_metacharacters_stay_literal(session, cohort)
+    _assert_name_ordering_matches_python(session, reference_rows)
+    _assert_selected_role_ordering(session, cohort)
+    _assert_unknowns_sort_last(session)
+    _assert_counting_is_per_player(session, cohort, reference_rows)
+    _assert_pagination(session)
+    _assert_tie_breaks(session, cohort)
+    _assert_season_without_an_end_date_is_answerable(session, cohort)
+    return summary
+
+
+# ---------------------------------------------------------------------------
+# portable expressions
+# ---------------------------------------------------------------------------
+def _assert_rounded_age_matches_python(session, cohort):
+    """The SQL age ordering key equals Python's `round(days / 365.25, 1)`.
+
+    This is the one place Discovery does date arithmetic in the database, so it is
+    checked directly against the Python expression that produces the displayed age,
+    for every birth date in the cohort, on whichever dialect is running.
+    """
+    age = discovery_repo.rounded_age_expr(Player.birth_date, cohort.season_end)
+    rows = session.execute(select(Player.id, Player.birth_date, age)).all()
+    checked = 0
+    for player_id, birth_date, sql_age in rows:
+        if birth_date is None:
+            assert sql_age is None, f"player {player_id}: unknown birth date must stay unknown"
+            continue
+        expected = round((cohort.season_end - birth_date).days / 365.25, 1)
+        assert float(sql_age) == expected, f"player {player_id}: {sql_age} != {expected}"
+        checked += 1
+    assert checked > 10, "cohort no longer exercises the age expression"
+
+    # A NULL season end makes every age unknown, exactly as `age_for` does. The NULL
+    # has to be explicitly typed: sent as a bare parameter, PostgreSQL infers `text`
+    # and then refuses to return it through a numeric result processor.
+    null_age = discovery_repo.rounded_age_expr(Player.birth_date, None)
+    assert session.scalar(select(null_age).limit(1)) is None
+
+
+def _assert_position_group_case_matches_domain(session, cohort):
+    """The SQL position-group fallback agrees with `position_group_for`.
+
+    Evaluated with the appearance's stored group forced to NULL, so the CASE is the
+    only thing deciding, and against real stored rows rather than literals.
+    """
+    expr = discovery_repo.position_group_case(
+        literal(None, type_=Player.primary_position.type), Player.primary_position
+    )
+    rows = session.execute(
+        select(Player.id, Player.primary_position, expr).where(Player.id.in_(_cohort_ids(cohort)))
+    ).all()
+    seen = set()
+    for player_id, primary_position, group in rows:
+        assert group == position_group_for(primary_position or ""), (
+            f"player {player_id}: SQL fallback {group!r} disagrees with the domain "
+            f"mapping for {primary_position!r}"
+        )
+        seen.add(primary_position)
+    # Both a mapped and an unmapped position must be present, or the CASE is untested.
+    assert seen & set(POSITIONS), "cohort has no position the domain maps"
+    assert seen - set(POSITIONS), "cohort has no position the domain leaves unmapped"
+
+
+def _cohort_ids(cohort):
+    return [pid for ids in cohort.ids_by_name.values() for pid in ids]
+
+
+#: Characters whose Python lowercase an inverse-`.upper()` fold cannot reach, plus a
+#: control that it can. Every one is evaluated by the database, on both dialects.
+_LOWER_PROBES = (
+    ("ASCII control", "ABC"),
+    ("acute", "ÉTIENNE"),
+    ("acute mixed", "Étienne"),
+    ("dotted capital i", "İPEK"),
+    ("dotless i", "ıpek"),
+    ("capital sharp s", "ẞETA"),
+    ("small sharp s", "ßeta"),
+    ("kelvin sign", "KELVIN"),
+    ("ohm sign", "ΩHM"),
+    ("long s", "ſoft"),
+    ("greek final sigma", "ΟΔΟΣ"),
+    ("greek medial sigma", "ΣΑΣ"),
+    ("greek tonos", "ΨΥΧΉ"),
+    ("cyrillic", "ЖУК"),
+    ("mixed script", "Cohort ЖУК Étienne İ"),
+    ("empty", ""),
+)
+
+
+def _assert_unicode_lower_matches_python(session):
+    """The database's lowercase expression IS Python's `str.lower()`.
+
+    Asserted directly against the expression the query builder uses, before any of the
+    predicates that depend on it, so a dialect that lowercases differently fails here
+    with the offending string rather than as a mysteriously missing search result.
+    """
+    from app.core.text_search import unicode_lower
+
+    for label, value in _LOWER_PROBES:
+        got = session.scalar(select(unicode_lower(literal(value))))
+        assert (
+            got == value.lower()
+        ), f"{label}: database lowered {value!r} to {got!r}, Python gives {value.lower()!r}"
+    # NULL in, NULL out - the ordering key relies on this for a nullable column.
+    assert (
+        session.scalar(select(unicode_lower(literal(None, type_=Player.canonical_name.type))))
+        is None
+    )
+
+
+# ---------------------------------------------------------------------------
+# differential: SQL against the pre-8.1B Python implementation
+# ---------------------------------------------------------------------------
+def _assert_matches_reference(session, reference_rows) -> int:
+    """Every filter combination, under every sort, matches the Python reference."""
+    cases = 0
+    non_empty = 0
+    for label, criteria in FILTER_CASES:
+        for sort in SORTS:
+            body = _search(session, sort=sort, **criteria)
+            expected_ids, expected_total, expected_page, expected_pages = reference_search(
+                reference_rows, sort=sort, page_size=WHOLE_COHORT, **criteria
+            )
+            context = f"{label} / {sort}"
+            assert body.total == expected_total, f"{context}: total"
+            assert body.page == expected_page, f"{context}: page"
+            assert body.total_pages == expected_pages, f"{context}: total_pages"
+            assert _ids(body) == expected_ids, f"{context}: order"
+            cases += 1
+            if expected_total:
+                non_empty += 1
+    assert non_empty > len(FILTER_CASES), "the matrix has collapsed to mostly empty results"
+    return cases
+
+
+# ---------------------------------------------------------------------------
+# Unicode text matching, stated as itself
+# ---------------------------------------------------------------------------
+#: `(query, cohort key, should the player be returned)`. The expectation is not a
+#: hand-guess: each is Python's own `needle.lower() in stored.lower()`, restated so the
+#: intent of the case is readable, and the assertion recomputes it from `str.lower()`.
+_SEARCH_CASES = (
+    ("Étienne", "acute", True),
+    ("étienne", "acute", True),
+    ("ÉTIENNE", "acute", True),
+    ("İpek", "dotted_i", True),
+    ("i̇pek", "dotted_i", True),  # i + U+0307, which is what "İ".lower() produces
+    ("ipek", "dotted_i", False),  # the combining dot is part of the stored key
+    ("ẞeta", "sharp_s", True),
+    ("ßeta", "sharp_s", True),
+    ("sseta", "sharp_s", False),  # `.lower()` never expands ẞ to "ss"
+    # U+212A KELVIN SIGN as stored, its Python lowercase, and the ordinary ASCII
+    # "K" that shares that lowercase. The first is written as an escape because it
+    # is indistinguishable from the third on screen.
+    ("Kelvin Sign", "kelvin", True),
+    ("kelvin sign", "kelvin", True),
+    ("Kelvin Sign", "kelvin", True),
+    ("ſoft", "long_s", True),
+    ("soft long", "long_s", False),  # ſ is already lowercase; it is not an "s"
+    ("ΟΔΟΣ", "final_sigma", True),
+    ("οδος", "final_sigma", True),  # final sigma, which is what Python produces
+    ("οδοσ", "final_sigma", False),  # medial sigma is a different character
+    ("ΨΥΧΉ", "greek_pair", True),
+    ("ψυχή", "greek_pair", True),
+    ("ЖУК", "cyrillic", True),
+    ("жук", "cyrillic", True),
+    ("Ωhm", "ohm", True),
+    ("ωhm", "ohm", True),
+)
+
+
+def _assert_unicode_search_matches_python(session, cohort):
+    """Free text, club, league and nationality all case-fold like `str.lower()`."""
+    from .discovery_cohort import UNICODE_NAMES
+
+    for needle, key, expected in _SEARCH_CASES:
+        stored = UNICODE_NAMES[key]
+        # The expectation is Python's, recomputed rather than trusted from the table.
+        assert (
+            needle.lower() in stored.lower()
+        ) is expected, f"case table is wrong for {needle!r} against {stored!r}"
+        found = cohort.id_of(stored) in _ids(_search(session, scope="all_records", q=needle))
+        assert (
+            found is expected
+        ), f"q={needle!r} against stored {stored!r}: expected {expected}, got {found}"
+
+    # The same folding on the club, league and nationality predicates, and across the
+    # boundary between two joined haystack fields.
+    sharp = cohort.id_of(UNICODE_NAMES["sharp_s"])
+    for club in ("straße", "STRAẞE", "Straße FC"):
+        assert sharp in _ids(_search(session, scope="all_records", club=club)), club
+    sigma = cohort.id_of(UNICODE_NAMES["final_sigma"])
+    for league in ("ελλάς", "ΕΛΛΆΣ", "cohort ελλάς"):
+        assert sigma in _ids(_search(session, scope="all_records", league=league)), league
+    # Nationality is equality, not containment: the stored "TÜRKİYE" is only equal to
+    # its own Python lowercase, which carries the combining dot.
+    dotted = cohort.id_of(UNICODE_NAMES["dotted_i"])
+    assert dotted in _ids(_search(session, scope="all_records", nationality="TÜRKİYE"))
+    assert dotted in _ids(_search(session, scope="all_records", nationality="türki̇ye"))
+    assert dotted not in _ids(_search(session, scope="all_records", nationality="türkiye"))
+    assert cohort.id_of(UNICODE_NAMES["sharp_s"]) in _ids(
+        _search(session, scope="all_records", nationality="großland")
+    )
+    # A needle that spans the name/club boundary of the joined haystack.
+    assert sharp in _ids(_search(session, scope="all_records", q="Sharp Cohort straße"))
+
+
+def _assert_like_metacharacters_stay_literal(session, cohort):
+    """`%`, `_` and the escape character are text, not pattern syntax.
+
+    Each needle has a decoy in the cohort that a wildcard reading would also return, so
+    these fail loudly if the needle is ever interpolated into a LIKE pattern.
+    """
+    from .discovery_cohort import LITERAL_PATTERN_NAMES
+
+    for key, decoy_key, needle in (
+        ("percent", "percent_decoy", "100% Effort"),
+        ("underscore", "underscore_decoy", "A_B"),
+        ("escape", "escape_decoy", "Sla/sh"),
+    ):
+        wanted = cohort.id_of(LITERAL_PATTERN_NAMES[key])
+        decoy = cohort.id_of(LITERAL_PATTERN_NAMES[decoy_key])
+        found = _ids(_search(session, scope="all_records", q=needle))
+        assert wanted in found, f"{needle!r} did not match its own literal record"
+        assert decoy not in found, f"{needle!r} matched {LITERAL_PATTERN_NAMES[decoy_key]!r}"
+
+    # `_` in the needle must not match the literal `/` record either.
+    assert cohort.id_of(LITERAL_PATTERN_NAMES["escape"]) not in _ids(
+        _search(session, scope="all_records", q="Sla_sh")
+    )
+    # ...and the same holds for the equality predicate.
+    assert cohort.id_of(LITERAL_PATTERN_NAMES["percent"]) in _ids(
+        _search(session, scope="all_records", nationality="cohort 100% effort")
+    )
+
+
+def _assert_name_ordering_matches_python(session, reference_rows):
+    """`name_asc` is exactly `(canonical_name.lower(), player_id)`.
+
+    Compared against the key computed in Python for the same cohort, so a database that
+    lowercases differently - or collates the lowered values in a locale order rather
+    than by code point - fails here rather than in a subtly reshuffled ledger.
+    """
+    items = _search(session, scope="all_records", sort="name_asc").items
+    got = [(item.canonical_name, item.id) for item in items]
+    expected = sorted(
+        ((row.canonical_name, row.player_id) for row in reference_rows),
+        key=lambda pair: (pair[0].lower(), pair[1]),
+    )
+    assert got == expected, "name_asc disagrees with (canonical_name.lower(), player_id)"
+
+    # Distinct spellings that lowercase to the same key must be adjacent and ordered by
+    # player id, which is the only thing left to separate them.
+    from .discovery_cohort import UNICODE_LOWER_COLLISIONS
+
+    ordered_ids = [item.id for item in items]
+    for first, second in UNICODE_LOWER_COLLISIONS:
+        assert (
+            first != second and first.lower() == second.lower()
+        ), f"{first!r}/{second!r} is no longer a lowercase collision"
+        pair = sorted(
+            session.scalars(
+                select(Player.id).where(Player.canonical_name.in_([first, second]))
+            ).all()
+        )
+        assert len(pair) == 2, f"{first!r}/{second!r} is not in the cohort"
+        positions = [ordered_ids.index(player_id) for player_id in pair]
+        assert positions == sorted(positions), f"{first!r}/{second!r} not ordered by player id"
+        assert abs(positions[0] - positions[1]) == 1, f"{first!r}/{second!r} not adjacent"
+
+
+# ---------------------------------------------------------------------------
+# the invariants stated as themselves, not only as "same as the reference"
+# ---------------------------------------------------------------------------
+def _assert_selected_role_ordering(session, cohort):
+    """A role-filtered ledger reports and orders by the selected role."""
+    conflicted = cohort.id_of("Cohort Conflicted Winger")
+    for direction, reverse in (("rolefit_desc", True), ("rolefit_asc", False)):
+        body = _search(session, role=SELECTED_ROLE, sort=direction)
+        assert body.items, direction
+        assert all(item.result_role == SELECTED_ROLE for item in body.items), direction
+        assert all(item.result_role_source == "selected_role" for item in body.items), direction
+        scores = [item.result_role_score for item in body.items]
+        assert all(score is not None for score in scores), direction
+        assert scores == sorted(scores, reverse=reverse), direction
+
+        row = next(item for item in body.items if item.id == conflicted)
+        assert row.result_role_score == 42.0
+        assert row.result_role_confidence == "low"
+        assert row.confidence == row.result_role_confidence
+        # ...while the best role stays independently truthful
+        assert row.best_role == OTHER_ROLE
+        assert row.best_role_score == 88.0
+        assert row.best_role_confidence == "high"
+
+    # With no role the same player is judged on its own best rating instead.
+    default_row = next(item for item in _search(session).items if item.id == conflicted)
+    assert default_row.result_role == OTHER_ROLE
+    assert default_row.result_role_score == 88.0
+    assert default_row.result_role_source == "best_role"
+
+    # A player without the selected rating does not qualify at all.
+    midfielder = cohort.id_of("Cohort Midfield Anchor")
+    assert midfielder not in _ids(_search(session, scope="all_records", role=SELECTED_ROLE))
+
+
+def _assert_unknowns_sort_last(session):
+    """Unrated, undated and unpriced records trail known values in both directions."""
+    for direction in ("rolefit_desc", "rolefit_asc"):
+        flags = [
+            item.has_rolefit_analysis
+            for item in _search(session, scope="all_records", sort=direction).items
+        ]
+        assert any(flags) and not all(flags), direction
+        assert flags == sorted(flags, reverse=True), direction
+
+    for direction in ("value_asc", "value_desc"):
+        items = _search(session, scope="all_records", sort=direction).items
+        known = [item.expected_asking_low_eur is not None for item in items]
+        assert any(known) and not all(known), direction
+        assert known == sorted(known, reverse=True), direction
+        lows = [
+            item.expected_asking_low_eur
+            for item in items
+            if item.expected_asking_low_eur is not None
+        ]
+        assert lows == sorted(lows, reverse=(direction == "value_desc")), direction
+        # nothing unknown is reported as EUR 0
+        assert all(
+            item.expected_asking_low_eur is None or item.expected_asking_low_eur > 0
+            for item in items
+        ), direction
+
+    for direction in ("age_asc", "age_desc"):
+        items = _search(session, scope="all_records", sort=direction).items
+        known = [item.age is not None for item in items]
+        assert any(known) and not all(known), direction
+        assert known == sorted(known, reverse=True), direction
+        ages = [item.age for item in items if item.age is not None]
+        assert ages == sorted(ages, reverse=(direction == "age_desc")), direction
+
+
+def _assert_counting_is_per_player(session, cohort, reference_rows):
+    """A player with several appearances, ratings, markets or playstyles counts once."""
+    body = _search(session, scope="all_records")
+    ids = _ids(body)
+    assert len(ids) == len(set(ids)), "a player appeared twice on one page"
+    assert body.total == len(reference_rows)
+
+    for name, expected_minutes in (
+        ("Cohort Multi Appearance", 2600),  # greatest-minutes appearance supplies the row
+        ("Cohort Tied Appearance Minutes", 1500),
+        ("Cohort Many Playstyles", 1800),
+        ("Cohort High Coverage Member", 1800),
+    ):
+        player_id = cohort.id_of(name)
+        matching = [item for item in body.items if item.id == player_id]
+        assert len(matching) == 1, f"{name} contributed {len(matching)} rows"
+        assert matching[0].minutes == expected_minutes, name
+        assert matching[0].represented_minutes == expected_minutes, name
+
+    # The playstyle predicate reads positives only, so a concern-only holder fails it.
+    concerns_only = cohort.id_of("Cohort Concerns Only")
+    positive = _ids(_search(session, scope="all_records", playstyle="volume_shooter"))
+    assert concerns_only not in positive
+    assert cohort.id_of("Cohort Many Playstyles") in positive
+    assert positive == sorted(set(positive), key=positive.index)
+    assert not _ids(_search(session, scope="all_records", playstyle="inflated_market"))
+
+    # High coverage: eligible members only, and the evidence status follows.
+    high = _search(session, scope="high_coverage_u23")
+    assert cohort.id_of("Cohort High Coverage Member") in _ids(high)
+    assert cohort.id_of("Cohort Ineligible Member") not in _ids(high)
+    assert all(item.is_high_coverage for item in high.items)
+    assert all(item.evidence_status == "high_coverage" for item in high.items)
+
+
+def _assert_pagination(session):
+    """Paging through the ledger reproduces the single-page ordering exactly."""
+    full = _ids(_search(session, scope="all_records", sort="rolefit_desc"))
+    assert len(full) > 6
+
+    page_size = 4
+    walked: list = []
+    page = 1
+    while True:
+        body = players_service.search_players(
+            session, scope="all_records", sort="rolefit_desc", page=page, page_size=page_size
+        )
+        assert body.page == page
+        assert len(body.items) <= page_size
+        walked.extend(_ids(body))
+        if page >= body.total_pages:
+            assert body.total == len(full)
+            break
+        page += 1
+    assert walked == full, "page-by-page order differs from the whole-ledger order"
+
+    # A page past the end serves the last real page and says so.
+    beyond = players_service.search_players(
+        session, scope="all_records", sort="rolefit_desc", page=999, page_size=page_size
+    )
+    assert beyond.page == beyond.total_pages
+    assert beyond.items
+    assert _ids(beyond) == full[(beyond.total_pages - 1) * page_size :]
+
+    # A genuinely empty result is page 1 with no pages.
+    empty = players_service.search_players(
+        session, scope="all_records", q="no-such-player-anywhere", page=7, page_size=page_size
+    )
+    assert (empty.items, empty.total, empty.page, empty.total_pages) == ([], 0, 1, 0)
+
+
+def _assert_tie_breaks(session, cohort):
+    """Confidence, then canonical name, then player id - in that order."""
+    body = _search(session, role=SELECTED_ROLE, sort="rolefit_desc")
+    ids = _ids(body)
+
+    # Equal selected score: the higher SELECTED confidence wins, even though the
+    # canonical-name tie-break alone would order these two the other way round.
+    low_conf = cohort.id_of("Cohort Aaa Tie Low Confidence")
+    high_conf = cohort.id_of("Cohort Zzz Tie High Confidence")
+    assert ids.index(high_conf) < ids.index(low_conf)
+
+    # Identical name, score and confidence: only the player id can separate them, and
+    # it does so ascending and repeatably.
+    twins = cohort.ids_of("Cohort Identical Twin")
+    assert len(twins) == 2
+    assert [i for i in ids if i in twins] == twins
+    assert _ids(_search(session, role=SELECTED_ROLE, sort="rolefit_desc")) == ids
+
+    # Same rounded age, different birth dates: the age sorts tie them and fall through
+    # to canonical name, rather than ordering by the underlying date.
+    early = cohort.id_of("Cohort Aaa Same Rounded Age")
+    late = cohort.id_of("Cohort Zzz Same Rounded Age")
+    for direction in ("age_asc", "age_desc"):
+        aged = _ids(_search(session, scope="all_records", sort=direction))
+        assert aged.index(early) < aged.index(late), direction
+
+    # name_asc is canonical name then player id, nothing else.
+    by_name = _search(session, scope="all_records", sort="name_asc").items
+    keys = [(item.canonical_name.lower(), item.id) for item in by_name]
+    assert keys == sorted(keys)
+
+
+def _assert_season_without_an_end_date_is_answerable(session, cohort):
+    """A season with no end date makes every age unknown, and still serves a page.
+
+    `Season.end_date` is nullable, so this is a reachable production state: the age
+    ordering key becomes a typed NULL and every age bound excludes every record. It is
+    asserted here rather than only in a unit test because the failure mode is
+    dialect-specific - PostgreSQL rejects an untyped NULL in a numeric position that
+    SQLite accepts silently.
+    """
+    from app.models.orm import Season
+
+    season = session.get(Season, cohort.season_id)
+    original = season.end_date
+    season.end_date = None
+    session.flush()
+    try:
+        for sort in ("age_asc", "age_desc", "rolefit_desc", "name_asc"):
+            body = _search(session, scope="all_records", sort=sort)
+            assert body.items, sort
+            assert all(item.age is None for item in body.items), sort
+        # Every age bound now excludes every record, exactly as an unknown age did.
+        for bounds in ({"age_min": 19}, {"age_max": 40}, {"age_band": "u23"}):
+            assert _search(session, scope="all_records", **bounds).total == 0, bounds
+    finally:
+        season.end_date = original
+        session.flush()

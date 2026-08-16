@@ -2,7 +2,17 @@ from __future__ import annotations
 
 from typing import Optional
 
-from sqlalchemy import JSON, Boolean, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, TimestampMixin
@@ -34,6 +44,11 @@ class RoleRating(Base, TimestampMixin):
     __tablename__ = "role_ratings"
     __table_args__ = (
         UniqueConstraint("player_id", "role_key", "season_id", "version", name="uq_role_rating"),
+        # Discovery resolves each candidate's best (or selected) rating with a
+        # season-scoped, player-correlated lookup. The unique constraint leads with
+        # player_id, so it cannot serve a season-first probe; this one can.
+        # See docs/milestone_8_discovery_contract.md for the measured plans.
+        Index("ix_role_ratings_season_player", "season_id", "player_id"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
