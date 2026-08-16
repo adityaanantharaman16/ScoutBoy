@@ -199,7 +199,12 @@ export function SearchExperience() {
             `lg:items-start` on the grid keeps this item content-height, which is
             what makes `position: sticky` take effect at all. */}
         <aside
-          className="filter-column"
+          // Grid items default to `min-width: auto`. On Linux Chromium's classic
+          // scrollbar layout, the expanded active-criteria row made this item's
+          // min-content width 15px wider than a 390px viewport. Let the rail shrink
+          // inside the single mobile grid track; its own children already truncate
+          // or wrap deliberately.
+          className="filter-column min-w-0"
           aria-label="Discovery filters"
           data-testid="filter-column"
         >

@@ -632,7 +632,11 @@ describe("Discovery filter rail: preserved controls", () => {
     // behaviour at real widths is asserted in the Playwright suites.
     mountDiscovery();
     const column = screen.getByTestId("filter-column");
-    expect(column.className).toBe("filter-column");
+    expect(column.className).toContain("filter-column");
+    // Grid items otherwise keep `min-width: auto`; Linux Chromium's classic
+    // scrollbar layout exposed that as a 15px page overflow at 390px when an
+    // advanced criterion opened the rail.
+    expect(column.className).toContain("min-w-0");
     // never a raw sticky/fixed utility that would apply below the lg breakpoint
     expect(column.className).not.toMatch(/(?:^|\s)(?:sticky|fixed)(?=\s|$)/);
   });
