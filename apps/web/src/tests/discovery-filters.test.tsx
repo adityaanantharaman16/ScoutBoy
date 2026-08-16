@@ -23,7 +23,18 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/",
   useSearchParams: () => paramsRef.current,
 }));
-vi.mock("@/lib/api/hooks", () => ({ usePlayerSearch: usePlayerSearchMock }));
+// The Playstyle options come from the Methodology contract in production; here a
+// fixed two-entry list stands in for it, so the select's SOURCE is exercised
+// without a network round trip. `discovery-advanced-filters.test.tsx` asserts the
+// source itself.
+const PLAYSTYLE_OPTIONS = [
+  { key: "box_crasher", label: "Box Crasher" },
+  { key: "press_resistant", label: "Press Resistant" },
+];
+vi.mock("@/lib/api/hooks", () => ({
+  usePlayerSearch: usePlayerSearchMock,
+  usePlaystyleOptions: () => PLAYSTYLE_OPTIONS,
+}));
 
 // The rail writes its URL through the native History API (see SearchExperience for
 // why), so that is what the assertions observe.
@@ -83,6 +94,11 @@ function lastUrl(): string {
 function lastRequest() {
   return usePlayerSearchMock.mock.calls.at(-1)![0];
 }
+
+/** The numeric/text controls that now live inside Advanced Filters. */
+const minutes = () => screen.getByTestId("min-minutes-filter");
+const roleFitMin = () => screen.getByTestId("rolefit-min-filter");
+const roleFitMax = () => screen.getByTestId("rolefit-max-filter");
 
 // The default response reports the page the default request asked for (1 of 4), so
 // no test is incidentally exercising the out-of-range page canonicalization. The
@@ -341,17 +357,26 @@ describe("Legacy age_band URLs", () => {
 describe("Discovery numeric thresholds", () => {
   it("declares its own range on each input: minutes 0-10,000, RoleFit 0-99", () => {
     mountDiscovery();
-    const minutes = screen.getByLabelText("Min minutes");
-    expect(minutes).toHaveAttribute("type", "number");
-    expect(minutes).toHaveAttribute("min", "0");
-    expect(minutes).toHaveAttribute("max", "10000");
-    expect(minutes).toHaveAttribute("step", "1");
+    expect(minutes()).toHaveAttribute("type", "number");
+    expect(minutes()).toHaveAttribute("min", "0");
+    expect(minutes()).toHaveAttribute("max", "10000");
+    expect(minutes()).toHaveAttribute("step", "1");
 
-    const rolefit = screen.getByLabelText("Min RoleFit");
-    expect(rolefit).toHaveAttribute("type", "number");
-    expect(rolefit).toHaveAttribute("min", "0");
-    expect(rolefit).toHaveAttribute("max", "99");
-    expect(rolefit).toHaveAttribute("step", "1");
+    // Both RoleFit bounds, not just the floor: Phase 8.2 exposes the ceiling too
+    // and it must carry the SAME domain, never the minutes one.
+    for (const input of [roleFitMin(), roleFitMax()]) {
+      expect(input).toHaveAttribute("type", "number");
+      expect(input).toHaveAttribute("min", "0");
+      expect(input).toHaveAttribute("max", "99");
+      expect(input).toHaveAttribute("step", "1");
+    }
+  });
+
+  it("keeps the accessible names explicit now that both bounds exist", () => {
+    mountDiscovery();
+    expect(minutes()).toHaveAccessibleName("Minimum Minutes");
+    expect(roleFitMin()).toHaveAccessibleName("Minimum RoleFit");
+    expect(roleFitMax()).toHaveAccessibleName("Maximum RoleFit");
   });
 
   it("states both contracts accurately in the shared helper copy", () => {
@@ -360,23 +385,22 @@ describe("Discovery numeric thresholds", () => {
     expect(help.textContent).toContain("Whole minutes 0-10,000");
     expect(help.textContent).toContain("whole RoleFit 0-99");
     expect(help.textContent).toMatch(/blank for none/i);
-    // both inputs point at it, and it no longer claims one 0-99 range for both
-    expect(screen.getByLabelText("Min minutes")).toHaveAttribute(
-      "aria-describedby",
-      "filter-threshold-help",
-    );
-    expect(screen.getByLabelText("Min RoleFit")).toHaveAttribute(
-      "aria-describedby",
-      "filter-threshold-help",
-    );
+    // every threshold input points at it, and it no longer claims one 0-99 range
+    // for both domains
+    for (const input of [minutes(), roleFitMin(), roleFitMax()]) {
+      expect(input).toHaveAttribute("aria-describedby", "filter-threshold-help");
+    }
     expect(help.textContent).not.toMatch(/^Whole numbers 0-99/);
+    // ...and it states the role context the RoleFit bounds are measured in
+    expect(help.textContent).toMatch(/selected role/i);
+    expect(help.textContent).toMatch(/best role/i);
   });
 
   it.each([0, 450, 900, 1500, 2000, 10000])(
     "accepts the realistic minute threshold %i unchanged",
     (value) => {
       mountDiscovery();
-      fireEvent.change(screen.getByLabelText("Min minutes"), { target: { value: String(value) } });
+      fireEvent.change(minutes(), { target: { value: String(value) } });
       if (value === 0) expect(lastUrl()).toContain("min_minutes=0");
       else expect(lastUrl()).toContain(`min_minutes=${value}`);
     },
@@ -384,39 +408,39 @@ describe("Discovery numeric thresholds", () => {
 
   it("accepts the RoleFit bounds and preserves a typed zero as zero", () => {
     mountDiscovery();
-    fireEvent.change(screen.getByLabelText("Min RoleFit"), { target: { value: "0" } });
+    fireEvent.change(roleFitMin(), { target: { value: "0" } });
     expect(lastUrl()).toContain("rolefit_min=0");
 
-    fireEvent.change(screen.getByLabelText("Min RoleFit"), { target: { value: "99" } });
+    fireEvent.change(roleFitMin(), { target: { value: "99" } });
     expect(lastUrl()).toContain("rolefit_min=99");
 
-    fireEvent.change(screen.getByLabelText("Min minutes"), { target: { value: "0" } });
+    fireEvent.change(minutes(), { target: { value: "0" } });
     expect(lastUrl()).toContain("min_minutes=0");
   });
 
   it("treats an emptied field as no threshold", () => {
     mountDiscovery("rolefit_min=70");
-    expect(screen.getByLabelText("Min RoleFit")).toHaveValue(70);
-    fireEvent.change(screen.getByLabelText("Min RoleFit"), { target: { value: "" } });
+    expect(roleFitMin()).toHaveValue(70);
+    fireEvent.change(roleFitMin(), { target: { value: "" } });
     expect(lastUrl()).not.toContain("rolefit_min");
   });
 
   it("clamps each input to its OWN ceiling, never the other's", () => {
     mountDiscovery();
     // RoleFit stops at 99 and must not accept the minutes ceiling
-    fireEvent.change(screen.getByLabelText("Min RoleFit"), { target: { value: "150" } });
+    fireEvent.change(roleFitMin(), { target: { value: "150" } });
     expect(lastUrl()).toContain("rolefit_min=99");
-    fireEvent.change(screen.getByLabelText("Min RoleFit"), { target: { value: "10000" } });
+    fireEvent.change(roleFitMin(), { target: { value: "10000" } });
     expect(lastUrl()).toContain("rolefit_min=99");
 
     // minutes stop at 10,000 and must NOT be crushed to the RoleFit ceiling
-    fireEvent.change(screen.getByLabelText("Min minutes"), { target: { value: "25000" } });
+    fireEvent.change(minutes(), { target: { value: "25000" } });
     expect(lastUrl()).toContain("min_minutes=10000");
-    fireEvent.change(screen.getByLabelText("Min minutes"), { target: { value: "1500" } });
+    fireEvent.change(minutes(), { target: { value: "1500" } });
     expect(lastUrl()).toContain("min_minutes=1500");
     expect(lastUrl()).not.toContain("min_minutes=99");
 
-    fireEvent.change(screen.getByLabelText("Min minutes"), { target: { value: "-5" } });
+    fireEvent.change(minutes(), { target: { value: "-5" } });
     expect(lastUrl()).toContain("min_minutes=0");
   });
 
@@ -424,15 +448,15 @@ describe("Discovery numeric thresholds", () => {
     // a realistic minutes threshold survives hydration intact
     mountDiscovery("min_minutes=1500&rolefit_min=70");
     expect(lastRequest()).toMatchObject({ min_minutes: 1500, rolefit_min: 70 });
-    expect(screen.getByLabelText("Min minutes")).toHaveValue(1500);
-    expect(screen.getByLabelText("Min RoleFit")).toHaveValue(70);
+    expect(minutes()).toHaveValue(1500);
+    expect(roleFitMin()).toHaveValue(70);
   });
 
   it("clamps out-of-range URL values per domain before they reach the request", () => {
     mountDiscovery("rolefit_min=250&min_minutes=-3");
     expect(lastRequest()).toMatchObject({ rolefit_min: 99, min_minutes: 0 });
-    expect(screen.getByLabelText("Min RoleFit")).toHaveValue(99);
-    expect(screen.getByLabelText("Min minutes")).toHaveValue(0);
+    expect(roleFitMin()).toHaveValue(99);
+    expect(minutes()).toHaveValue(0);
 
     mountDiscovery("min_minutes=99999");
     expect(lastRequest()).toMatchObject({ min_minutes: 10000 });
@@ -442,6 +466,18 @@ describe("Discovery numeric thresholds", () => {
     mountDiscovery("rolefit_min=Infinity&min_minutes=abc");
     expect(lastRequest().rolefit_min).toBeUndefined();
     expect(lastRequest().min_minutes).toBeUndefined();
+  });
+
+  it("clamps the new RoleFit CEILING through the same domain", () => {
+    mountDiscovery();
+    fireEvent.change(roleFitMax(), { target: { value: "150" } });
+    expect(lastUrl()).toContain("rolefit_max=99");
+
+    mountDiscovery("rolefit_max=-4");
+    expect(lastRequest()).toMatchObject({ rolefit_max: 0 });
+
+    mountDiscovery("rolefit_max=Infinity");
+    expect(lastRequest().rolefit_max).toBeUndefined();
   });
 });
 
@@ -588,12 +624,16 @@ describe("Discovery filter rail: preserved controls", () => {
     expect(lastUrl()).toContain("position_group=DEF");
   });
 
-  it("is sticky only from the desktop breakpoint up", () => {
+  it("delegates its stickiness to the shared filter-column contract", () => {
+    // The rule itself moved into globals.css so it can also RELEASE when a
+    // disclosure region is showing (a sticky box taller than the scrollport pins
+    // its own overflow out of reach, and a nested rail scroller is not allowed).
+    // The declarations are asserted in `filter-layout.test.tsx`; the measured
+    // behaviour at real widths is asserted in the Playwright suites.
     mountDiscovery();
     const column = screen.getByTestId("filter-column");
-    expect(column.className).toContain("lg:sticky");
-    expect(column.className).toContain("lg:top-4");
-    // never sticky below lg: no unprefixed sticky/fixed utility
+    expect(column.className).toBe("filter-column");
+    // never a raw sticky/fixed utility that would apply below the lg breakpoint
     expect(column.className).not.toMatch(/(?:^|\s)(?:sticky|fixed)(?=\s|$)/);
   });
 });
@@ -613,7 +653,7 @@ describe("Discovery results ledger header", () => {
     expect(within(ledger).getAllByTestId("result-row").length).toBe(2);
   });
 
-  it("reports count, age condition, season, page and Ranked ledger — and no scope", () => {
+  it("reports count, season, page and Ranked ledger — and no scope", () => {
     // a later page, requested and served, so the reported page is the served one
     usePlayerSearchMock.mockReturnValue({
       isLoading: false,
@@ -623,19 +663,45 @@ describe("Discovery results ledger header", () => {
     mountDiscovery("page=2");
     const summary = screen.getByTestId("result-count");
     expect(summary).toHaveTextContent("37 players");
-    expect(summary).toHaveTextContent("All Ages");
     expect(summary).toHaveTextContent("2023/24");
     expect(summary).toHaveTextContent("page 2 of 4");
     expect(summary).toHaveTextContent("Ranked ledger");
     expect(summary.textContent).not.toMatch(/Analyzed|All records|High-coverage/);
   });
 
-  it("reports the active age condition in the shared phrasing", () => {
-    mountDiscovery("age_max=25");
-    expect(screen.getByTestId("result-count")).toHaveTextContent("25 Years And Younger");
+  it("says nothing about criteria when the request narrows by nothing", () => {
+    mountDiscovery();
+    const summary = screen.getByTestId("result-count");
+    // Not "0 active criteria", and not the old always-present age sentence
+    // either: an unfiltered ledger reports a count, a season and a page.
+    expect(summary.textContent).not.toMatch(/criteri/i);
+    expect(summary.textContent).not.toMatch(/All Ages/);
+  });
 
+  it("counts the active narrowing criteria rather than listing them", () => {
+    mountDiscovery("q=Anton&age_max=25&league=Bundesliga&rolefit_min=60");
+    const summary = screen.getByTestId("result-count");
+    expect(summary).toHaveTextContent("4 active criteria");
+    // the readable list belongs in the rail, not in the ledger header
+    expect(summary.textContent).not.toContain("Bundesliga");
+    expect(summary.textContent).not.toContain("Anton");
+    // ...where it IS available in full
+    expect(screen.getByTestId("active-criteria-count")).toHaveTextContent("4 Active Criteria");
+  });
+
+  it("uses the singular for exactly one active criterion", () => {
     mountDiscovery("age_min=28");
-    expect(screen.getAllByTestId("result-count").at(-1)).toHaveTextContent("28 Years And Older");
+    expect(screen.getByTestId("result-count")).toHaveTextContent("1 active criterion");
+    expect(screen.getByTestId("result-count").textContent).not.toContain("criteria");
+  });
+
+  it("does not count a non-default sort as a narrowing criterion", () => {
+    // Sort reorders the ledger; it never removes a player from it, and it is
+    // permanently visible in the always-present Sort control.
+    mountDiscovery("sort=name_asc");
+    expect(lastRequest()).toMatchObject({ sort: "name_asc" });
+    expect(screen.getByTestId("result-count").textContent).not.toMatch(/criteri/i);
+    expect(screen.queryByTestId("active-criteria")).not.toBeInTheDocument();
   });
 
   it("does not report a scope even when a legacy scope URL is in play", () => {

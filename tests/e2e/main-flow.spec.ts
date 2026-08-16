@@ -9,7 +9,12 @@ test("main scouting flow", async ({ page }) => {
   // Analysis scope is no longer a Discovery control; the default analyzed pool is.
   await expect(page.getByTestId("scope-filter")).toHaveCount(0);
   await expect(page.getByTestId("player-result").first()).toBeVisible();
-  await expect(page.getByTestId("result-count")).toContainText("All Ages");
+  // The header counts active narrowing criteria rather than restating one of
+  // them; an unfiltered ledger therefore says nothing about criteria at all. The
+  // age condition itself stays visible in the always-present Age control and in
+  // the rail's active-criteria list.
+  await expect(page.getByTestId("result-count")).not.toContainText("criteri");
+  await expect(page.getByTestId("active-criteria")).toHaveCount(0);
   const defaultCountText = await page.getByTestId("result-count").textContent();
   expect(defaultCountText).not.toBeNull();
 
@@ -17,7 +22,11 @@ test("main scouting flow", async ({ page }) => {
   await page.getByTestId("age-direction-younger").click();
   await expect(page).toHaveURL(/age_max=25/);
   await expect(page).not.toHaveURL(/age_min/);
-  await expect(page.getByTestId("result-count")).toContainText("25 Years And Younger");
+  await expect(page.getByTestId("result-count")).toContainText("1 active criterion");
+  await expect(page.getByTestId("active-criteria-count")).toHaveText("1 Active Criterion");
+  await expect(page.getByTestId("active-criteria-summary")).toContainText(
+    "Age: 25 Years And Younger",
+  );
   await expect(page.getByTestId("player-result").first()).toBeVisible();
 
   await page.getByTestId("age-direction-older").click();
@@ -26,7 +35,8 @@ test("main scouting flow", async ({ page }) => {
 
   await page.getByTestId("age-direction-all").click();
   await expect(page).not.toHaveURL(/age_m(in|ax)/);
-  await expect(page.getByTestId("result-count")).toContainText("All Ages");
+  await expect(page.getByTestId("result-count")).not.toContainText("criteri");
+  await expect(page.getByTestId("active-criteria")).toHaveCount(0);
 
   // A legacy age_band link still loads and still narrows by age.
   await page.goto("/?age_band=u23");

@@ -92,7 +92,9 @@ class FixtureSuite:
     @classmethod
     def load(cls, directory: Optional[Path] = None) -> FixtureSuite:
         directory = directory or (config_dir() / "calibration")
-        with open(directory / FIXTURES_FILE) as f:
+        # UTF-8 explicitly, for the same reason as the contract loader: this file
+        # carries non-ASCII prose and its `config_hash` is over the parsed document.
+        with open(directory / FIXTURES_FILE, encoding="utf-8") as f:
             data = yaml.safe_load(f)
         players: dict[str, FixturePlayer] = {}
         benchmark_ids: list[str] = []

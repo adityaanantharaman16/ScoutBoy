@@ -25,6 +25,23 @@ async function pageOverflow(page: Page): Promise<number> {
   );
 }
 
+/**
+ * Reveal the Evidence & Fit fields.
+ *
+ * Phase 8.2 moved Minimum Minutes and the RoleFit bounds behind progressive
+ * disclosure. The controls, their domains and their semantics are unchanged; only
+ * how many presses reach them is. Advanced Filters opens onto Context, so the
+ * category has to be selected as well — unless a hard-loaded URL already carried
+ * an Evidence & Fit criterion, in which case both are already open.
+ */
+async function openEvidenceCategory(page: Page) {
+  const advanced = page.getByTestId("advanced-filters-toggle");
+  if ((await advanced.getAttribute("aria-expanded")) !== "true") await advanced.click();
+  const category = page.getByTestId("advanced-category-toggle-evidence");
+  if ((await category.getAttribute("aria-expanded")) !== "true") await category.click();
+  await expect(page.getByTestId("advanced-category-fields-evidence")).toBeVisible();
+}
+
 /** Every row's displayed name, RoleFit score and role caption, in ledger order. */
 async function ledgerRows(page: Page) {
   await page.getByTestId("results-ledger").waitFor();
@@ -107,9 +124,13 @@ test.describe("Role-filtered Discovery shows the role it ranked by", () => {
     await page.goto(`/?role=${SELECTED_ROLE}`);
     await page.getByTestId("results-ledger").waitFor();
 
-    // (8) the rail's controls keep their accessible names under a role filter
-    await expect(page.getByLabel("Min minutes")).toBeVisible();
-    await expect(page.getByLabel("Min RoleFit")).toBeVisible();
+    // (8) the rail's controls keep their accessible names under a role filter.
+    // Since Phase 8.2 the minutes/RoleFit thresholds live inside the Advanced
+    // Filters disclosure, so the names are asserted where they are reachable.
+    await openEvidenceCategory(page);
+    await expect(page.getByLabel("Minimum Minutes")).toBeVisible();
+    await expect(page.getByLabel("Minimum RoleFit")).toBeVisible();
+    await expect(page.getByLabel("Maximum RoleFit")).toBeVisible();
     await expect(page.getByLabel("Sort")).toBeVisible();
     await expect(page.getByTestId("age-threshold-slider")).toHaveAccessibleName("Age threshold");
 
@@ -152,15 +173,20 @@ test.describe("A realistic minimum-minutes threshold", () => {
     // (4) typed into the control, not just supplied by URL
     await page.goto("/?page_size=100");
     await page.getByTestId("results-ledger").waitFor();
-    await page.getByLabel("Min minutes").fill(String(MINUTES_THRESHOLD));
+    await openEvidenceCategory(page);
+    await page.getByTestId("min-minutes-filter").fill(String(MINUTES_THRESHOLD));
     await expect(page).toHaveURL(new RegExp(`min_minutes=${MINUTES_THRESHOLD}`));
 
     const narrowed = await ledgerRows(page);
     expect(narrowed.length).toBeGreaterThan(0);
     expect(narrowed.length).toBeLessThan(all.length);
 
-    // the value survived intact: it was NOT clamped to the old 0-99 RoleFit ceiling
-    await expect(page.getByLabel("Min minutes")).toHaveValue(String(MINUTES_THRESHOLD));
+    // The value survived intact: it was NOT clamped to the old 0-99 RoleFit
+    // ceiling. Addressed by test id rather than by label, because the criterion's
+    // own remove action is now named after the same field.
+    await expect(page.getByTestId("min-minutes-filter")).toHaveValue(String(MINUTES_THRESHOLD));
+    // ...and the disclosure did not swallow the criterion: the rail reports it
+    await expect(page.getByTestId("advanced-filters-toggle-count")).toHaveText("1");
 
     // every remaining row genuinely clears the threshold
     for (const row of narrowed) {
@@ -172,11 +198,14 @@ test.describe("A realistic minimum-minutes threshold", () => {
   test("states the minutes and RoleFit contracts separately in the rail", async ({ page }) => {
     await page.goto("/");
     await page.getByTestId("results-ledger").waitFor();
+    await openEvidenceCategory(page);
     const help = page.locator("#filter-threshold-help");
     await expect(help).toContainText("Whole minutes 0-10,000");
     await expect(help).toContainText("whole RoleFit 0-99");
-    await expect(page.getByLabel("Min minutes")).toHaveAttribute("max", "10000");
-    await expect(page.getByLabel("Min RoleFit")).toHaveAttribute("max", "99");
+    await expect(page.getByLabel("Minimum Minutes")).toHaveAttribute("max", "10000");
+    await expect(page.getByLabel("Minimum RoleFit")).toHaveAttribute("max", "99");
+    // the RoleFit CEILING Phase 8.2 added carries the same domain, never minutes
+    await expect(page.getByLabel("Maximum RoleFit")).toHaveAttribute("max", "99");
   });
 });
 

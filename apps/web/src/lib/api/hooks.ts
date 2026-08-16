@@ -1,5 +1,5 @@
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 import { apiGet } from "./client";
 import type { operations } from "./schema.gen";
@@ -123,6 +123,33 @@ export function useMethodology() {
     queryKey: ["methodology"],
     queryFn: () => apiGet<Methodology>("/methodology"),
   });
+}
+
+/** One playstyle option: the query-parameter value and its display name. */
+export interface PlaystyleOption {
+  key: string;
+  label: string;
+}
+
+/**
+ * The Playstyle filter's options, read from the Methodology contract.
+ *
+ * `GET /methodology` serializes `configs/playstyles/playstyles_v1.yaml`, which is
+ * the same file the rating engine applies badges from, so it is the single source
+ * of truth for playstyle keys and display names. A hand-written list in the
+ * frontend would be a second copy free to drift from the one the backend actually
+ * filters by.
+ *
+ * `positives` only. `concerns` are a separate, deliberately unfilterable list:
+ * `playstyle=<key>` matches a QUALIFYING positive badge (`is_concern = false`),
+ * so offering a concern here would silently return nothing.
+ */
+export function usePlaystyleOptions(): PlaystyleOption[] {
+  const { data } = useMethodology();
+  return useMemo(
+    () => (data?.playstyles ?? []).map((p) => ({ key: p.key, label: p.display_name })),
+    [data],
+  );
 }
 
 export function useAllPlayersLite() {

@@ -28,6 +28,49 @@ test.describe("Automated accessibility scans", () => {
     await expectNoA11yViolations(page, "Discovery + compare tray");
   });
 
+  test("Discovery with Advanced Filters and the active-criteria list expanded", async ({
+    page,
+  }) => {
+    // A compound URL so every Phase 8.2 surface is really on screen for the scan:
+    // the criteria rows and their remove actions, Clear All, the disclosure count
+    // boxes, and each category's fields and helper copy.
+    await page.goto("/?q=a&league=e&rolefit_max=95&value_min=1000000");
+    await readyForScan(page, '[data-testid="results-ledger"]');
+
+    await page.getByTestId("active-criteria-toggle").click();
+    await expect(page.getByTestId("active-criterion").first()).toBeVisible();
+    await settle(page);
+    await expectNoA11yViolations(page, "Discovery + active criteria expanded");
+
+    // Idempotent: a URL carrying an advanced criterion already opened the
+    // disclosure onto its own first active category, so a blind click would close
+    // the region that is meant to be scanned.
+    for (const category of ["context", "evidence", "market"]) {
+      const header = page.getByTestId(`advanced-category-toggle-${category}`);
+      if ((await header.getAttribute("aria-expanded")) !== "true") await header.click();
+      await expect(page.getByTestId(`advanced-category-fields-${category}`)).toBeVisible();
+      await settle(page);
+      await expectNoA11yViolations(page, `Discovery + Advanced Filters (${category})`);
+    }
+  });
+
+  test("Discovery disclosures scan clean at 320 and at 200% desktop zoom", async ({ page }) => {
+    for (const [label, width, height] of [
+      ["narrow-320", 320, 720],
+      ["zoom-640", 640, 720],
+    ] as const) {
+      await page.setViewportSize({ width, height });
+      await page.goto("/?club=e&min_minutes=450");
+      await readyForScan(page, '[data-testid="results-ledger"]');
+      await page.getByTestId("active-criteria-toggle").click();
+      const evidence = page.getByTestId("advanced-category-toggle-evidence");
+      if ((await evidence.getAttribute("aria-expanded")) !== "true") await evidence.click();
+      await expect(page.getByTestId("advanced-category-fields-evidence")).toBeVisible();
+      await settle(page);
+      await expectNoA11yViolations(page, `Discovery disclosures @ ${label}`);
+    }
+  });
+
   test("player dossier, alternate role, and pinned evidence", async ({ page }) => {
     await gotoFirstDossier(page, '[data-testid="role-territory"]');
     await settle(page);

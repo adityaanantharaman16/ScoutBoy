@@ -13,6 +13,14 @@ export const SCOPE_BANNER =
 export const SEARCH_SCOPE_KEYS = ["analyzed", "all_records", "high_coverage_u23"] as const;
 export const DEFAULT_SEARCH_SCOPE = "analyzed";
 
+/**
+ * The established default Discovery pagination. Named here so the default
+ * request, the URL-omission rules and the Clear All reset all read the same two
+ * numbers instead of repeating literals that could drift apart.
+ */
+export const DEFAULT_PAGE = 1;
+export const DEFAULT_PAGE_SIZE = 12;
+
 // Every visible option label in the Discovery rail is Title Case, including the
 // "all"/"any" defaults. Only the labels changed: `key` is the query-parameter
 // value and is deliberately untouched.
@@ -26,6 +34,15 @@ export const POSITION_GROUPS = [
 
 /** The Role select's "no specific role" option. Title Case, same empty key. */
 export const ANY_ROLE_LABEL = "Any Role (Best)";
+
+/**
+ * The Playstyle select's "no playstyle" option. The options themselves are NOT
+ * listed here: they come from the Methodology contract, which serializes the same
+ * `configs/playstyles/playstyles_v1.yaml` the engine applies badges from (see
+ * `usePlaystyleOptions`). A second hand-written copy in this file would be free to
+ * drift from the keys the backend actually filters by.
+ */
+export const ANY_PLAYSTYLE_LABEL = "Any Playstyle";
 
 // Role keys + display names mirror configs/roles/*.yaml (also exposed via /methodology).
 export const ROLES = [

@@ -206,7 +206,13 @@ class CalibrationContract:
     @classmethod
     def load(cls, directory: Optional[Path] = None) -> CalibrationContract:
         directory = directory or (config_dir() / "calibration")
-        with open(directory / CONTRACT_FILE) as f:
+        # UTF-8 explicitly, never the platform's locale encoding. The committed
+        # contract contains em dash, arrow, approx and less-or-equal characters, and
+        # `config_hash` is a hash of the PARSED document — so on a locale where
+        # `open()` defaults to cp1252 those characters decode to mojibake and the
+        # hash silently changes, failing `test_matches_committed_baseline` against a
+        # baseline that is itself correct.
+        with open(directory / CONTRACT_FILE, encoding="utf-8") as f:
             data = yaml.safe_load(f)
         return cls.parse(data)
 

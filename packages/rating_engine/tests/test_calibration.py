@@ -197,9 +197,67 @@ def test_playstyle_tier_boundary_direct(engine, suite):
     assert res["status"] == "pass"
 
 
+# --- 6b. committed Unicode decodes identically on every platform ---------------
+#: The contract hash the committed baseline was generated with, pinned as a literal.
+#: It is a hash of the PARSED contract document, so it changes if any character in
+#: `configs/calibration/rolefit_calibration_v1.yaml` decodes differently.
+COMMITTED_CONTRACT_HASH = "6f25ab01e7b575c4"
+
+#: The non-ASCII characters the committed contract actually contains. On a cp1252
+#: locale an implicit `open()` turns each into mojibake, which is what silently
+#: moved the contract hash on Windows while CI stayed green.
+CONTRACT_NON_ASCII = ("—", "→", "≈", "≤")  # — → ≈ ≤
+
+
+def test_committed_calibration_config_decodes_as_utf8():
+    """The calibration YAML is read as UTF-8, not as the platform's locale encoding.
+
+    Asserted on the RAW BYTES as well as on the loaded contract, so this fails with a
+    decoding message rather than as a mystifying hash mismatch. The repair is in
+    `CalibrationContract.load` / `FixtureSuite.load`; the baseline is correct and is
+    deliberately not regenerated.
+    """
+    from evaluation.contract import CONTRACT_FILE
+    from evaluation.fixtures import FIXTURES_FILE
+    from rolefit.paths import config_dir
+
+    calibration = config_dir() / "calibration"
+    raw = (calibration / CONTRACT_FILE).read_bytes()
+    assert raw.decode("utf-8"), "the committed contract is not valid UTF-8"
+    for char in CONTRACT_NON_ASCII:
+        assert char in raw.decode("utf-8"), f"{char!r} is no longer in the contract"
+    # A locale decode would produce mojibake for every one of them.
+    assert "—" in (calibration / FIXTURES_FILE).read_bytes().decode("utf-8")
+
+    loaded = CalibrationContract.load()
+    joined = " ".join(
+        [
+            loaded.methodology_note,
+            *loaded.limitations,
+            *(s.description or "" for s in loaded.scenarios),
+        ]
+    )
+    assert any(
+        char in joined for char in CONTRACT_NON_ASCII
+    ), "the loaded contract carries no non-ASCII text, so this test proves nothing"
+    assert "â" not in joined, "mojibake in the loaded contract: it was not read as UTF-8"
+
+
+def test_contract_hash_is_the_committed_one(contract):
+    """The pinned hash, independent of the fuller baseline comparison below.
+
+    Kept separate so a platform text-encoding regression reads as exactly that,
+    rather than as "RoleFit config changed".
+    """
+    assert contract.config_hash == COMMITTED_CONTRACT_HASH, (
+        "the calibration contract hash moved without the config changing — almost "
+        "certainly a text-encoding regression, not an intentional config edit"
+    )
+
+
 # --- 7. baseline-vs-current regression ----------------------------------------
 def test_matches_committed_baseline(result):
-    baseline = json.loads(BASELINE.read_text())
+    baseline = json.loads(BASELINE.read_text(encoding="utf-8"))
     # config hashes must match: any config/formula change is intentional and updates the baseline
     assert result["config_hashes"] == baseline["config_hashes"], (
         "RoleFit config changed — regenerate calibration_baseline.json intentionally "

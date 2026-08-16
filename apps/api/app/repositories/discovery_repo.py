@@ -80,6 +80,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Session, aliased
 from sqlalchemy.sql import ColumnElement, Select
 
+from app.core.search_aliases import club_alias_targets, league_alias_targets
 from app.core.text_search import unicode_lower
 from app.models.orm import (
     Appearance,
@@ -198,6 +199,15 @@ def _ci_equals(expr: ColumnElement, needle: str) -> ColumnElement:
     return unicode_lower(expr) == needle.lower()
 
 
+def _ci_contains_any(expr: ColumnElement, needles) -> ColumnElement:
+    """``expr`` contains any one of ``needles``, each taken literally.
+
+    One ``OR`` inside the same ``WHERE``, so an alias that stands for several stored
+    spellings still costs no extra statement and no application-side pass over rows.
+    """
+    return or_(*[_ci_contains(expr, needle) for needle in needles])
+
+
 def _space_joined(*parts: ColumnElement) -> ColumnElement:
     """SQL equivalent of ``" ".join(filter(None, parts))``.
 
@@ -226,6 +236,58 @@ def _space_joined(*parts: ColumnElement) -> ColumnElement:
     for piece in pieces[1:]:
         joined = joined + piece
     return joined
+
+
+# ---------------------------------------------------------------------------
+# Context predicates: league, club
+#
+# Both are ordinary case-insensitive literal-substring searches over a joined
+# haystack, with one deterministic alias table in front of them
+# (`configs/discovery/search_aliases_v1.yaml`). The alias layer is a lookup, not
+# fuzzy matching, and it compiles into the SAME `WHERE` clause: no extra statement,
+# no application-side pass over rows, and AND composition with every other filter is
+# untouched.
+# ---------------------------------------------------------------------------
+def _league_haystack() -> ColumnElement:
+    """Competition slug, name and COUNTRY as one searchable string.
+
+    Country is the Phase 8.2 addition. Without it the field only appeared to
+    understand countries: `eng`, `por` and `ita` worked purely because those codes
+    happen to lead the stored slugs, while the actual words `England`, `Portugal` and
+    `Italy` matched nothing. Adding the stored country makes both spellings work for
+    the same reason instead of by coincidence, and it needs no extra join because
+    `Competition` is already outer-joined for the free-text haystack.
+    """
+    return _space_joined(Competition.slug, Competition.name, Competition.country)
+
+
+def _club_haystack() -> ColumnElement:
+    """Team slug and canonical name as one searchable string.
+
+    Alias targets are matched against this same joined value, so a target may be
+    written in either provider shape (`paris_sg` or `Paris Saint-Germain`) and still
+    resolve.
+    """
+    return _space_joined(Team.slug, Team.canonical_name)
+
+
+def _league_predicate(needle: str) -> ColumnElement:
+    """League by name, slug code or country, with the misspelling table in front."""
+    targets = league_alias_targets(needle)
+    return _ci_contains_any(_league_haystack(), targets or (needle,))
+
+
+def _club_predicate(needle: str) -> ColumnElement:
+    """Club by name or slug, with the abbreviation/nickname table in front.
+
+    A matched alias RESOLVES: its targets replace the typed needle rather than being
+    unioned with it. `club=` is a statement of which club, so a curated answer is what
+    the field is for - and unioning would let a two-letter abbreviation such as `om`
+    drag in every club whose name merely contains those letters. Anything that is not
+    an alias is searched exactly as before.
+    """
+    targets = club_alias_targets(needle)
+    return _ci_contains_any(_club_haystack(), targets or (needle,))
 
 
 # ---------------------------------------------------------------------------
@@ -466,28 +528,44 @@ class _Candidates:
             where.append(self.high_coverage)
 
         if f.q:
-            where.append(
-                _ci_contains(
-                    _space_joined(
-                        Player.canonical_name,
-                        Team.canonical_name,
-                        Competition.name,
-                        Player.primary_position,
-                    ),
-                    f.q,
-                )
+            # The documented free-text haystack, unchanged.
+            free_text = _ci_contains(
+                _space_joined(
+                    Player.canonical_name,
+                    Team.canonical_name,
+                    Competition.name,
+                    Player.primary_position,
+                ),
+                f.q,
             )
+            # ...plus, when the WHOLE input is a known club abbreviation, the clubs it
+            # stands for. `q` is documented as searching club identity, so `q=psg`
+            # finding nobody was a hole in that promise. This ADDS to the free-text
+            # match rather than replacing it (the club field resolves instead - see
+            # `_club_predicate`), because `q` is a broad "find anything" search and
+            # silently narrowing it would be the more surprising behaviour. Only a
+            # normalized whole-input alias is considered: there is deliberately no
+            # token parsing of compound prose.
+            club_targets = club_alias_targets(f.q)
+            if club_targets:
+                free_text = or_(free_text, _ci_contains_any(_club_haystack(), club_targets))
+            where.append(free_text)
         if f.position_group:
             where.append(
                 position_group_case(self.appearance.position_group, Player.primary_position)
                 == f.position_group
             )
         if f.league:
-            where.append(_ci_contains(_space_joined(Competition.slug, Competition.name), f.league))
+            where.append(_league_predicate(f.league))
         if f.club:
-            where.append(_ci_contains(_space_joined(Team.slug, Team.canonical_name), f.club))
+            where.append(_club_predicate(f.club))
         if f.nationality:
-            where.append(_ci_equals(func.coalesce(Player.nationality, ""), f.nationality))
+            # Substring, not equality. Equality meant the field returned nothing until
+            # the whole stored country had been typed, which read as a broken control:
+            # `Eng` matched no England player at all. Missing nationality still fails an
+            # active predicate - COALESCE to the empty string cannot contain a non-empty
+            # needle - so nothing became more permissive about unknown data.
+            where.append(_ci_contains(func.coalesce(Player.nationality, ""), f.nationality))
         if f.min_minutes is not None:
             where.append(func.coalesce(self.appearance.minutes, 0) >= f.min_minutes)
 

@@ -35,6 +35,47 @@ default `analyzed` scope. `scope` remains a supported API parameter, a
 scope-bearing URL still loads and is still honoured, and an unrecognised value
 falls back to the default rather than being forwarded.
 
+Phase 8.2 did not reinstate it. The active-criteria list is deliberately not a
+back door: it reports narrowing criteria the user can see and change, and
+Analysis Scope is neither. Clear All still drops a legacy `scope` / `universe` /
+`age_band` from the canonical URL.
+
+## Exposed Discovery filters
+
+Since Phase 8.2 the rail can express every filter `GET /api/players` accepts,
+split between five always-visible core controls and an Advanced Filters
+disclosure:
+
+| Group | Controls |
+| ----- | -------- |
+| Core (always visible) | Search, Age Threshold, Position Group, Role, Sort |
+| Advanced → Context | League, Club, Nationality |
+| Advanced → Evidence & Fit | Minimum Minutes, Minimum RoleFit, Maximum RoleFit, Playstyle |
+| Advanced → Market | Minimum Expected Asking, Maximum Expected Asking |
+
+All three Context predicates are case-insensitive **literal substrings**.
+League searches the competition's slug, name **and stored country**, so `England`,
+`eng` and `Premier League` all reach the Premier League. Club is searched through a
+versioned alias registry first (`configs/discovery/search_aliases_v1.yaml`), so `psg`,
+`P.S.G.` and `Paris SG` resolve to Paris Saint-Germain and an ambiguous abbreviation
+returns every club it defensibly names; anything that is not a configured alias is an
+ordinary substring. There is **no fuzzy matching** anywhere. Nationality matches any
+part of the stored country (`Eng` finds England) and a player with no stored
+nationality still fails an active predicate. Playstyle matches a qualifying positive
+badge and never a concern, and its options come from the Methodology contract rather
+than a hand-written frontend list. The expected-asking inputs are typed in **EUR
+millions** and serialized as the absolute EUR the API contract requires
+(`12.5` → `value_max=12500000`); a player with no expected asking is excluded by
+an active bound rather than read as EUR 0, and no midpoint of the two bounds is
+ever computed or shown. All active filters compose with AND.
+
+Confidence, evidence state and concern filtering remain **unsupported**: the
+search contract has no predicate for them, and none was invented in the browser.
+
+Progressive disclosure, the active-criteria list, the range-safety rule and the
+Clear All reset are documented in
+[docs/milestone_8_discovery_contract.md](milestone_8_discovery_contract.md).
+
 ## Age filter
 
 Age is calculated relative to the selected season's end date.
@@ -128,6 +169,24 @@ minutes are never capped or altered by it. `-1` and `10001` are validation error
 `rolefit_min` / `rolefit_max` stay on the authoritative 0-99 RoleFit scale
 (`DISPLAY_SCALE_MIN` / `DISPLAY_SCALE_MAX`). The RoleFit calculation and display scale
 are unchanged.
+
+### Coherent pairs
+
+Both inclusive pairs the rail can now express — `rolefit_min`/`rolefit_max` and
+`value_min`/`value_max` — are kept coherent by one deterministic rule, so `min >
+max` can never reach the API (RoleFit would silently return nothing; an inverted
+asking range is a 422):
+
+> **The edited bound wins, and its companion follows it.** Raising a minimum past
+> its maximum raises the maximum to match; lowering a maximum past its minimum
+> lowers the minimum to match.
+
+The companion move is written to the control, the URL, the active-criteria
+summary and the request in the same update, and nothing outside the pair is
+touched. A hard-loaded URL has no edited side, so the **minimum is
+authoritative**: `?rolefit_min=80&rolefit_max=20` loads as `80-80`, the same way
+an off-stop age bound snaps, and the next interaction writes the canonical pair
+back to the URL.
 
 ## Asking-price ordering
 

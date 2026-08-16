@@ -42,7 +42,15 @@ PAGE_SIZE_MAX = 100
 
 @router.get("", response_model=Paginated[PlayerSearchCard])
 def search_players(
-    q: Optional[str] = None,
+    q: Optional[str] = Query(
+        None,
+        description=(
+            "Case-insensitive literal substring across player name, club, league and "
+            "primary position. When the WHOLE input is a configured club alias "
+            "('psg', 'spurs') the clubs it names are searched as well, so club "
+            "abbreviations work here too."
+        ),
+    ),
     age_min: Optional[float] = None,
     age_max: Optional[float] = None,
     position_group: Optional[str] = Query(
@@ -61,9 +69,34 @@ def search_players(
             "tie-break and the display. An unknown role key is a 422."
         ),
     ),
-    league: Optional[str] = None,
-    club: Optional[str] = None,
-    nationality: Optional[str] = None,
+    league: Optional[str] = Query(
+        None,
+        description=(
+            "Case-insensitive literal substring over the competition's slug, name and "
+            "country, so 'Premier League', 'eng' and 'England' all match. A small "
+            "deterministic misspelling table is applied first (see "
+            "configs/discovery/search_aliases_v1.yaml); there is no fuzzy matching."
+        ),
+    ),
+    club: Optional[str] = Query(
+        None,
+        description=(
+            "Case-insensitive literal substring over the team's slug and canonical "
+            "name. A deterministic alias table resolves common abbreviations and "
+            "nicknames first - 'psg', 'P.S.G.', 'spurs', 'thfc' - and an ambiguous "
+            "abbreviation returns every club it defensibly names. Anything that is not "
+            "a configured alias is searched as an ordinary substring; there is no fuzzy "
+            "matching."
+        ),
+    ),
+    nationality: Optional[str] = Query(
+        None,
+        description=(
+            "Case-insensitive literal SUBSTRING of the stored nationality, so 'Eng' "
+            "matches England. A player with no stored nationality fails an active "
+            "predicate rather than matching."
+        ),
+    ),
     # Bounds are declared here so a directly crafted out-of-range request gets a
     # 422 rather than silently producing a misleading result set. Minutes and
     # RoleFit carry SEPARATE ceilings: see the module constants.

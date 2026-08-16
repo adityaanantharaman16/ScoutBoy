@@ -399,6 +399,44 @@ async function gridItems(page: Page) {
   });
 }
 
+/**
+ * Open Advanced Filters, and optionally one category, WITHOUT toggling something
+ * that is already open. A URL carrying an advanced criterion opens the disclosure
+ * for itself, so a blind click would close the region under measurement.
+ */
+async function openAdvancedCategory(page: Page, category?: string) {
+  const toggle = page.getByTestId("advanced-filters-toggle");
+  if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
+  if (!category) return;
+  const header = page.getByTestId(`advanced-category-toggle-${category}`);
+  if ((await header.getAttribute("aria-expanded")) !== "true") await header.click();
+  await expect(page.getByTestId(`advanced-category-fields-${category}`)).toBeVisible();
+}
+
+/**
+ * The measured boxes of one advanced category's fields, in DOM order. Each label
+ * wrapper is named after the control it contains, so a row assertion reads as the
+ * sequence a scout actually tabs through.
+ */
+async function advancedFields(page: Page, category: string) {
+  return page.evaluate((key) => {
+    const grid = document.querySelector<HTMLElement>(
+      `[data-testid="advanced-category-fields-${key}"] > div`,
+    )!;
+    return Array.from(grid.children).map((child) => {
+      const el = child as HTMLElement;
+      const r = el.getBoundingClientRect();
+      const control = el.querySelector<HTMLElement>("[data-testid]");
+      return {
+        name: control?.dataset.testid ?? el.id ?? el.tagName.toLowerCase(),
+        x: Math.round(r.x),
+        y: Math.round(r.y),
+        w: Math.round(r.width),
+      };
+    });
+  }, category);
+}
+
 /** Rows of item names, grouped by shared top edge. */
 function rowsOf(items: Array<{ name: string; y: number }>): string[][] {
   const rows: Array<{ y: number; names: string[] }> = [];
@@ -411,7 +449,10 @@ function rowsOf(items: Array<{ name: string; y: number }>): string[][] {
 }
 
 test.describe("Filter rail responsive layout", () => {
-  const PANEL_PADDING = 16; // .card => p-4
+  // The core grid section keeps the `p-4` the whole panel used to carry; the
+  // panel itself is now an unpadded bordered box divided by hairlines, like the
+  // results ledger beside it.
+  const PANEL_PADDING = 16;
 
   /** Internal content width of the filter panel. */
   async function panelInnerWidth(page: Page): Promise<number> {
@@ -441,25 +482,48 @@ test.describe("Filter rail responsive layout", () => {
       expect(rowsOf(items), `rows at ${label}`).toEqual([
         ["Search"],
         ["age-threshold-filter"],
-        ["Position group", "threshold-pair"],
-        ["Role", "Sort"],
+        ["Position group", "Role"],
+        ["Sort"],
       ]);
 
-      // the two full-width rows really do span the panel's whole interior
+      // the three full-width rows really do span the panel's whole interior
       // (2px tolerance: the panel width and each item width round independently)
       const inner = await panelInnerWidth(page);
-      for (const name of ["Search", "age-threshold-filter"]) {
+      for (const name of ["Search", "age-threshold-filter", "Sort"]) {
         const item = items.find((i) => i.name === name)!;
         expect(item.w, `${name} width at ${label}`).toBeGreaterThanOrEqual(inner - 2);
       }
 
-      // ...and the paired rows are two genuine columns, each about half
+      // ...and the paired row is two genuine columns, each about half
       const pg = items.find((i) => i.name === "Position group")!;
-      const pair = items.find((i) => i.name === "threshold-pair")!;
-      expect(pg.y).toBe(pair.y);
-      expect(pg.x).toBeLessThan(pair.x);
-      expect(Math.abs(pg.w - pair.w)).toBeLessThanOrEqual(2);
+      const role = items.find((i) => i.name === "Role")!;
+      expect(pg.y).toBe(role.y);
+      expect(pg.x).toBeLessThan(role.x);
+      expect(Math.abs(pg.w - role.w)).toBeLessThanOrEqual(2);
 
+      expect(await pageOverflow(page), `overflow at ${label}`).toBeLessThanOrEqual(1);
+    });
+
+    test(`${label}: an open advanced category uses a balanced two-column grid`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 1000 });
+      await page.goto("/");
+      await page.getByTestId("results-ledger").waitFor();
+      await openAdvancedCategory(page, "evidence");
+
+      const rows = rowsOf(await advancedFields(page, "evidence"));
+      // DOM order is preserved as visual order: minutes, RoleFit floor, RoleFit
+      // ceiling, playstyle, then the helper sentence spanning both columns.
+      expect(rows, `evidence rows at ${label}`).toEqual([
+        ["min-minutes-filter", "rolefit-min-filter"],
+        ["rolefit-max-filter", "playstyle-filter"],
+        ["filter-threshold-help"],
+      ]);
+
+      const items = await advancedFields(page, "evidence");
+      const [a, b] = items;
+      expect(Math.abs(a.w - b.w), `balanced columns at ${label}`).toBeLessThanOrEqual(2);
       expect(await pageOverflow(page), `overflow at ${label}`).toBeLessThanOrEqual(1);
     });
 
@@ -527,7 +591,6 @@ test.describe("Filter rail responsive layout", () => {
         ["Search"],
         ["age-threshold-filter"],
         ["Position group"],
-        ["threshold-pair"],
         ["Role"],
         ["Sort"],
       ]);
@@ -538,10 +601,37 @@ test.describe("Filter rail responsive layout", () => {
       }
       expect(await pageOverflow(page), `overflow at ${width}px`).toBeLessThanOrEqual(1);
       // and no select collapsed to an unreadable width
+      // Only the selects that are actually laid out: the Playstyle select lives
+      // inside a closed disclosure and legitimately measures 0x0 there.
       const selectWidths = await page
         .locator('[data-testid="filter-rail"] select')
-        .evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().width)));
+        .evaluateAll((els) =>
+          els
+            .map((e) => Math.round(e.getBoundingClientRect().width))
+            .filter((w) => w > 0),
+        );
+      expect(selectWidths.length).toBe(3);
       for (const w of selectWidths) expect(w).toBeGreaterThanOrEqual(120);
+    });
+
+    test(`${width}px: advanced categories stay one column and never overflow`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/");
+      await page.getByTestId("results-ledger").waitFor();
+      await openAdvancedCategory(page);
+
+      for (const category of ["context", "evidence", "market"]) {
+        await openAdvancedCategory(page, category);
+        const fields = await advancedFields(page, category);
+        // one field per row: no two share a top edge
+        for (const row of rowsOf(fields)) {
+          expect(row.length, `${category} row at ${width}px`).toBe(1);
+        }
+        expect(
+          await pageOverflow(page),
+          `overflow with ${category} open at ${width}px`,
+        ).toBeLessThanOrEqual(1);
+      }
     });
   }
 
@@ -556,7 +646,6 @@ test.describe("Filter rail responsive layout", () => {
       ["Search"],
       ["age-threshold-filter"],
       ["Position group"],
-      ["threshold-pair"],
       ["Role"],
       ["Sort"],
     ]);
@@ -569,7 +658,28 @@ test.describe("Filter rail responsive layout", () => {
     const ledger = (await page.getByTestId("results-ledger").boundingBox())!;
     expect(Math.round(rail.y)).toBe(Math.round(ledger.y));
     // and it is still the narrow column, not a full-width panel
+    expect(rail.width).toBeGreaterThanOrEqual(240);
     expect(rail.width).toBeLessThanOrEqual(280);
+    expect(await pageOverflow(page)).toBeLessThanOrEqual(1);
+  });
+
+  test("lg desktop keeps advanced categories one column inside the narrow rail", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/");
+    await page.getByTestId("results-ledger").waitFor();
+    await openAdvancedCategory(page);
+
+    for (const category of ["context", "evidence", "market"]) {
+      await openAdvancedCategory(page, category);
+      for (const row of rowsOf(await advancedFields(page, category))) {
+        expect(row.length, `${category} row on desktop`).toBe(1);
+      }
+      // the rail never widens past its approved track, whatever is open
+      const rail = (await page.getByTestId("filter-rail").boundingBox())!;
+      expect(rail.width, category).toBeLessThanOrEqual(280);
+    }
     expect(await pageOverflow(page)).toBeLessThanOrEqual(1);
   });
 });

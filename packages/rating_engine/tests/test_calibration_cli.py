@@ -54,9 +54,15 @@ def test_cli_all_writes_output_file(tmp_path, capsys):
     out_file = tmp_path / "report.md"
     assert main(["all", "--format", "markdown", "--output", str(out_file)]) == 0
     assert capsys.readouterr().out == ""  # nothing on stdout when writing a file
-    text = out_file.read_text()
+    # UTF-8 explicitly on both sides: the report contains status emoji and em
+    # dashes, and a locale-encoded round trip cannot carry them.
+    text = out_file.read_text(encoding="utf-8")
     assert "## Pilot (read-only)" in text
     assert "## Limitations" in text
+    assert (
+        "✅" in text or "❓" in text or "❗" in text or "❌" in text
+    ), "the written report lost its status glyphs, so the encoding round trip is lossy"
+    assert "—" in text  # em dash in the report's own headings
 
 
 def test_cli_fixtures_fail_on_fail_green_gate(capsys):

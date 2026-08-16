@@ -59,6 +59,7 @@ def assert_discovery_parity(session) -> dict:
     summary["matrix_cases"] = _assert_matches_reference(session, reference_rows)
     _assert_unicode_search_matches_python(session, cohort)
     _assert_like_metacharacters_stay_literal(session, cohort)
+    _assert_context_search_semantics(session, cohort)
     _assert_name_ordering_matches_python(session, reference_rows)
     _assert_selected_role_ordering(session, cohort)
     _assert_unknowns_sort_last(session)
@@ -253,14 +254,20 @@ def _assert_unicode_search_matches_python(session, cohort):
     sigma = cohort.id_of(UNICODE_NAMES["final_sigma"])
     for league in ("ελλάς", "ΕΛΛΆΣ", "cohort ελλάς"):
         assert sigma in _ids(_search(session, scope="all_records", league=league)), league
-    # Nationality is equality, not containment: the stored "TÜRKİYE" is only equal to
-    # its own Python lowercase, which carries the combining dot.
+    # Nationality is a case-insensitive SUBSTRING since Phase 8.2, and it folds case
+    # exactly like the other predicates. The stored "TÜRKİYE" lowercases to a key
+    # carrying the combining dot, so a naive "türkiye" still finds nothing - the
+    # substring change did not weaken the Unicode rule, it only widened the match.
     dotted = cohort.id_of(UNICODE_NAMES["dotted_i"])
     assert dotted in _ids(_search(session, scope="all_records", nationality="TÜRKİYE"))
     assert dotted in _ids(_search(session, scope="all_records", nationality="türki̇ye"))
+    assert dotted in _ids(_search(session, scope="all_records", nationality="TÜRKİ"))  # partial
     assert dotted not in _ids(_search(session, scope="all_records", nationality="türkiye"))
     assert cohort.id_of(UNICODE_NAMES["sharp_s"]) in _ids(
         _search(session, scope="all_records", nationality="großland")
+    )
+    assert cohort.id_of(UNICODE_NAMES["sharp_s"]) in _ids(
+        _search(session, scope="all_records", nationality="GROẞ")  # partial, stored case
     )
     # A needle that spans the name/club boundary of the joined haystack.
     assert sharp in _ids(_search(session, scope="all_records", q="Sharp Cohort straße"))
@@ -289,10 +296,90 @@ def _assert_like_metacharacters_stay_literal(session, cohort):
     assert cohort.id_of(LITERAL_PATTERN_NAMES["escape"]) not in _ids(
         _search(session, scope="all_records", q="Sla_sh")
     )
-    # ...and the same holds for the equality predicate.
-    assert cohort.id_of(LITERAL_PATTERN_NAMES["percent"]) in _ids(
-        _search(session, scope="all_records", nationality="cohort 100% effort")
-    )
+    # ...and the same holds for the nationality predicate, which became a SUBSTRING in
+    # Phase 8.2 and so is now a second place a needle could have been interpolated into
+    # a LIKE pattern. Both the whole stored value and a partial one stay literal.
+    percent = cohort.id_of(LITERAL_PATTERN_NAMES["percent"])
+    underscore = cohort.id_of(LITERAL_PATTERN_NAMES["underscore"])
+    assert percent in _ids(_search(session, scope="all_records", nationality="cohort 100% effort"))
+    assert percent in _ids(_search(session, scope="all_records", nationality="100%"))
+    assert underscore not in _ids(_search(session, scope="all_records", nationality="100%"))
+    assert underscore in _ids(_search(session, scope="all_records", nationality="A_B"))
+    assert percent not in _ids(_search(session, scope="all_records", nationality="A_B"))
+
+
+def _assert_context_search_semantics(session, cohort):
+    """Phase 8.2 Context behaviour, on whichever dialect is running.
+
+    Nationality is a substring, league also searches the stored country, and the club
+    field resolves configured abbreviations. Every case here is written so it can only
+    pass for the intended reason: the alias clubs' stored text contains none of the
+    abbreviations that must find them, and the England league mentions its country
+    nowhere except in the country column.
+    """
+    from .discovery_cohort import ALIAS_CLUB_PLAYERS
+
+    paris = cohort.id_of(ALIAS_CLUB_PLAYERS["paris"])
+    spurs = cohort.id_of(ALIAS_CLUB_PLAYERS["spurs"])
+
+    # -- nationality: partial, mixed case, and still missing-safe ---------------
+    for needle in ("England", "eng", "ENG", "gland"):
+        assert spurs in _ids(_search(session, scope="all_records", nationality=needle)), needle
+    assert paris not in _ids(_search(session, scope="all_records", nationality="England"))
+    # A player with no stored nationality never satisfies an active predicate, however
+    # short the needle is.
+    no_nationality = cohort.id_of("Cohort Unrated No Birth Date")
+    assert no_nationality in _ids(_search(session, scope="all_records"))
+    for needle in ("a", "e", "land"):
+        assert no_nationality not in _ids(
+            _search(session, scope="all_records", nationality=needle)
+        ), needle
+
+    # -- league: name, slug code and country all reach the same competition -----
+    country_only = _ids(_search(session, scope="all_records", league="England"))
+    assert {paris, spurs} <= set(country_only), "league did not search the stored country"
+    for needle in ("eng", "ENGLAND", "cohort-eng-flight", "Island Flight"):
+        assert paris in _ids(_search(session, scope="all_records", league=needle)), needle
+    # ...and the deterministic misspelling resolves to the same set as the country.
+    portugal = _ids(_search(session, scope="all_records", league="Portugal"))
+    assert portugal
+    assert _ids(_search(session, scope="all_records", league="portgual")) == portugal
+    assert _ids(_search(session, scope="all_records", league="por")) == portugal
+    # A league with a NULL country is still searchable by its other parts.
+    assert _ids(_search(session, scope="all_records", league="ελλάς"))
+
+    # -- club: aliases resolve, punctuation and case are tolerated --------------
+    for needle in ("psg", "PSG", " P.S.G. ", "Paris SG", "paris  sg"):
+        assert _ids(_search(session, scope="all_records", club=needle)) == [paris], needle
+    for needle in ("spurs", "SPURS", "thfc", "T.H.F.C."):
+        assert _ids(_search(session, scope="all_records", club=needle)) == [spurs], needle
+    # A non-alias needle is still an ordinary substring, over slug and name alike.
+    assert _ids(_search(session, scope="all_records", club="Tottenham")) == [spurs]
+    assert _ids(_search(session, scope="all_records", club="cohort-paris_sg")) == [paris]
+    # ...and an alias target reaches the SLUG, not only the canonical name: `psg`'s
+    # `paris_sg` target is a substring of this cohort's prefixed slug.
+    assert _ids(_search(session, scope="all_records", club="Saint-Germain")) == [paris]
+    assert paris not in _ids(_search(session, scope="all_records", club="cohort-home"))
+    assert not _ids(_search(session, scope="all_records", club="no-such-club"))
+
+    # -- whole-input club aliases also work in the main search ------------------
+    for needle in ("psg", "P.S.G."):
+        assert paris in _ids(_search(session, scope="all_records", q=needle)), needle
+    assert spurs in _ids(_search(session, scope="all_records", q="Spurs"))
+    # ...and `q` keeps its ordinary free-text reach at the same time.
+    assert spurs in _ids(_search(session, scope="all_records", q="Tottenham"))
+
+    # -- aliases still compose with AND -----------------------------------------
+    assert _ids(_search(session, scope="all_records", club="psg", position_group="ATT")) == [paris]
+    assert not _ids(_search(session, scope="all_records", club="psg", position_group="MID"))
+    assert not _ids(_search(session, scope="all_records", club="psg", nationality="England"))
+    assert _ids(
+        _search(session, scope="all_records", club="psg", league="England", min_minutes=1000)
+    ) == [paris]
+
+    # -- the count agrees with the rows an alias returns ------------------------
+    body = _search(session, scope="all_records", club="psg")
+    assert body.total == len(body.items) == 1
 
 
 def _assert_name_ordering_matches_python(session, reference_rows):

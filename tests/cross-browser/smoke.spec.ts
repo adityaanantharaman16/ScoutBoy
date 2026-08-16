@@ -36,8 +36,14 @@ test("discovery loads and filters", async ({ page }) => {
   await page.waitForLoadState("networkidle");
   expect(page.url()).toContain("age_max=25");
   await expect(page.locator('[data-testid="filter-column"]')).toBeVisible();
+  // Since Phase 8.2 the ledger header COUNTS active narrowing criteria instead of
+  // restating one of them; the age condition itself is reported by the rail's
+  // active-criteria summary, which is what this asserts on every engine.
   await expect(page.locator('[data-testid="result-count"]')).toContainText(
-    "25 Years And Younger",
+    "1 active criterion",
+  );
+  await expect(page.locator('[data-testid="active-criteria-summary"]')).toContainText(
+    "Age: 25 Years And Younger",
   );
 
   await slider.focus();

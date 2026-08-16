@@ -123,7 +123,7 @@ cannot drift into three readings of the same query.
 
 ## Phase 8.1B — Discovery query execution moves into the database
 
-**Status: implemented, pending supervisory audit.**
+**Status: implemented and supervisory-audited.**
 
 A behaviour-preserving query rewrite. No product or API redesign: no new filters, no
 new controls, no visual change, no scoring change, and the Phase 8.1A contract above is
@@ -446,3 +446,592 @@ so the whole path is covered on both dialects rather than just the expression.
   pinned Playwright now requires 1228 / 2311, whose text rasterization differs. The
   mismatch is renderer-side and affects surfaces Discovery does not touch. See the
   Phase 8.1B verification notes for the evidence.
+
+---
+
+## Phase 8.2 — Advanced Discovery interface
+
+**Status: implemented and supervisory-audited.**
+
+The main interface phase exposes the existing Phase 8.1 query contract without changing
+the scoring model or database schema. Its corrective pass then makes three bounded query
+semantics changes — partial nationality, league-country matching and deterministic club
+aliases — and updates the OpenAPI descriptions accordingly. The final
+`docs/api_contracts/openapi.json` and `apps/web/src/lib/api/schema.gen.ts` artifacts are
+current and regenerate byte-identically. The primary change is how much of the contract
+Discovery's rail can express, and how it stays readable while doing it.
+
+Before 8.2 the rail exposed six filter groups. `league` and `playstyle` could be
+supplied in a URL with no production control; `club`, `nationality`, `rolefit_max`,
+`value_min` and `value_max` were reachable only by hand-writing an API request. A scout
+could not compound "Bundesliga, under 25, at least 900 minutes, RoleFit 70-90, asking
+under EUR 30M" from the interface at all.
+
+Phase 8.2 exposes all seven, and keeps the default rail **shorter** than the one it
+replaces, by moving the two existing specialized thresholds behind the same disclosure.
+
+### Exactly which filters are exposed
+
+Only parameters `GET /api/players` already accepts. Nothing was added to the backend and
+nothing is filtered in the browser: one request carries every predicate and the ledger
+renders exactly the rows it returns.
+
+| Control | Parameter | Where it lives | Semantics |
+| --- | --- | --- | --- |
+| Search | `q` | core | case-insensitive substring across name, club, league, primary position |
+| Age Threshold | `age_min` **or** `age_max` | core | the unchanged five-stop one-sided control |
+| Position Group | `position_group` | core | `ATT` / `MID` / `DEF` / `GK` |
+| Role | `role` | core | selected-role context (see Phase 8.1A) |
+| Sort | `sort` | core | the six representable modes; **not** a narrowing criterion |
+| League | `league` | Advanced → Context | case-insensitive substring over slug, name **and country** |
+| Club | `club` | Advanced → Context | case-insensitive substring, with a deterministic alias table |
+| Nationality | `nationality` | Advanced → Context | case-insensitive **substring** |
+| Minimum Minutes | `min_minutes` | Advanced → Evidence & Fit | whole-season minutes, 0-10,000 |
+| Minimum RoleFit | `rolefit_min` | Advanced → Evidence & Fit | 0-99, applicable role context |
+| Maximum RoleFit | `rolefit_max` | Advanced → Evidence & Fit | 0-99, applicable role context |
+| Playstyle | `playstyle` | Advanced → Evidence & Fit | a qualifying **positive** badge, never a concern |
+| Minimum Expected Asking | `value_min` | Advanced → Market | absolute EUR; typed in EUR millions |
+| Maximum Expected Asking | `value_max` | Advanced → Market | absolute EUR; typed in EUR millions |
+
+RoleFit bounds apply to the **applicable role context**: each player's stored best role
+with no `role` selected, and only that role's stored rating when one is. All active
+filters compose with AND. The three Context predicates are detailed in
+[Phase 8.2 corrective pass](#phase-82-corrective-pass--context-search-decimal-typing-and-utf-8).
+
+**Deliberately not exposed.** Analysis Scope stays retired (Phase 8.1A): the rail has no
+scope selector, the ledger header reports none, and the active-criteria list does not
+offer one either — listing it as removable would reinstate the control by the side door.
+A scope-bearing or `universe=`-bearing URL still loads and is still honoured, and Clear
+All drops it from the canonical URL. Legacy Age Band keeps its documented normalization.
+
+**Confidence, evidence state and concern filtering remain unsupported.** They may be
+future product concepts, but `GET /api/players` has no predicate for any of them. No
+control was invented, and nothing is filtered out of already-returned rows to fake one.
+
+### Units: EUR millions in, absolute EUR out
+
+The asking-price inputs are the one place in the product with two units, because
+`12500000` is unreadable in a 248px column and one keystroke away from a tenfold error.
+The **input** is EUR millions; the **request, the URL and `SearchFilters`** are absolute
+EUR, exactly as the contract states.
+
+| typed | URL / API |
+| --- | --- |
+| `5` | `value_min=5000000` |
+| `12.5` | `value_max=12500000` |
+| `0` | `value_min=0` |
+
+The conversion lives in `lib/filters` (`parseAskingMillions` / `askingMillionsInput`), not
+in the component, so the input, the URL, the readable summary and the request cannot
+disagree about which unit they hold. Blank is no bound; zero is a real bound; non-finite
+and negative values are rejected as no bound rather than clamped, because there is no
+meaningful ceiling to clamp to and rewriting `-5` as `0` would invent an active predicate.
+Conversion rounds to whole euros, so a hard-loaded `value_min=1234567` displays as
+`1.234567` and round-trips back to the same euros instead of being quietly rewritten as
+EUR 1.2M by its own control.
+
+Readable summaries go through the shared `formatEur`, so a bound reads exactly like every
+other euro figure in the product. **No midpoint of the two bounds is ever computed or
+shown**, and the copy says "Expected Asking" throughout.
+
+### Missing-data behaviour
+
+Unchanged from the backend contract, and now stated in the rail:
+
+- an asking-price bound requires the endpoint it depends on to be **known**; a player
+  with no expected asking fails an active predicate rather than passing as EUR 0;
+- an active range needs both endpoints plus an overlap with the requested interval;
+- RoleFit bounds require a stored rating; unrated players never receive a placeholder;
+- an unknown age is excluded by any active age bound and visible when none is active.
+
+### Progressive disclosure
+
+The rail is one bordered panel divided by internal hairlines into square regions — the
+same construction as the results ledger beside it, so the two columns read as objects of
+one kind and their top edges still align.
+
+```
+  Narrow results                          URL-backed     header
+  3 Active Criteria                        Clear All     active criteria (absent when none)
+    Search: Anton · League: Bundesliga · +1 more
+  Search / Age Threshold / Position Group / Role / Sort   core controls
+  Advanced Filters                              [3] +     disclosure
+      Context                                   [1] +
+      Evidence & Fit                            [2] −
+        Minimum Minutes / Minimum RoleFit
+        Maximum RoleFit / Playstyle
+      Market                                        +
+```
+
+Rules, all enforced by test:
+
+- **One category open at a time.** Opening Market closes Context, so the expanded rail
+  stays roughly one category tall however many criteria are in play.
+- **Closing never clears.** Every field is derived from URL-backed request state, so
+  collapsing is pure presentation: no value changes, no URL write, no refetch. A closed
+  category keeps reporting its own active count.
+- **Open state is local, not URL state.** A shared link describes a cohort, not which
+  drawer the sender had open. It is seeded once at mount from the hydrated request: a
+  hard-loaded compound URL opens Advanced Filters onto the first category it is actually
+  using, so nothing is active-but-invisible.
+- Both regions stay in the DOM and toggle with the `hidden` attribute, so every
+  `aria-controls` reference resolves in both states and no field is focusable while its
+  category is shut.
+
+Advanced Filters and each category header are the same component (`FilterDisclosure`): a
+real `<button>` with `aria-expanded`, `aria-controls`, a 44px (category: 40px) row, the
+product's shared focus ring, and an accessible name that speaks its count
+("Advanced Filters, 3 active"). Enter and Space are the platform's.
+
+Field grids repeat the core grid's three column counts — one column below 640px, two on
+tablet, one again in the narrow desktop rail — with **no `order` utilities anywhere**, so
+DOM order is visual and keyboard order at every width.
+
+### Range safety
+
+RoleFit and asking-price pairs must never send `min > max`: RoleFit would silently return
+nothing and `value_min > value_max` is a documented 422. One deterministic rule,
+implemented once in `coherentBounds` and used by both pairs and both entry points:
+
+> **The edited bound wins, and its companion follows it.** Raising a minimum past its
+> maximum raises the maximum to match; lowering a maximum past its minimum lowers the
+> minimum to match.
+
+The edit is never discarded or withheld, and the companion move is written to the
+control, the URL, the active summary and the request in the same update, so all four
+always agree. Nothing outside the pair is touched. A hard-loaded URL has no edited side,
+so the **minimum is authoritative**: `?rolefit_min=80&rolefit_max=20` loads as `80-80` —
+the same normalization the age control already applies to an off-stop URL bound — and the
+next interaction writes the canonical pair back. A browser-level assertion records every
+`/api/players` request made during a range edit and fails if any carries an inverted pair.
+
+### Active criteria
+
+A compact area directly below the filter header, **absent entirely** when nothing
+narrows. Collapsed it is one square row: the total count, the first two criteria in rail
+order, and "+N more", with a long search needle or club name truncating rather than
+widening the rail. Expanded it is one flat rectangular row per criterion — field, readable
+value, and a remove action named after it ("Remove League: Bundesliga."). These are
+deliberately **not** `DisplayTag`s: a display tag is a non-interactive semantic label with
+no tab stop, and these are filter controls.
+
+Clear All sits in the header row rather than only inside the expanded list, so a complete
+reset is always one press away — including from a zero-result ledger, which is when it
+matters most.
+
+- **Removing one criterion** clears only its own parameters, resets to page 1, and
+  carries every unrelated criterion through untouched. Removing Age clears `age_min`,
+  `age_max` **and** the legacy `age_band`, so a criterion that arrived through a legacy
+  link does not survive its own removal.
+- **Clear All** hands the serializer exactly the default request
+  (`scope=analyzed`, `sort=rolefit_desc`, `page=1`, `page_size=12`), which produces the
+  clean root URL: every default is omitted and any legacy `scope` / `universe` /
+  `age_band` the incoming link carried is simply not among the keys written back.
+  Device-local shortlist and compare state lives outside the URL and is untouched.
+- **Focus survives both.** The removed button is gone, so the next stop is chosen
+  explicitly: the remove action that slid into that position, else the last one, else
+  Clear All, else the summary toggle, else the Search box. Focus is never left on
+  `<body>`.
+
+A typed zero is a real, listed, removable bound throughout — `min_minutes=0`,
+`rolefit_min=0` and `value_min=0` all appear in the list and the counts.
+
+### Result communication
+
+The ledger header reports four facts and only four: total matching players, the number of
+active narrowing criteria when nonzero, the season, and the current page of the total.
+The criteria are **counted, never listed** — Phase 8.2 can carry thirteen at once, and
+spelling them out would turn the ledger's header into a second filter rail; the readable
+list with a remove action per criterion belongs in the rail beside it. Zero is reported as
+silence, not as "0 active criteria". Both counts come from one derivation
+(`lib/filters/criteria.ts`), so the rail and the header cannot disagree.
+
+The atomic `pane-enter` replacement is unchanged, so a stale count and fresh rows can
+still never be seen together. Empty and error states leave the rail fully usable — it is a
+sibling of the results pane — and the empty state names the recovery route ("Remove one of
+the 3 active criteria in the filter rail, or Clear All.").
+
+### Playstyle options come from the Methodology contract
+
+`usePlaystyleOptions` reads `GET /api/methodology`, which serializes the same
+`configs/playstyles/playstyles_v1.yaml` the engine applies badges from. A hand-written
+list in the frontend would be a second copy free to drift from the keys the backend
+actually filters by. Only `positives` are offered: `playstyle=<key>` matches a qualifying
+positive badge (`is_concern = false`), so offering a concern would silently return
+nothing. A browser test compares the select's options against the Methodology page's own
+rendered playstyle tags and asserts every concern is absent. A key a slow contract has not
+delivered yet still renders as the selected option, so the control never disagrees with
+the request.
+
+### Sticky rail
+
+The compact rail keeps its approved `lg:` stickiness at the same 16px offset, and
+**releases to normal document flow while a disclosure region is showing**. A sticky box
+taller than the scrollport pins itself at its offset and puts everything past the
+viewport's bottom edge permanently out of reach; the alternative — a nested scroller
+inside the rail — is explicitly not allowed. The rule is CSS-only
+(`.filter-column:has(.filter-region:not([hidden]))`) and keys on region *visibility*
+rather than on `aria-expanded`, because a category header inside a closed Advanced region
+legitimately reports itself expanded while contributing no height.
+
+### Visual system
+
+No new geometry. Every new rectangle is 90 degrees; there are no pills, chips, bubbles,
+glass effects, gradients, glows or decorative shadows. Open state is an inset marker plus
+a `+`/`−` glyph — paint only, never a dimension — so opening a category cannot shift the
+rail, the ledger, or their shared top edge. The disclosure rows join the existing
+`background-color, box-shadow` transition rule rather than adding a fourth cadence; the
+remove and Clear All actions join the existing `.btn`/`.input` feedback rule. **No layout
+property is animated**, disclosure content appears in the same frame, and under
+`prefers-reduced-motion: reduce` the rail runs zero animations. The 2px Discovery
+heart/Compare rail remains the single documented rectangular exception; no second one was
+created. The desktop rail stays inside its 240-280px track with every category open.
+
+### Evidence
+
+**Frontend unit tests — 586 passing across 21 files** (was 436 across 19).
+
+| suite | what it holds |
+| --- | --- |
+| `discovery-criteria.test.ts` (new, 47) | EUR millions ↔ absolute EUR both ways and round-tripping, blank/zero/negative/non-finite, the range rule exhaustively over every `{min, max, edited}` combination, the criteria model, per-category counts, removal patches |
+| `discovery-advanced-filters.test.tsx` (new, 78) | the disclosure contract, single-open categories, counts, the collapsed summary and "+N more", individual removal, Clear All, focus restoration, the URL contract for all seven new fields, compound hydration, reload and back/forward, empty-result recovery, unsupported filters absent, DOM/tab order |
+| `discovery-filters.test.tsx` (81) | every Phase 8.1 gate, updated: retired scope, the age control, legacy `age_band`, both threshold domains plus the new RoleFit ceiling, sort, pagination canonicalization, the ledger header |
+| `filter-layout.test.tsx` (48) | the new panel composition, the five-item core grid, category grids and helper spans, the disclosure/criteria CSS contract, the sticky-release rule, Title Case copy |
+| `sharp-corners.test.tsx` | unchanged source scan and rendered-DOM audit, now covering the new components |
+
+`discovery-advanced-filters.test.tsx` runs a **live URL harness**: the mocked
+`useSearchParams` subscribes to what the rail writes, exactly as Next.js keeps it in sync
+with the native History methods, so "remove a criterion" is a real state transition rather
+than a string assertion about an address bar.
+
+**Browser tests — 305 passing across 15 files** (was 265), on Chromium against the
+committed sample fixture cohort through a production build.
+
+- `discovery-advanced.spec.ts` (new, 40): the collapsed rail's contents, Enter/Space on
+  every disclosure, one-category-at-a-time from the keyboard, closing changing neither URL
+  nor ledger, focus escaping an open region, a hard-loaded compound link restoring every
+  control **and** narrowing the ledger with per-row AND verification, reload,
+  back/forward, no history entry per keystroke, EUR-millions typing, the range invariant
+  checked against every recorded request, individual removal with page reset, focus after
+  removal, Clear All to the clean root URL, legacy-parameter stripping, favourites and
+  compare surviving it, zero-result recovery two ways, truncation, **seven viewports** ×
+  (no overflow collapsed and with each category open, field sizes, target sizes,
+  accessible names), rail/ledger alignment at 1024/1280/1440, focus order following visual
+  order, no animated layout property, and reduced motion.
+- `sharp-corners.spec.ts`: a computed-radius scan of every Phase 8.2 surface open and
+  closed; the collapsed rail proven materially shorter than the expanded one and restored
+  exactly on close; sticky release with the last control reachable by page scrolling; no
+  nested scroller in the rail.
+- `accessibility.spec.ts`: axe with the active-criteria list expanded and with each of the
+  three categories expanded, plus the same at 320×720 and at 640×720 (200% desktop zoom).
+  **Zero violations.**
+- `discovery-contract.spec.ts`, `filters-and-cards.spec.ts`, `main-flow.spec.ts`,
+  `resilience.spec.ts`, `motion.spec.ts`, `typography.spec.ts`, `display-tags.spec.ts`,
+  `cross-surface.spec.ts`: the pre-existing gates, updated for the new structure rather
+  than dropped.
+
+**Cross-browser:** `playwright.cross-browser.config.ts` — Chromium 11/11, Firefox 11/11
+and WebKit 11/11 pass, including the Discovery filter flow.
+
+**Contract:** `app.export_openapi` + `pnpm gen:api` regenerate
+`docs/api_contracts/openapi.json` and `apps/web/src/lib/api/schema.gen.ts`
+**byte-identical** (MD5 unchanged both sides). No contract drift, intended or otherwise.
+
+### Limitations
+
+- **Visual-regression baselines were not compared, and were not regenerated.** The Phase
+  8.1B renderer-version mismatch is unresolved — the committed images were captured with
+  Chromium 1208 / WebKit 2248 and the pinned Playwright now requires 1228 / 2311 — so a
+  pixel difference on this machine would measure rasterization rather than the product.
+
+  The Discovery baselines **will** legitimately change: the rail's construction, its
+  header row and the ledger header's wording all changed. They were deliberately left
+  alone. Regenerating them on a renderer that does not match the platform that captured
+  the originals would bake this machine's rasterization into the reference set, which is
+  exactly the failure mode `playwright.visual.config.ts` warns about. `tests/visual/` is
+  untouched by this phase (`git status` is clean for it); regenerating and hand-reviewing
+  those images belongs with a release-review run on the reference platform.
+- **The `has()` sticky release requires `:has()` support** (Chromium 105+, Safari 15.4+,
+  Firefox 121+). The pinned Chromium, WebKit and Firefox engines all exercise the phase's
+  disclosure flows successfully.
+- **Nationality has no enumeration.** The backend matches it by case-insensitive equality
+  against stored values and the frontend has no list of countries to offer, so it is a
+  free-text field with its semantics stated in the helper copy. A typo returns nothing
+  rather than a suggestion.
+- **The playstyle options depend on `GET /api/methodology`.** If that request fails the
+  select falls back to "Any Playstyle" plus whatever key the URL carried; every other
+  control is unaffected. There is no retry beyond React Query's default.
+- Discovery's own request cost is unchanged: this phase adds predicates the query already
+  supported and no new statement. The extra methodology request is one cached call per
+  session.
+- The Leverkusen-centered pilot limitation is unchanged. Nothing here widens coverage or
+  makes any claim about data quality.
+
+---
+
+## Phase 8.2 corrective pass — Context search, decimal typing and UTF-8
+
+**Status: implemented and supervisory-audited.**
+
+A focused repair pass over the Phase 8.2 surface after its layout, responsive,
+accessibility and sharp-corner audits had passed. Five defects, no redesign: the
+information architecture, the 240-280px rail, the one-category-open rule, the square
+geometry and the retired controls are all untouched.
+
+### Root causes
+
+| # | Symptom | Cause |
+| --- | --- | --- |
+| 1 | `nationality=Eng` returned nothing, so the field read as broken | the predicate was case-insensitive **equality** |
+| 2 | `England`, `Portugal`, `Italy` matched no league; `eng`, `por`, `ita` only appeared to work | the predicate searched `slug` + `name`, and those codes happen to lead the stored slugs. `Competition.country` was never searched |
+| 3 | `club=psg` and `club=spurs` returned nothing | a bare substring cannot turn an abbreviation into a stored name |
+| 4 | a trailing space in a Context field silently matched nothing | `parseTextFilter` deliberately did not trim, on the mistaken premise that trimming would eat the space between two words |
+| 5 | typing `12.5` into an asking bound one key at a time never got past `12.` | the controlled `<input type="number">` re-derived from the canonical URL value on every keystroke, and the browser's own value sanitization rewrote the intermediate state. `fill("12.5")` sets the whole value at once and hid it |
+
+### 1. Nationality is a substring
+
+`nationality` is now a case-insensitive **literal substring** of the stored value, so
+`Eng`, `england` and `ENGLAND` all match England. Nothing else moved:
+
+- case folding is still Python's `str.lower()` on both dialects, so `TÜRKİ` matches the
+  stored `TÜRKİYE` while a naive `türkiye` still does not — the change widened the match,
+  it did not weaken the Unicode rule;
+- `%`, `_` and the LIKE escape character stay literal (the needle is escaped, never
+  interpolated into a pattern), and the cohort carries a decoy for each so a wildcard
+  reading would fail loudly. That matters more than before: substring matching made
+  nationality a second place a needle could have reached a pattern;
+- a player with **no** stored nationality still fails an active predicate — a `COALESCE`
+  to the empty string can contain no non-empty needle — however short the needle is;
+- AND composition with every other filter is unchanged.
+
+### 2. League searches the country too
+
+The league haystack is now `slug` + `name` + **`country`**, joined by the same
+`_space_joined` helper the free-text search uses, so a missing country simply
+contributes nothing. `Competition` was already outer-joined, so this adds no join, no
+statement and no scan.
+
+| typed | matches through |
+| --- | --- |
+| `England`, `Germany`, `France`, `Portugal`, `Italy`, `Spain` | the stored country |
+| `eng`, `ger`, `fra`, `por`, `ita`, `esp` | the slug code, and for most of them the country as well |
+| `Premier League`, `Serie A` | the name |
+| `eng_premier_league` | the slug |
+
+`portgual` is a **single curated misspelling**, resolved by the alias table below to
+`portugal`. It is not fuzzy matching: `portugual`, `portgal`, `prtugal`, `englnd` and
+`germny` all return nothing, and a test asserts exactly that.
+
+### 3. Club abbreviations and nicknames
+
+A versioned registry at **`configs/discovery/search_aliases_v1.yaml`**, loaded and
+validated once per process by `app.core.search_aliases`.
+
+**Lookup, not fuzzy matching.** No edit distance, no phonetic key, no scoring, no "did
+you mean". An input either normalizes to a key in the file or it does not; anything that
+does not falls straight through to the ordinary substring search it always had.
+
+**Key normalization.** Outer whitespace trimmed, repeated whitespace collapsed, Python
+`str.lower()` — the same case rule the SQL uses, so the two layers cannot disagree — and
+abbreviation punctuation (`.`, `·`, apostrophes) removed, so `P.S.G.`, ` psg ` and `PSG`
+are one key. **Hyphens are deliberately kept**, because they carry meaning in real names
+(`Saint-Étienne`). Only the lookup is normalized; stored names are never rewritten and
+never transliterated.
+
+**Targets are literal substrings matched against `Team.slug` OR `Team.canonical_name`**,
+so a target may be written in either provider shape and still resolve. `%`, `_` and the
+escape character in a target stay literal, exactly as in a typed needle.
+
+**A matched club alias RESOLVES**: its targets replace the typed needle rather than being
+unioned with it. `club=` is a statement of *which club*, and unioning would let a
+two-letter abbreviation such as `om` drag in every club whose name merely contains those
+letters. **`q=<alias>` ADDS instead**, because `q` is a broad "find anything" search and
+narrowing it would be the more surprising behaviour; only a normalized **whole-input**
+alias is considered, with no token parsing of compound prose — `q=psg winger` is searched
+exactly as typed.
+
+The shipped registry: 26 club aliases across the top five leagues, and one league
+misspelling.
+
+| aliases | resolve to |
+| --- | --- |
+| `spurs`, `thfc` | Tottenham |
+| `man utd`, `man united`, `mufc` | Manchester United |
+| `man city`, `mcfc` | Manchester City |
+| `lfc` | Liverpool |
+| `gunners` | Arsenal |
+| `barca`, `barça` | Barcelona |
+| `atleti` | Atlético Madrid |
+| `rma` | Real Madrid |
+| `bvb` | Borussia Dortmund |
+| `b04` | Bayer Leverkusen |
+| `rbl` | RB Leipzig |
+| `juve` | Juventus |
+| `inter milan`, `nerazzurri` | Internazionale |
+| `rossoneri` | AC Milan |
+| `psg`, `paris sg` | Paris Saint-Germain |
+| `om` | Olympique de Marseille |
+| `ol` | Olympique Lyonnais |
+| `losc` | Lille |
+| **`fcb`** | **Barcelona AND Bayern Munich** |
+| `portgual` (league) | Portugal |
+
+`fcb` is the deliberate ambiguous case: it is claimed by two major clubs, so it returns
+both rather than silently choosing one. `united`, `city`, `real` and `blues` are
+deliberately **absent** — each names several major clubs — and a test asserts they never
+become aliases. `inter` alone is absent for the same reason, and `rossoneri` exists
+precisely because a bare `milan` reaches AC Milan's name *and* Internazionale's slug.
+
+**Malformed configuration fails loudly.** A missing `version`, a non-list group, a
+missing or empty `alias`, an empty `targets` list, an alias not written in normalized
+form, a duplicate normalized key or an unknown key each raises `AliasConfigError` at load
+time — never an empty table that would leave the field quietly broken again.
+
+**No migration, no alias table, no schema change.** This is bounded configuration.
+
+### 4. Free-text trimming
+
+`parseTextFilter` now trims outer whitespace and treats a whitespace-only value as unset.
+Internal spacing is untouched and never collapsed, so `Paris Saint-Germain` and
+`Paris  Saint-Germain` are both preserved exactly as typed.
+
+The original no-trim decision was wrong about the mechanics — trimming only removes
+leading and trailing runs — but it was guarding a real failure: a *controlled* input that
+normalizes on every keystroke writes the normalized value straight back, so `Paris `
+becomes `Paris` and the space between two words can never be typed. The fix is a **raw
+text draft** (`useEditDraft`), not the absence of trimming:
+
+- while a field is being edited it shows the user's own text;
+- the URL, the request and the readable summary always carry the trimmed value;
+- the draft records the canonical value it is synchronized with, so an outside change —
+  Clear All, removing the criterion, back/forward, a hard load, the companion of a
+  coherent min/max pair — drops it and the field converges on the URL;
+- blur drops it too, so a trailing space is visibly gone rather than lingering as a state
+  nothing else shares.
+
+This is the same adjust-state-during-render pattern the age slider already used.
+
+### 5. Sequential €M decimal typing
+
+Both asking-price controls are now `type="text"` with `inputMode="decimal"` — the numeric
+keypad without the browser's destructive value sanitization — over the same
+`useEditDraft`. A raw keystroke is classified three ways rather than two, because "clear
+this bound" and "do not send this" are different intentions:
+
+| raw | outcome |
+| --- | --- |
+| blank / whitespace | clear the bound |
+| a finite, non-negative number | commit `round(value × 1_000_000)` absolute EUR |
+| negative, non-finite or unparseable | **hold the text, send nothing**, and mark `aria-invalid` |
+
+Typing `12.5` one key at a time now leaves `12.5` visibly in the control and
+`value_min=12500000` in the URL. The intermediate `12.` is a harmless `12` — JavaScript
+reads it as such — and what preserves the visible point is the draft. Blur, reset,
+removal, back/forward and a hard load all converge deterministically on the URL. The
+regression test presses **one key at a time**; `fill("12.5")` cannot reproduce the
+defect.
+
+The coherent min/max rule is unchanged, and one consequence of combining it with a
+per-keystroke commit is worth stating plainly: typing a large **maximum** passes through
+small intermediate values, and "the edited bound wins and its companion follows" drags
+the minimum down with each of them. Starting from `value_min=12.5` and typing `120.75`
+into the maximum leaves the minimum at `1`. That is pinned by a test rather than worked
+around, because the alternative — deferring the pull until the value looks finished —
+would let `min > max` reach the API between keystrokes, and never emitting an invalid
+request is the invariant the rule exists to protect. Both fields update visibly together
+and the URL always matches what is on screen.
+
+### 6. Windows UTF-8 determinism
+
+Two genuine, platform-specific failures, both from text I/O that used the locale encoding:
+
+- `CalibrationContract.load()` and `FixtureSuite.load()` opened committed UTF-8 YAML
+  without `encoding=`. On a cp1252 locale the em dash, arrow, `≈` and `≤` in
+  `configs/calibration/rolefit_calibration_v1.yaml` decoded to mojibake, and because
+  `config_hash` is a hash of the **parsed** document it moved to `f13659a3a30461d7` —
+  failing `test_matches_committed_baseline` against a baseline that is itself correct.
+- The calibration CLI wrote its Markdown report with the locale encoding, so
+  `make calibration-evaluate` died with a `UnicodeEncodeError` on the status emoji.
+
+All three sites now specify `encoding="utf-8"`, stdout is reconfigured where the stream
+allows it, and the tests read and write UTF-8 explicitly. Two regression assertions were
+added: one decodes the committed YAML and asserts its non-ASCII characters survive
+loading, and one pins the contract hash to the committed **`6f25ab01e7b575c4`** with a
+message naming an encoding regression rather than "RoleFit config changed". The baseline
+was **not** regenerated: it is correct under UTF-8, and supported Python 3.11 already
+produces it.
+
+The repair is deliberately narrow. No repository-wide text-I/O refactor was attempted.
+
+### Query and performance invariants
+
+Unchanged, and asserted:
+
+- Discovery is still database-backed. Nothing materializes the cohort or post-filters in
+  Python; alias targets compile into the same `WHERE` clause as one `OR`.
+- **A normal request is still four statements** — current season, count, page, page
+  playstyles. `test_an_alias_request_costs_the_same_statements_as_a_plain_one` measures a
+  plain needle, a one-target alias, a three-target alias, a league alias and a `q` alias,
+  and asserts all five issue exactly four.
+- `test_alias_resolution_issues_no_database_statement` asserts the registry load and
+  lookup emit **zero** SQL.
+- The documented eight-statement ceiling and the 5,000-record volume gate are unchanged
+  and still pass.
+- Pagination, sorting, the applicable RoleFit context, count/row atomicity, missing-data
+  behaviour and the deterministic tie-breaks are untouched. An alias pages coherently
+  because it is one predicate, not a post-filter.
+- SQLite and PostgreSQL agree: the new rules are asserted inside `discovery_parity`, which
+  the PostgreSQL smoke also runs.
+
+### What the differential matrix now proves
+
+`reference_search` began as a transcription of the pre-8.1B in-Python implementation.
+Three Context rules deliberately changed here, so those three are now **restated** in the
+reference rather than transcribed. The matrix therefore still proves that the database and
+an independent Python implementation agree on every case; it no longer claims those three
+rules are unchanged from pre-8.1B, because they intentionally are not. Everything else in
+the reference is still the original transcription.
+
+### Tests
+
+**Backend — 429 passed, 7 skipped, coverage 91.70%** (gate 90%).
+
+| suite | what it adds |
+| --- | --- |
+| `test_search_aliases.py` (new) | key normalization including punctuation, hyphen preservation and `str.lower()` parity; lookup and miss; the shipped registry's version, size, normalized keys, target sanity and absence of generic aliases; 16 malformed-document shapes each raising `AliasConfigError`; a missing file, invalid YAML, and a UTF-8 round trip |
+| `test_discovery_context_search.py` (new) | an isolated synthetic cohort with 20 real top-five-league clubs and six countries: full/partial/mixed-case nationality; league by country, code, name and slug for all six countries; the `portgual` alias and five typos that are *not* aliases; **every shipped alias** resolving; the ambiguous `fcb`; slug-target matching; non-alias fallback; generic abbreviations staying non-aliases; AND composition; count/row agreement and coherent paging; whole-input `q` aliases; and the two query-count assertions |
+| `discovery_parity.py` | a new `_assert_context_search_semantics` block, run on **both** dialects, plus substring and LIKE-metacharacter cases for nationality |
+| `discovery_cohort.py` | competition countries (including one NULL), two alias-named clubs, one Portugal-league player, one player with no nationality, and 22 new matrix cases |
+| `test_calibration.py` | the UTF-8 decode assertion and the pinned contract hash |
+
+**Frontend — 607 passed across 21 files** (was 586).
+
+| suite | what it adds |
+| --- | --- |
+| `discovery-criteria.test.ts` | trimming: blank/whitespace-only unset, outer whitespace removed, internal spacing preserved and never collapsed |
+| `discovery-advanced-filters.test.tsx` | sequential decimal typing, the trailing point, leading zero, long decimals, paste, backspace-to-blank, a malformed draft never reaching the URL, blur snap-back, draft dropped on removal / Clear All / a replayed URL, the coherent rule mid-typing; multi-word club typing, raw-vs-trimmed display, blur settling, whitespace-only clearing, all four predicates trimmed, a trimmed hard-loaded URL; alias values staying readable in the criteria list; and the corrected Context helper copy |
+
+**Browser — Playwright, against the production build and the committed fixture cohort.**
+`discovery-advanced.spec.ts` gains a `Context search` group — partial nationality, league
+by country for all six countries, the `portgual` alias, `psg` through both Club and
+Search, multi-word typing, whitespace, AND composition with zero-result recovery, helper
+copy — and five asking-price cases driven by **`pressSequentially`**, keyboard editing,
+paste, clearing, malformed-draft withholding, reload and back/forward.
+
+### Limitations
+
+- **The alias registry is curated, not complete.** Twenty-six club aliases across the top
+  five leagues. Anything outside it is an ordinary substring search, by design; nothing
+  guesses.
+- **`fcb` is the only ambiguous alias shipped.** Others exist in the wild; each would need
+  the same deliberate "return all defensible targets" decision.
+- **A matched alias resolves rather than widening**, so an unusually spelled provider name
+  that none of an alias's targets reach will not be found by that alias even if the typed
+  text happens to be a substring of it. The trade is deliberate: it is what keeps `om`
+  from returning every club containing those two letters.
+- **The committed sample cannot exercise most of the registry.** It is a 24-player
+  synthetic fixture with PSG but no Tottenham, Barcelona or Juventus, so the browser tests
+  use PSG and the exhaustive alias coverage is backend-side against a synthetic database.
+  No production player was fabricated.
+- **Nationality has no enumeration**; it remains free text over stored values.
+- **`portgual` is one reported misspelling**, not a spelling corrector.

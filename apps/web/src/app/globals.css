@@ -330,6 +330,158 @@ select.input[size]:not([size="1"]) {
 }
 
 /* ---------------------------------------------------------------------------
+   Discovery filter rail: progressive disclosure (Phase 8.2)
+   ---------------------------------------------------------------------------
+   Advanced Filters, each of its three categories, and the active-criteria
+   summary are all the same square, full-width row, so the rail grows one
+   repeated shape instead of three separate inventions. Every rectangle here is
+   90 degrees, flat and hairline-bounded: no pill, chip, bubble, glass, gradient,
+   glow or decorative shadow, and no dimension changes when a region opens.
+
+   Open state is carried by an inset marker plus the +/- glyph, never by colour
+   alone, matching the age-direction segments and the ledger action rail. The
+   disclosure content itself appears immediately: there is no height animation,
+   because animating a layout property is forbidden product-wide and because a
+   reduced-motion user must reach the same final state in the same frame. */
+.filter-disclosure {
+  appearance: none;
+  background: var(--panel);
+  border: 0;
+  border-radius: 0;
+  color: var(--ink);
+  cursor: pointer;
+  /* Comfortably above the 24px minimum (WCAG 2.2 SC 2.5.8) at every width. */
+  min-height: 44px;
+  text-align: left;
+  @apply flex w-full items-center justify-between gap-2 px-4 py-2;
+}
+
+.filter-disclosure:hover {
+  background: var(--panel-muted);
+}
+
+.filter-disclosure:active {
+  background: var(--track);
+}
+
+/* Marks the row whose region is open. An inset shadow is paint only, so opening
+   a category cannot shift the rail, the ledger, or their shared top edge. */
+.filter-disclosure[aria-expanded="true"] {
+  box-shadow: inset 3px 0 0 var(--pitch);
+}
+
+/* A category header sits one level inside the Advanced region: same geometry and
+   the same aria contract, a quieter surface and a shorter row, so the nesting is
+   legible without indentation that would eat the narrow rail's width. */
+.filter-disclosure-sub {
+  background: var(--panel-muted);
+  min-height: 40px;
+}
+
+.filter-disclosure-sub:hover {
+  background: var(--track);
+}
+
+/* Active-criteria count. A square box, deliberately not a rounded badge: the
+   product has no capsule geometry. The count is also spoken through the
+   control's accessible name, so it is never a bare numeral. */
+.filter-disclosure-count {
+  background: var(--pitch);
+  border-radius: 0;
+  color: #fff;
+  @apply inline-flex min-w-[1.25rem] shrink-0 items-center justify-center px-1 text-[11px] font-bold leading-5;
+}
+
+/* Decorative open/closed indicator; the real state is `aria-expanded`. */
+.filter-disclosure-glyph {
+  color: var(--ink-soft);
+  @apply shrink-0 text-sm font-bold leading-none;
+}
+
+/* Clear All sits beside the active-criteria summary, in the same row, separated
+   by the rail's own hairline. Always reachable while any criterion is active —
+   including from a zero-result ledger, which is exactly when it matters most. */
+.filter-clear-all {
+  appearance: none;
+  background: var(--panel);
+  border: 0;
+  border-left: 1px solid var(--line);
+  border-radius: 0;
+  color: var(--ink-muted);
+  cursor: pointer;
+  min-height: 44px;
+  @apply inline-flex shrink-0 items-center px-3 text-[11px] font-bold uppercase tracking-[0.08em];
+}
+
+.filter-clear-all:hover {
+  background: var(--panel-muted);
+  color: var(--ink);
+}
+
+.filter-clear-all:active {
+  background: var(--track);
+}
+
+/* One active criterion: a flat rectangular ledger row inside the rail. Not a
+   DisplayTag and not a chip — these are interactive filter controls. */
+.filter-criterion {
+  @apply flex min-w-0 items-center justify-between gap-2 px-4 py-2;
+}
+
+.filter-criterion-remove {
+  appearance: none;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
+  color: var(--ink-muted);
+  cursor: pointer;
+  min-height: 28px;
+  @apply inline-flex shrink-0 items-center px-2 text-[11px] font-semibold;
+}
+
+.filter-criterion-remove:hover {
+  background: var(--panel-muted);
+  color: var(--ink);
+}
+
+.filter-criterion-remove:active {
+  background: var(--track);
+}
+
+/* ---------------------------------------------------------------------------
+   Filter column stickiness
+   ---------------------------------------------------------------------------
+   The compact rail is sticky from lg up, at the same restrained offset it has
+   always used. Below lg the column stays in normal document flow above the
+   ledger.
+
+   It RELEASES to normal flow while a disclosure region is showing, because a
+   sticky box taller than the scrollport pins itself at its offset and puts
+   everything past the viewport's bottom edge permanently out of reach — no
+   amount of page scrolling recovers it. The alternative, a nested scroller
+   inside the rail, is explicitly not allowed. So the default (collapsed) rail
+   keeps the approved sticky behaviour, and an expanded rail is reachable by
+   ordinary page scrolling.
+
+   Keyed on the REGION's visibility rather than on `aria-expanded`, because a
+   category header inside a closed Advanced region legitimately reports itself as
+   expanded while contributing no height. */
+.filter-column {
+  position: static;
+}
+
+@media (min-width: 1024px) {
+  .filter-column {
+    position: sticky;
+    top: 1rem;
+  }
+
+  .filter-column:has(.filter-region:not([hidden])) {
+    position: static;
+  }
+}
+
+/* ---------------------------------------------------------------------------
    Discovery age-threshold control
    ---------------------------------------------------------------------------
    A real `<input type="range">` with its platform track neutralized, laid over a
@@ -743,7 +895,9 @@ select.input[size]:not([size="1"]) {
   .btn,
   .nav-link,
   .ledger-row,
-  .input {
+  .input,
+  .filter-clear-all,
+  .filter-criterion-remove {
     transition-property: background-color, border-color, color;
     transition-duration: var(--motion-feedback);
     transition-timing-function: var(--motion-ease-out);
@@ -751,9 +905,13 @@ select.input[size]:not([size="1"]) {
 
   /* The action rail carries two channels at once: a hover/press tint (feedback)
      and the `aria-pressed` inset marker (a reversible state), so the two
-     properties are timed separately rather than averaged. */
+     properties are timed separately rather than averaged. The filter rail's
+     disclosure rows join the same rule: their `aria-expanded` marker is exactly
+     the same kind of reversible inset state, and reusing the declaration keeps
+     one cadence rather than adding a fourth. */
   .rail-action,
-  .age-direction-action {
+  .age-direction-action,
+  .filter-disclosure {
     transition-property: background-color, box-shadow;
     transition-duration: var(--motion-feedback), var(--motion-state);
     transition-timing-function: var(--motion-ease-out), var(--motion-ease-standard);

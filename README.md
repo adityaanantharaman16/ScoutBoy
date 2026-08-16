@@ -21,13 +21,14 @@ transparent market-value ranges — and it can always show *why* a score, badge,
 
 ## What it does
 
-1. **Search / browse** player profiles. The Discovery rail exposes six filter groups:
-   free-text search (name / club / league), an age threshold, position group, role,
-   paired minimum-minutes / minimum-RoleFit thresholds, and sort. `league` and
-   `playstyle` can also be supplied in a Discovery page URL, although neither has a
-   production control. `club`, `nationality`, `rolefit_max` and the expected-asking
-   `value_min` / `value_max` predicates are supported by direct `/api/players` requests;
-   the production page does not hydrate them from its URL. See
+1. **Search / browse** player profiles. The Discovery rail exposes **every filter
+   `/api/players` accepts**, behind progressive disclosure so the default view stays
+   short: five always-visible core controls (search, age threshold, position group,
+   role, sort) plus an **Advanced Filters** disclosure holding three compact
+   categories — Context (league, club, nationality), Evidence & Fit (minimum minutes,
+   minimum/maximum RoleFit, playstyle) and Market (minimum/maximum expected asking). A
+   compact active-criteria area names what is narrowing, removes any one criterion, and
+   offers a complete reset. Every control is URL-backed. See
    [Discover filters](#discover-filters).
 2. **Player card** — identity, face stats, sub-stats, role-specific **RoleFit ratings**, playstyle
    badges, **market panel** (public value vs model value vs expected asking price), strengths &
@@ -152,6 +153,87 @@ not currently model defender or goalkeeper RoleFit ratings.
 **RoleFit is role-specific.** It is never a universal player overall, and the frontend only ever
 displays stored backend ratings.
 
+#### The exposed control matrix
+
+Since Phase 8.2 every parameter below has a production control. Nothing is filtered in the
+browser: one request carries every predicate and the ledger renders exactly the rows it returns.
+
+| Control | Parameter | Where | Semantics |
+| --- | --- | --- | --- |
+| Search | `q` | core | case-insensitive substring across name, club, league, primary position |
+| Age Threshold | `age_min` **or** `age_max` | core | five-stop one-sided threshold (see [Discover scopes](#discover-scopes)) |
+| Position Group | `position_group` | core | `ATT` / `MID` / `DEF` / `GK` |
+| Role | `role` | core | selected-role context |
+| Sort | `sort` | core | six representable modes; **not** a narrowing criterion |
+| League | `league` | Advanced → Context | case-insensitive substring over slug, name **and country** |
+| Club | `club` | Advanced → Context | case-insensitive substring, plus a deterministic alias table |
+| Nationality | `nationality` | Advanced → Context | case-insensitive **substring** |
+| Minimum Minutes | `min_minutes` | Advanced → Evidence & Fit | whole-season minutes, 0-10,000 |
+| Minimum RoleFit | `rolefit_min` | Advanced → Evidence & Fit | 0-99, applicable role context |
+| Maximum RoleFit | `rolefit_max` | Advanced → Evidence & Fit | 0-99, applicable role context |
+| Playstyle | `playstyle` | Advanced → Evidence & Fit | a qualifying **positive** badge, never a concern |
+| Minimum Expected Asking | `value_min` | Advanced → Market | absolute EUR; **typed in EUR millions** |
+| Maximum Expected Asking | `value_max` | Advanced → Market | absolute EUR; **typed in EUR millions** |
+
+All active filters compose with **AND**, and every free-text predicate is trimmed of outer
+whitespace on the way to the URL (internal spacing is never touched, so `Paris Saint-Germain`
+works).
+
+**Context search is forgiving but deterministic.** Nationality is a substring, so `Eng` finds
+England. League searches the competition's slug, name **and stored country**, so `England`,
+`eng` and `Premier League` all work — as do `Portugal`/`por`, `Italy`/`ita`, `Spain`/`esp`,
+`Germany`/`ger` and `France`/`fra`. Club understands common abbreviations and nicknames from a
+versioned registry (`configs/discovery/search_aliases_v1.yaml`): `psg`, `P.S.G.` and `Paris SG`
+all resolve to Paris Saint-Germain, `spurs` and `thfc` to Tottenham, and an ambiguous
+abbreviation such as `fcb` returns **every** club it defensibly names rather than silently
+picking one. Exact whole-input club aliases work in the main search box too (`q=psg`).
+
+**There is no fuzzy matching.** No edit distance, no phonetic key, no scoring. An input either
+normalizes to a key in the registry or it falls straight through to the ordinary substring
+search; `portgual` is one curated misspelling, and `portugual` is simply not found. The alias
+layer is a cached configuration read that issues **zero** SQL and compiles into the same
+`WHERE` clause, so the documented four-statement request shape is unchanged.
+
+The asking-price inputs are the one place with two units: `12.5` in the rail is
+`value_max=12500000` in the URL and the request. They are text fields with a decimal keypad, so
+typing `12.5` one key at a time works — a plain number input sanitized the intermediate `12.`
+away. Blank is no bound, `0` is a real bound, and a negative, non-finite or malformed value is
+held on screen and never sent. Copy says "Expected Asking", never an exact transfer value, and
+**no midpoint of the two bounds is ever computed or shown**.
+
+**Missing data fails an active predicate; it never passes as zero.** A player with no
+expected-asking endpoint is excluded by an active asking bound, an unrated player is excluded
+by a RoleFit bound, and an unknown age is excluded by any active age bound.
+
+Both inclusive pairs are kept coherent by one rule — **the edited bound wins and its companion
+follows** — so `min > max` never reaches the API; a hard-loaded inverted pair treats the
+minimum as authoritative.
+
+**Analysis Scope remains intentionally absent** (retired in Phase 8.1A). It is not a control,
+not reported in the ledger header, and not offered in the active-criteria list; a
+scope-bearing URL is still honoured and Clear All drops it. **Confidence, evidence state and
+concern filtering remain unsupported** — the search contract has no predicate for them and
+none was invented in the browser.
+
+#### Progressive disclosure and the active-criteria area
+
+The rail is one bordered panel with internal hairlines: header, active criteria, core
+controls, Advanced Filters. Only one advanced category is expanded at a time, closing a
+category never clears its values, and the disclosure state is local rather than URL state
+(a shared link describes a cohort, not an open drawer) — but a hard-loaded URL carrying an
+advanced filter opens the disclosure onto the category it is using.
+
+The active-criteria area is absent when nothing narrows. Collapsed it shows the count, the
+first two criteria and "+N more"; expanded it lists each criterion as a flat rectangular row
+with its own named remove action. Removing one clears only its own parameters and resets to
+page 1; **Clear All** returns the clean root URL (default analyzed scope, default sort, page
+1, page size 12) and drops legacy `scope` / `universe` / `age_band`, without touching
+favourites or the compare queue. The ledger header reports the total, the number of active
+criteria when nonzero, the season and the page — it counts them, it does not list them.
+
+See [docs/milestone_8_discovery_contract.md](docs/milestone_8_discovery_contract.md) for the
+full Phase 8.2 record.
+
 #### Selected-role results
 
 With no `role` filter, a result's role context is the player's own stored **best role**. With
@@ -202,11 +284,11 @@ is turned into a meaningful zero:
 - unrated players sort after rated ones in either RoleFit direction, wherever the selected scope
   admits them.
 
-The API-only `value_min` / `value_max` predicates are absolute EUR and require the endpoint they
+The `value_min` / `value_max` predicates are absolute EUR and require the endpoint they
 depend on to be **known**: `value_min` needs an expected-asking high at or above it, `value_max`
 needs an expected-asking low at or below it, and an active range needs both plus an overlap.
 Missing market information fails an active predicate instead of passing as zero. `value_min`
-above `value_max` is rejected.
+above `value_max` is rejected by the API and can never be produced by the rail.
 
 #### Pagination
 
@@ -359,6 +441,41 @@ untyped-NULL defect SQLite had tolerated. Four `(season_id, player_id)` composit
 added with a migration, justified by recorded query plans. Details, evidence and limitations —
 including the measured, name-irrelevant residual between ICU's Unicode tables and CPython's — are
 in [docs/milestone_8_discovery_contract.md](docs/milestone_8_discovery_contract.md).
+
+## Advanced Discovery interface (Milestone 8, Phase 8.2)
+
+The interface work stays over the Phase 8.1 database-backed query contract, while its
+corrective pass makes three bounded search-semantics changes: partial nationality,
+league-country matching and deterministic club aliases. There is no scoring change or
+migration. `docs/api_contracts/openapi.json` and the generated TypeScript schema are current
+and regenerate byte-identically from the final implementation.
+
+The rail used to expose six filter groups. `league` and `playstyle` could only be supplied by
+URL; `club`, `nationality`, `rolefit_max`, `value_min` and `value_max` only by hand-writing an
+API request. All seven now have production controls — and the **default rail is shorter than
+the one it replaces**, because the two existing specialized thresholds moved behind the same
+disclosure. Five core controls stay visible (search, age threshold, position group, role,
+sort); everything else lives in **Advanced Filters** over three compact categories, one open
+at a time, with per-category active counts that keep reporting while a category is shut.
+
+A compact active-criteria area sits under the filter header: collapsed, the count plus the
+first two criteria and "+N more"; expanded, one flat rectangular row per criterion with its
+own named remove action, beside a permanent Clear All. Removing one criterion clears only its
+own parameters and resets to page 1; Clear All produces the clean root URL and drops legacy
+scope parameters without touching favourites or the compare queue. Focus never lands on
+`<body>` after either. The ledger header counts active criteria instead of listing them.
+
+Everything is URL-backed and replace-style, so hard load, reload, back/forward and shared
+links all reproduce the same request, the same controls and the same ledger. The asking-price
+inputs are EUR millions over an absolute-EUR contract and accept sequentially typed decimals;
+`min > max` can never be sent, by one documented rule; the Playstyle options come from the
+Methodology contract rather than a hand-written list. The Context filters search the way a
+scout types — partial nationality, league by country or code, club by abbreviation — through a
+versioned alias registry rather than fuzzy matching, at no extra SQL cost. No new rounded
+geometry, no nested rail scroller, no animated layout property, and axe is clean with every
+disclosure open — including at 320px and at 200% desktop zoom. See
+[docs/milestone_8_discovery_contract.md](docs/milestone_8_discovery_contract.md) for the
+control matrix, the units, the range rule, the alias registry and the recorded evidence.
 
 ---
 

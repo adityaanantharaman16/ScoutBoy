@@ -3,7 +3,29 @@
 // pure, so the rail, the URL hydration in SearchExperience and the results summary
 // all derive the same state from the same rules instead of each re-deriving them.
 
-import { DEFAULT_SORT, SORT_OPTION_KEYS } from "@/lib/constants";
+import {
+  DEFAULT_PAGE,
+  DEFAULT_PAGE_SIZE,
+  DEFAULT_SEARCH_SCOPE,
+  DEFAULT_SORT,
+  SORT_OPTION_KEYS,
+} from "@/lib/constants";
+
+/**
+ * The established default Discovery request, in one place.
+ *
+ * It is what the root URL means, what every default-omission rule in the
+ * serializer compares against, and what Clear All restores. Because the
+ * serializer only writes the keys it is handed, passing exactly this object
+ * produces the clean root URL and drops any legacy `scope` / `universe` /
+ * `age_band` parameter a shared link happened to carry.
+ */
+export const DEFAULT_DISCOVERY_FILTERS = {
+  scope: DEFAULT_SEARCH_SCOPE,
+  sort: DEFAULT_SORT,
+  page: DEFAULT_PAGE,
+  page_size: DEFAULT_PAGE_SIZE,
+} as const;
 
 // ---------------------------------------------------------------------------
 // Age threshold
@@ -182,6 +204,158 @@ export function parseAgeBound(raw: string | null | undefined): number | undefine
   const parsed = Number(raw);
   if (!Number.isFinite(parsed)) return undefined;
   return Math.max(0, Math.round(parsed));
+}
+
+// ---------------------------------------------------------------------------
+// Free-text predicates (Search, League, Club, Nationality)
+// ---------------------------------------------------------------------------
+
+/**
+ * A text predicate read from a URL or typed into the rail.
+ *
+ * OUTER whitespace is removed; internal spacing is not touched, so multi-word names
+ * such as "Paris Saint-Germain" and "Manchester City" are unaffected. An earlier
+ * version skipped trimming on the theory that it would eat the space between two
+ * words — it would not: trimming only ever removes leading and trailing runs, and a
+ * user typing "Paris " has not yet typed a second word for that space to separate.
+ *
+ * Leaving the outer space in was not harmless. It reached the URL as `club=Paris+`,
+ * the readable summary as "Club: Paris ", and the SQL predicate as a literal
+ * substring with a trailing space — so a stray keystroke or a paste from a
+ * spreadsheet silently returned nothing.
+ *
+ * Whitespace-only input is "no predicate", exactly as an empty string is, so the
+ * parameter is omitted from the request and from the URL rather than being sent as
+ * a needle no stored value can contain.
+ */
+export function parseTextFilter(raw: string | null | undefined): string | undefined {
+  const trimmed = raw?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+// ---------------------------------------------------------------------------
+// Expected-asking bounds
+//
+// TWO UNITS, ONE DIRECTION OF TRUTH. The API contract is absolute EUR, so that
+// is what the request and the URL carry and what `SearchFilters` holds. The rail
+// is 248px wide, where "12500000" is unreadable and easy to mistype by a factor
+// of ten, so the INPUT is EUR millions and nothing else in the app is.
+//
+// The conversion lives here rather than in the component so the input, the URL,
+// the readable active-criteria summary and the request cannot disagree about
+// which unit they are holding.
+// ---------------------------------------------------------------------------
+
+/** Scale between the rail's millions input and the API's absolute EUR. */
+export const EUR_PER_MILLION = 1_000_000;
+
+/**
+ * An absolute-EUR asking bound from a URL.
+ *
+ * Blank is no bound. A non-finite or negative value is REJECTED as no bound
+ * rather than clamped: unlike a minutes or RoleFit threshold there is no
+ * meaningful ceiling to clamp to, and silently rewriting `-5` as `0` would make
+ * an active predicate out of a value the user cannot have meant. Zero itself is
+ * a real, representable bound and survives.
+ */
+export function parseAskingEur(raw: string | number | null | undefined): number | undefined {
+  if (raw == null) return undefined;
+  if (typeof raw === "string" && raw.trim() === "") return undefined;
+  const parsed = typeof raw === "number" ? raw : Number(raw);
+  if (!Number.isFinite(parsed) || parsed < 0) return undefined;
+  return Math.round(parsed);
+}
+
+/**
+ * The rail's millions input, converted to the absolute EUR the API accepts.
+ * `5` becomes `5000000`; `12.5` becomes `12500000`. Rounding to whole euros
+ * removes binary floating-point dust (12.5 * 1e6 is exact, 1.234567 * 1e6 is
+ * not) so a value can round-trip through the URL unchanged.
+ */
+export function parseAskingMillions(raw: string | number | null | undefined): number | undefined {
+  if (raw == null) return undefined;
+  if (typeof raw === "string" && raw.trim() === "") return undefined;
+  const parsed = typeof raw === "number" ? raw : Number(raw);
+  if (!Number.isFinite(parsed) || parsed < 0) return undefined;
+  return Math.round(parsed * EUR_PER_MILLION);
+}
+
+/** What one raw asking-price keystroke means. See {@link classifyAskingDraft}. */
+export type AskingDraft =
+  /** Empty or whitespace-only: clear the bound. */
+  | { kind: "blank" }
+  /** A complete, non-negative number: this many absolute EUR. */
+  | { kind: "value"; eur: number }
+  /** Not a number the API could accept: hold the text, send nothing. */
+  | { kind: "invalid" };
+
+/**
+ * Classify the raw text in an asking-price field.
+ *
+ * Three outcomes rather than two, because "clear the bound" and "do not send this"
+ * are different intentions and a single `number | undefined` cannot tell them apart.
+ * Blank clears; a negative, non-finite or unparseable value is withheld from the
+ * request entirely rather than being clamped into something the user did not type.
+ *
+ * Note that a mid-typing `"12."` is a genuine `value` (JavaScript reads it as 12), so
+ * the intermediate state of typing `12.5` is a harmless `12` rather than a rejection —
+ * what preserves the visible `"12."` is the control's own text draft, not this
+ * function.
+ */
+export function classifyAskingDraft(raw: string): AskingDraft {
+  if (raw.trim() === "") return { kind: "blank" };
+  const eur = parseAskingMillions(raw);
+  return eur == null ? { kind: "invalid" } : { kind: "value", eur };
+}
+
+/**
+ * The input value for an absolute-EUR bound, in millions.
+ *
+ * Full precision, not a fixed number of decimals: a hard-loaded `value_min=1234567`
+ * must remain representable and round-trip back to the same euros rather than
+ * being quietly rewritten as EUR 1.2M by its own control.
+ */
+export function askingMillionsInput(eur: number | null | undefined): string {
+  if (eur == null || !Number.isFinite(eur)) return "";
+  return String(eur / EUR_PER_MILLION);
+}
+
+// ---------------------------------------------------------------------------
+// Range safety
+// ---------------------------------------------------------------------------
+
+/** Which side of an inclusive pair the user just changed. */
+export type EditedBound = "min" | "max";
+
+/**
+ * Keep an inclusive `[min, max]` pair coherent, so `min > max` can never reach
+ * the API. RoleFit would silently return nothing; `value_min > value_max` is a
+ * documented 422.
+ *
+ * ONE deterministic rule, used by both pairs and by both entry points:
+ *
+ *   **the edited bound wins, and its companion follows it.**
+ *
+ * Raising a minimum past its maximum raises the maximum to match; lowering a
+ * maximum past its minimum lowers the minimum to match. The edit a scout just
+ * made is never discarded or held back, and the companion move is written to the
+ * control, the URL, the active-criteria summary and the request in the same
+ * update — so all four always agree.
+ *
+ * A hard-loaded URL has no edited side, so the caller passes `"min"` and the
+ * **minimum is authoritative**: `?rolefit_min=80&rolefit_max=20` loads as
+ * `80-80`. That is the same normalization the age control already applies to an
+ * off-stop URL bound, and the next interaction writes the canonical pair back.
+ *
+ * Nothing outside the pair is touched.
+ */
+export function coherentBounds(
+  min: number | undefined,
+  max: number | undefined,
+  edited: EditedBound = "min",
+): { min: number | undefined; max: number | undefined } {
+  if (min == null || max == null || min <= max) return { min, max };
+  return edited === "min" ? { min, max: min } : { min: max, max };
 }
 
 // ---------------------------------------------------------------------------

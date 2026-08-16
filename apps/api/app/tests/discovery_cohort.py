@@ -6,10 +6,18 @@ PostgreSQL smoke (`test_postgres_smoke.py`) so both make *the same* semantic
 assertions against *the same* fixture. Nothing here is dialect-aware; if SQLite and
 PostgreSQL disagree about anything Discovery relies on, one of the two runs fails.
 
-`reference_search` is a transcription of the pre-8.1B in-Python implementation, kept
-deliberately naive: it loads the whole cohort, filters with a predicate per row, sorts
-with a tuple key and slices a page. It is the oracle the SQL rewrite is differenced
-against, so it must not be re-derived from the SQL implementation.
+`reference_search` began as a transcription of the pre-8.1B in-Python implementation
+and is kept deliberately naive: it loads the whole cohort, filters with a predicate per
+row, sorts with a tuple key and slices a page. It is the oracle the SQL implementation
+is differenced against, so it must not be re-derived from the SQL.
+
+Phase 8.2 deliberately changed three Context semantics — nationality became a substring,
+league gained the stored country, and club plus whole-input `q` gained a configured
+alias table — so those three rules are now restated in `reference_search` rather than
+transcribed. Everything else is still the original transcription. The matrix therefore
+still proves that the database and an independent Python implementation agree on every
+case; it no longer claims those three rules are unchanged from pre-8.1B, because they
+are intentionally not.
 """
 
 from __future__ import annotations
@@ -21,6 +29,7 @@ from typing import Optional
 from scoutboy_shared import MVP_UNIVERSE_KEY, position_group_for
 from sqlalchemy import insert, select, update
 
+from app.core.search_aliases import club_alias_targets, league_alias_targets
 from app.models.orm import (
     Appearance,
     Competition,
@@ -101,12 +110,28 @@ def build_cohort(session, *, scale: int = 0) -> Cohort:
     session.add(season)
     session.flush()
 
-    league = Competition(slug="cohort-league", name="Cohort Premier League", is_european=True)
-    other_league = Competition(slug="cohort-second", name="Cohort Second Division")
+    league = Competition(
+        slug="cohort-league",
+        name="Cohort Premier League",
+        country="Cohortland",
+        is_european=True,
+    )
+    # Country "Portugal" with a slug and name that mention neither, so a `Portugal`,
+    # `por` or misspelled `portgual` needle can only match through the stored country.
+    other_league = Competition(
+        slug="cohort-second", name="Cohort Second Division", country="Portugal"
+    )
     # A league whose name only matches once the haystack has been lowercased the way
-    # Python does it: the final sigma in "ΕΛΛΆΣ" is context-sensitive.
+    # Python does it: the final sigma in "ΕΛΛΆΣ" is context-sensitive. Its country is
+    # deliberately NULL, so the joined league haystack is exercised with a missing part.
     greek_league = Competition(slug="cohort-ellas", name="Cohort ΕΛΛΆΣ Division")
-    session.add_all([league, other_league, greek_league])
+    # Country "England" against a slug carrying only the "eng" code and a name that
+    # mentions the country nowhere: `eng` matches the code, `England` matches only the
+    # country, and both must work.
+    country_league = Competition(
+        slug="cohort-eng-flight", name="Cohort Island Flight", country="England"
+    )
+    session.add_all([league, other_league, greek_league, country_league])
     session.flush()
     home = Team(slug="cohort-home", canonical_name="Cohort Home", league_id=league.id)
     away = Team(slug="cohort-away", canonical_name="Cohort Away", league_id=other_league.id)
@@ -115,7 +140,21 @@ def build_cohort(session, *, scale: int = 0) -> Cohort:
     sharp = Team(
         slug="cohort-strasse", canonical_name="Cohort STRAẞE FC", league_id=greek_league.id
     )
-    session.add_all([home, away, accented, sharp])
+    # Two clubs the alias registry names. Spelled the way a provider would, so the
+    # alias has to resolve through its targets rather than through the typed text:
+    # nothing about "Paris Saint-Germain" contains "psg", and nothing about
+    # "Tottenham Hotspur" contains "spurs".
+    # The slugs carry a `cohort-` prefix because `Team.slug` is unique and this cohort
+    # is built inside a transaction on an already-seeded database, which owns the bare
+    # `paris_sg`. The prefix is invisible to the alias layer: its targets are
+    # substrings, so `paris_sg` still matches `cohort-paris_sg`.
+    alias_paris = Team(
+        slug="cohort-paris_sg", canonical_name="Paris Saint-Germain", league_id=country_league.id
+    )
+    alias_spurs = Team(
+        slug="cohort-tottenham", canonical_name="Tottenham Hotspur", league_id=country_league.id
+    )
+    session.add_all([home, away, accented, sharp, alias_paris, alias_spurs])
     session.flush()
 
     cohort = Cohort(
@@ -283,6 +322,11 @@ def build_cohort(session, *, scale: int = 0) -> Cohort:
         position_group="GK",
         minutes=90,
         birth_date=None,
+        # Also the cohort's one player with NO stored nationality, so the nationality
+        # predicate has something that must fail it however short the needle is. That
+        # matters more since Phase 8.2 made the predicate a substring: a COALESCE to
+        # the empty string can contain no non-empty needle, and this pins it.
+        nationality=None,
     )
     add(
         "Cohort Rated No Birth Date",
@@ -414,6 +458,39 @@ def build_cohort(session, *, scale: int = 0) -> Cohort:
         asking=(9_000_000, 12_000_000),
         nationality="Otherland",
     )
+    # -- clubs the alias registry names, and a country-only league --------------
+    # Neither player's club text contains its own abbreviation, so `club=psg` and
+    # `club=spurs` can only succeed through the configured targets. The English
+    # league they play in is only findable as "England" through the stored country.
+    add(
+        ALIAS_CLUB_PLAYERS["paris"],
+        ratings={SELECTED_ROLE: (58.0, "medium")},
+        birth_date=_born(24, season_end=end),
+        team=alias_paris,
+        competition=country_league,
+        nationality="France",
+        asking=(30_000_000, 40_000_000),
+    )
+    add(
+        ALIAS_CLUB_PLAYERS["spurs"],
+        ratings={SELECTED_ROLE: (57.0, "medium")},
+        birth_date=_born(23, season_end=end),
+        team=alias_spurs,
+        competition=country_league,
+        nationality="England",
+        asking=(20_000_000, 28_000_000),
+    )
+    # The only player whose PRIMARY appearance is in the Portugal-country league, so
+    # `Portugal`, `por` and the misspelled `portgual` each have exactly one right answer.
+    add(
+        ALIAS_CLUB_PLAYERS["portugal"],
+        ratings={SELECTED_ROLE: (44.0, "medium")},
+        birth_date=_born(26, season_end=end),
+        team=away,
+        competition=other_league,
+        nationality="Portugal",
+        asking=(4_000_000, 6_000_000),
+    )
     _add_unicode_rows(add, season_end=end, sharp_club=sharp, greek_league=greek_league)
     _add_literal_pattern_rows(add, season_end=end)
 
@@ -422,6 +499,17 @@ def build_cohort(session, *, scale: int = 0) -> Cohort:
 
     session.flush()
     return cohort
+
+
+#: Players at clubs the alias registry names. Their club text contains none of the
+#: abbreviations that must find them, so an assertion cannot pass by plain substring.
+ALIAS_CLUB_PLAYERS = {
+    "paris": "Cohort Paris Alias",
+    "spurs": "Cohort Spurs Alias",
+    #: Not a club alias — the one player in the Portugal-country league, so the league
+    #: country rule and its misspelling alias each have exactly one right answer.
+    "portugal": "Cohort Portugal League",
+}
 
 
 #: Names whose Python lowercase cannot be reached by inverting `.upper()`, keyed by the
@@ -728,6 +816,7 @@ class _RefRow:
     club_slug: Optional[str]
     league_name: Optional[str]
     league_slug: Optional[str]
+    league_country: Optional[str]
     minutes: int
     position_group: Optional[str]
     age: Optional[float]
@@ -809,6 +898,7 @@ def load_reference_rows(session, season_id: int, season_end: Optional[date]) -> 
                 club_slug=team.slug if team else None,
                 league_name=comp.name if comp else None,
                 league_slug=comp.slug if comp else None,
+                league_country=comp.country if comp else None,
                 minutes=appearance.minutes or 0,
                 position_group=(
                     appearance.position_group or position_group_for(player.primary_position or "")
@@ -851,7 +941,16 @@ def _ref_scope(scope, universe):
 
 
 def reference_search(rows: list, *, sort="rolefit_desc", page=1, page_size=20, **criteria):
-    """The pre-8.1B result for one query: `(ids, total, page, total_pages)`."""
+    """The reference result for one query: `(ids, total, page, total_pages)`.
+
+    Originally a transcription of the pre-8.1B in-Python implementation, so the SQL
+    rewrite could be differenced against the behaviour it replaced. Phase 8.2
+    deliberately CHANGED three Context semantics - nationality became a substring,
+    league gained the stored country, and club/`q` gained a configured alias table -
+    so those three rules are restated here in Python. Everything else is still the
+    original transcription, and the matrix still proves the database and an
+    independent Python implementation agree on every case.
+    """
     import math
 
     q = criteria.get("q")
@@ -887,21 +986,34 @@ def reference_search(rows: list, *, sort="rolefit_desc", page=1, page_size=20, *
                     [row.canonical_name, row.club, row.league_name, row.primary_position],
                 )
             ).lower()
-            if q.lower() not in hay:
+            matched = q.lower() in hay
+            # A whole-input club alias ADDS to the free-text match (Phase 8.2).
+            if not matched:
+                club_hay = " ".join(filter(None, [row.club_slug, row.club])).lower()
+                matched = any(t in club_hay for t in club_alias_targets(q))
+            if not matched:
                 return False
         if position_group and row.position_group != position_group:
             return False
         if role and result is None:
             return False
-        if (
-            league
-            and league.lower()
-            not in " ".join(filter(None, [row.league_slug, row.league_name])).lower()
-        ):
-            return False
-        if club and club.lower() not in " ".join(filter(None, [row.club_slug, row.club])).lower():
-            return False
-        if nationality and (row.nationality or "").lower() != nationality.lower():
+        # League searches slug, name AND country, with the misspelling table first.
+        if league:
+            hay = " ".join(
+                filter(None, [row.league_slug, row.league_name, row.league_country])
+            ).lower()
+            needles = league_alias_targets(league) or (league,)
+            if not any(n.lower() in hay for n in needles):
+                return False
+        # Club RESOLVES a configured alias to its targets; anything else is an
+        # ordinary substring.
+        if club:
+            hay = " ".join(filter(None, [row.club_slug, row.club])).lower()
+            needles = club_alias_targets(club) or (club,)
+            if not any(n.lower() in hay for n in needles):
+                return False
+        # Nationality is a SUBSTRING since Phase 8.2, not equality.
+        if nationality and nationality.lower() not in (row.nationality or "").lower():
             return False
         if min_minutes is not None and row.minutes < min_minutes:
             return False
@@ -1029,9 +1141,35 @@ FILTER_CASES = (
     ("position group DEF", {"scope": "all_records", "position_group": "DEF"}),
     ("league by slug", {"scope": "all_records", "league": "cohort-league"}),
     ("league by name", {"scope": "all_records", "league": "Second Division"}),
+    # -- Phase 8.2 Context semantics. League also searches the stored country, the
+    # club field resolves configured abbreviations, and nationality is a substring.
+    ("league by country", {"scope": "all_records", "league": "England"}),
+    ("league by country lowered", {"scope": "all_records", "league": "england"}),
+    ("league by country code", {"scope": "all_records", "league": "eng"}),
+    ("league by other country", {"scope": "all_records", "league": "Portugal"}),
+    ("league by other country code", {"scope": "all_records", "league": "por"}),
+    ("league misspelling alias", {"scope": "all_records", "league": "portgual"}),
+    ("league country with no match", {"scope": "all_records", "league": "Narnia"}),
+    ("club alias psg", {"scope": "all_records", "club": "psg"}),
+    ("club alias psg punctuated", {"scope": "all_records", "club": "P.S.G."}),
+    ("club alias paris sg", {"scope": "all_records", "club": "Paris SG"}),
+    ("club alias spurs", {"scope": "all_records", "club": "spurs"}),
+    ("club alias thfc upper", {"scope": "all_records", "club": "THFC"}),
+    ("club alias unknown falls back", {"scope": "all_records", "club": "cohort-home"}),
+    ("club non-alias substring", {"scope": "all_records", "club": "Tottenham"}),
+    ("q whole-input club alias", {"scope": "all_records", "q": "psg"}),
+    ("q whole-input club alias spurs", {"scope": "all_records", "q": "Spurs"}),
     ("club by slug", {"scope": "all_records", "club": "cohort-away"}),
     ("club accented name", {"scope": "all_records", "club": "Étienne"}),
     ("nationality mixed case", {"scope": "all_records", "nationality": "cohortIA"}),
+    ("nationality partial", {"scope": "all_records", "nationality": "cohort"}),
+    ("nationality partial prefix", {"scope": "all_records", "nationality": "Eng"}),
+    ("nationality partial infix", {"scope": "all_records", "nationality": "ran"}),
+    ("nationality no match", {"scope": "all_records", "nationality": "Nowhereland"}),
+    (
+        "alias composed with another filter",
+        {"scope": "all_records", "club": "psg", "position_group": "ATT"},
+    ),
     ("minutes zero", {"scope": "all_records", "min_minutes": 0}),
     ("minutes realistic", {"scope": "all_records", "min_minutes": 1500}),
     ("minutes above every record", {"scope": "all_records", "min_minutes": 9000}),

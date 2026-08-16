@@ -41,6 +41,21 @@ def _combined() -> dict:
     return combined
 
 
+def _write_stdout(text: str) -> None:
+    """Write the report to stdout without depending on the console's encoding.
+
+    The Markdown renderer emits status emoji, so a cp1252 console would raise
+    instead of printing. Reconfiguring the stream keeps the CLI usable there;
+    where the stream cannot be reconfigured (a captured buffer in tests) the
+    plain write is already correct.
+    """
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):  # pragma: no cover - non-reconfigurable stream
+        pass
+    sys.stdout.write(text)
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="evaluation", description="ScoutBoy RoleFit calibration")
     parser.add_argument("suite", choices=["fixtures", "pilot", "all"])
@@ -58,10 +73,14 @@ def main(argv=None) -> int:
 
     text = render_json(result) if args.format == "json" else render_markdown(result)
     if args.output:
-        with open(args.output, "w") as f:
+        # UTF-8 explicitly. The Markdown renderer emits status emoji and em dashes,
+        # which a locale-encoded write (cp1252 on Windows) cannot encode at all —
+        # `make calibration-evaluate` died with a UnicodeEncodeError rather than
+        # producing a report.
+        with open(args.output, "w", encoding="utf-8") as f:
             f.write(text)
     else:
-        sys.stdout.write(text)
+        _write_stdout(text)
 
     if args.fail_on_fail:
         if args.suite == "pilot":

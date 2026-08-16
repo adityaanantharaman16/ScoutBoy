@@ -4,42 +4,46 @@ import { useMemo } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 import { PageHeader, ScopeBanner } from "@/components/common";
-import {
-  DEFAULT_SEARCH_SCOPE,
-  DEFAULT_SORT,
-  SCOPE_BANNER,
-  SEARCH_SCOPE_KEYS,
-} from "@/lib/constants";
+import { SCOPE_BANNER, SEARCH_SCOPE_KEYS } from "@/lib/constants";
 import {
   ageBounds,
   ageSelectionFromBounds,
-  ageSummaryText,
+  coherentBounds,
+  DEFAULT_DISCOVERY_FILTERS,
   legacyAgeBandSelection,
   parseAgeBound,
+  parseAskingEur,
   parseMinutesThreshold,
   parsePage,
   parsePageSize,
   parseRoleFitThreshold,
   parseSortOption,
+  parseTextFilter,
 } from "@/lib/filters";
+import { activeCriteria } from "@/lib/filters/criteria";
 import type { SearchFilters } from "@/lib/api/hooks";
+import { usePlaystyleOptions } from "@/lib/api/hooks";
 
 import { PlayerSearchFilters } from "./PlayerSearchFilters";
 import { PlayerSearchResults } from "./PlayerSearchResults";
 
-const DEFAULT_FILTERS: SearchFilters = {
-  scope: DEFAULT_SEARCH_SCOPE,
-  sort: DEFAULT_SORT,
-  page: 1,
-  page_size: 12,
-};
+const DEFAULT_FILTERS: SearchFilters = { ...DEFAULT_DISCOVERY_FILTERS };
 
 export function SearchExperience() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  /**
+   * The Playstyle filter's options and display names, from the Methodology
+   * contract — the same YAML the engine applies badges from. Nothing here is
+   * hand-listed, so the select's keys cannot drift from the ones the backend
+   * filters by. It resolves independently of the search request, so a slow or
+   * failed methodology fetch leaves every other control working.
+   */
+  const playstyleOptions = usePlaystyleOptions();
+
   const filters = useMemo<SearchFilters>(() => {
-    const scope = searchParams.get("scope") ?? DEFAULT_SEARCH_SCOPE;
+    const scope = searchParams.get("scope") ?? DEFAULT_DISCOVERY_FILTERS.scope;
 
     // Age hydration, in precedence order:
     //   1. explicit age_min / age_max (what the control writes)
@@ -57,25 +61,52 @@ export function SearchExperience() {
         ? explicitAge
         : (legacyAgeBandSelection(searchParams.get("age_band")) ?? explicitAge);
 
+    // Inclusive pairs are made coherent on the way in, not just on the way out.
+    // A hand-crafted `?rolefit_min=80&rolefit_max=20` (or the market equivalent,
+    // which the API answers with a 422) has no edited side, so the documented
+    // rule treats the MINIMUM as authoritative and raises the ceiling to it. The
+    // control, the active summary and the request therefore all read 80-80, and
+    // the next interaction writes that canonical pair back to the URL.
+    const roleFit = coherentBounds(
+      parseRoleFitThreshold(searchParams.get("rolefit_min")),
+      parseRoleFitThreshold(searchParams.get("rolefit_max")),
+      "min",
+    );
+    const asking = coherentBounds(
+      parseAskingEur(searchParams.get("value_min")),
+      parseAskingEur(searchParams.get("value_max")),
+      "min",
+    );
+
     return {
       ...DEFAULT_FILTERS,
-      q: searchParams.get("q") || undefined,
+      q: parseTextFilter(searchParams.get("q")),
       // Not a Discovery control any more, but a scope-bearing URL must still load
       // and still mean what it said. Unknown values fall back to the default.
       scope: (SEARCH_SCOPE_KEYS as readonly string[]).includes(scope)
         ? scope
-        : DEFAULT_SEARCH_SCOPE,
+        : DEFAULT_DISCOVERY_FILTERS.scope,
       ...ageBounds(ageSelection),
       position_group: searchParams.get("position_group") || undefined,
       role: searchParams.get("role") || undefined,
-      league: searchParams.get("league") || undefined,
-      playstyle: searchParams.get("playstyle") || undefined,
+      // Phase 8.2 Context group. Case-insensitive substring for league and club,
+      // case-insensitive EQUALITY for nationality — the backend's own semantics;
+      // nothing is re-filtered in the browser.
+      league: parseTextFilter(searchParams.get("league")),
+      club: parseTextFilter(searchParams.get("club")),
+      nationality: parseTextFilter(searchParams.get("nationality")),
+      playstyle: parseTextFilter(searchParams.get("playstyle")),
       // Clamped on the way in as well as on the way out, through the parser for the
       // right DOMAIN in each case: a hand-crafted ?rolefit_min=-5 or
       // ?min_minutes=25000 never reaches the API unbounded, and a realistic
       // ?min_minutes=1500 is no longer crushed to 99 by a RoleFit-shaped ceiling.
       min_minutes: parseMinutesThreshold(searchParams.get("min_minutes")),
-      rolefit_min: parseRoleFitThreshold(searchParams.get("rolefit_min")),
+      rolefit_min: roleFit.min,
+      rolefit_max: roleFit.max,
+      // Absolute EUR, exactly as the API contract states. The rail types these in
+      // millions; the conversion happens in the control, never in the URL.
+      value_min: asking.min,
+      value_max: asking.max,
       // Unknown or unrepresentable values are replaced by the defaults rather than
       // forwarded, so the API never sees a request the rail cannot also display.
       sort: parseSortOption(searchParams.get("sort")),
@@ -115,11 +146,24 @@ export function SearchExperience() {
      * is unchanged in every respect that matters: same URLs, same replace
      * semantics (a filter change still adds no history entry), same hydration on
      * reload and on back/forward, and no scroll jump.
+     *
+     * Replace-style is also what keeps typing cheap: a search needle or an
+     * asking-price bound is a keystroke-per-render control, and pushing would
+     * leave one history entry per character.
      */
     window.history.replaceState(null, "", url);
   };
 
-  const ageSummary = ageSummaryText(ageSelectionFromBounds(filters.age_min, filters.age_max));
+  /**
+   * The active narrowing criteria, derived ONCE here from the same request the
+   * rail and the ledger are both looking at, so the rail's count and the ledger
+   * header's count cannot disagree. Sort, pagination and the retired analysis
+   * scope are deliberately not criteria — see `lib/filters/criteria.ts`.
+   */
+  const criteriaCount = activeCriteria(
+    filters,
+    Object.fromEntries(playstyleOptions.map((p) => [p.key, p.label])),
+  ).length;
 
   /**
    * The URL follows the page the API actually served.
@@ -146,21 +190,29 @@ export function SearchExperience() {
       {/* Filter rail (subordinate) beside the results ledger on desktop; stacked
           above the ledger on tablet/mobile. */}
       <div className="grid gap-5 lg:grid-cols-[minmax(240px,280px)_minmax(0,1fr)] lg:items-start">
-        {/* Sticky only from lg up, at the existing restrained offset. Below lg the
+        {/* Sticky only from lg up, at the existing restrained offset, and only
+            while the rail is compact — `.filter-column` releases to normal flow
+            whenever a disclosure region is showing, because a sticky box taller
+            than the scrollport would pin its own overflow out of reach and the
+            alternative (a nested rail scroller) is not allowed. Below lg the
             column stays in normal document flow above the results ledger.
             `lg:items-start` on the grid keeps this item content-height, which is
             what makes `position: sticky` take effect at all. */}
         <aside
-          className="lg:sticky lg:top-4"
+          className="filter-column"
           aria-label="Discovery filters"
           data-testid="filter-column"
         >
-          <PlayerSearchFilters filters={filters} onChange={setFilters} />
+          <PlayerSearchFilters
+            filters={filters}
+            onChange={setFilters}
+            playstyleOptions={playstyleOptions}
+          />
         </aside>
         <section aria-label="Results" className="min-w-0">
           <PlayerSearchResults
             filters={filters}
-            ageSummary={ageSummary}
+            criteriaCount={criteriaCount}
             onPage={(page) => setFilters({ ...filters, page })}
             onCanonicalPage={syncCanonicalPage}
           />

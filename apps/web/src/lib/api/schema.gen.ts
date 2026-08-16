@@ -1356,6 +1356,7 @@ export interface operations {
     search_players_api_players_get: {
         parameters: {
             query?: {
+                /** @description Case-insensitive literal substring across player name, club, league and primary position. When the WHOLE input is a configured club alias ('psg', 'spurs') the clubs it names are searched as well, so club abbreviations work here too. */
                 q?: string | null;
                 age_min?: number | null;
                 age_max?: number | null;
@@ -1363,8 +1364,11 @@ export interface operations {
                 position_group?: string | null;
                 /** @description A configured role key. Only players with a STORED rating for it qualify, and the result's role context becomes that role: its stored score and confidence do the filtering, the ordering, the confidence tie-break and the display. An unknown role key is a 422. */
                 role?: string | null;
+                /** @description Case-insensitive literal substring over the competition's slug, name and country, so 'Premier League', 'eng' and 'England' all match. A small deterministic misspelling table is applied first (see configs/discovery/search_aliases_v1.yaml); there is no fuzzy matching. */
                 league?: string | null;
+                /** @description Case-insensitive literal substring over the team's slug and canonical name. A deterministic alias table resolves common abbreviations and nicknames first - 'psg', 'P.S.G.', 'spurs', 'thfc' - and an ambiguous abbreviation returns every club it defensibly names. Anything that is not a configured alias is searched as an ordinary substring; there is no fuzzy matching. */
                 club?: string | null;
+                /** @description Case-insensitive literal SUBSTRING of the stored nationality, so 'Eng' matches England. A player with no stored nationality fails an active predicate rather than matching. */
                 nationality?: string | null;
                 /** @description Whole season minutes, 0-10000 inclusive. Omit for no minutes threshold; 0 is a real accepted value, not 'unset'. Unrelated to the RoleFit scale. */
                 min_minutes?: number | null;

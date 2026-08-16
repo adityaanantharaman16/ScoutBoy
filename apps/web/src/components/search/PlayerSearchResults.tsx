@@ -75,13 +75,18 @@ export function ResultCard({ p }: { p: PlayerSearchCard }) {
 
 export function PlayerSearchResults({
   filters,
-  ageSummary,
+  criteriaCount,
   onPage,
   onCanonicalPage,
 }: {
   filters: SearchFilters;
-  /** The active age condition, phrased by the shared `ageSummaryText` helper. */
-  ageSummary: string;
+  /**
+   * How many narrowing criteria the request is carrying, derived once by
+   * `SearchExperience` from the same request the rail reads, so this header and
+   * the rail's own summary can never report different numbers. Zero is reported
+   * as nothing at all rather than as "0 active criteria".
+   */
+  criteriaCount: number;
   onPage: (page: number) => void;
   /**
    * Called with the page the API actually served when it differs from the one
@@ -107,8 +112,16 @@ export function PlayerSearchResults({
       <EmptyState
         label="No players match these filters."
         action={
+          // The recovery route is stated, not implied. The filter rail is a
+          // sibling of this pane and stays fully usable in the empty state, so
+          // removing one criterion or pressing Clear All is available without a
+          // reload — and the count tells the user how much is in play.
           <span className="text-xs text-ink-soft">
-            Try widening the age range or clearing a filter.
+            {criteriaCount > 0
+              ? `Remove one of the ${criteriaCount} active ${
+                  criteriaCount === 1 ? "criterion" : "criteria"
+                } in the filter rail, or Clear All.`
+              : "Try widening the age range or clearing a filter."}
           </span>
         }
       />
@@ -138,13 +151,26 @@ export function PlayerSearchResults({
           className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 bg-paper-muted px-4 py-2 text-xs text-ink-soft"
           data-testid="result-count"
         >
-          {/* Analysis scope is deliberately absent: it is no longer a Discovery
+          {/* Four facts, and only four: how many players matched, how much
+              narrowing produced that number, which season it is about, and where
+              in the result set this page sits.
+
+              The criteria are COUNTED here, never listed. Phase 8.2 can carry a
+              dozen at once, and spelling them out would turn the ledger's header
+              into a second filter rail that scrolls the players off the screen —
+              the readable list, with a remove action per criterion, belongs in the
+              rail beside it. Zero is reported as silence rather than as "0 active
+              criteria".
+
+              Analysis scope is deliberately absent: it is no longer a Discovery
               control, so reporting it here would describe a filter the user
-              cannot see or change. What remains is all active information —
-              count, age condition, season, pagination. */}
+              cannot see or change. */}
           <span>
-            {data.total} player{data.total === 1 ? "" : "s"} · {ageSummary} ·{" "}
-            {data.items[0]?.season ?? "current season"} · page {page} of {data.total_pages}
+            {data.total} player{data.total === 1 ? "" : "s"}
+            {criteriaCount > 0
+              ? ` · ${criteriaCount} active ${criteriaCount === 1 ? "criterion" : "criteria"}`
+              : ""}{" "}
+            · {data.items[0]?.season ?? "current season"} · page {page} of {data.total_pages}
           </span>
           <span>Ranked ledger</span>
         </div>

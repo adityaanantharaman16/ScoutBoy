@@ -1,0 +1,116 @@
+version: v1
+# Discovery search aliases.
+#
+# A small, curated, DETERMINISTIC lookup table. It is not fuzzy matching: there is no
+# edit distance, no phonetic key and no scoring. An input either normalizes to a key in
+# this file or it does not, and anything that does not falls straight through to the
+# ordinary case-insensitive substring search.
+#
+# How a target is used
+# --------------------
+# Each target is a case-insensitive LITERAL SUBSTRING, matched against the joined
+# `slug` + name haystack the plain search already uses. Listing both a slug-shaped and
+# a name-shaped target is deliberate: providers spell clubs differently, and matching
+# either keeps the alias usable across them. `%`, `_` and the LIKE escape character in
+# a target stay literal, exactly as they do in a user-typed needle.
+#
+# Club aliases RESOLVE, league aliases RESOLVE
+# --------------------------------------------
+# When `club=<alias>` matches a key here, the alias's targets REPLACE the typed needle
+# rather than being unioned with it. An alias is a curated statement of intent, and
+# two-letter abbreviations such as `om` would otherwise drag in every club whose name
+# merely contains those letters. `q=<alias>` is different and is documented in
+# `discovery_repo`: there the club targets are ADDED to the ordinary free-text match,
+# because `q` is a broad "find anything" search and narrowing it would be surprising.
+#
+# Key normalization (see `app.core.search_aliases.normalize_alias_key`)
+# --------------------------------------------------------------------
+# Outer whitespace trimmed, repeated whitespace collapsed, Python `str.lower()`, and
+# abbreviation punctuation (`.`, `·`, apostrophes) removed — so `P.S.G.`, ` psg ` and
+# `PSG` are one key. Keys below must already be written in normalized form; the loader
+# rejects the file if they are not, so a key that could never be reached cannot ship.
+#
+# Curation rules
+# --------------
+# * Top-five-league clubs only, kept restrained on purpose.
+# * No dangerously generic alias: `united`, `city`, `real` and `blues` are deliberately
+#   absent, because each names several major clubs and none of them is "the" one.
+# * An abbreviation that genuinely refers to more than one major club maps to ALL
+#   defensible targets rather than silently picking a favourite (`fcb`).
+
+league_aliases:
+  # The one alias here exists because it is a reported user misspelling, not because
+  # league search needs help: `Portugal`, `por` and `Primeira Liga` all already work
+  # through the ordinary slug / name / country substring search.
+  - alias: portgual
+    targets: [portugal]
+
+club_aliases:
+  # -- England ---------------------------------------------------------------
+  - alias: spurs
+    targets: [tottenham]
+  - alias: thfc
+    targets: [tottenham]
+  - alias: man utd
+    targets: [manchester united, man_utd, man_united]
+  - alias: man united
+    targets: [manchester united, man_utd, man_united]
+  - alias: mufc
+    targets: [manchester united, man_utd, man_united]
+  - alias: man city
+    targets: [manchester city, man_city]
+  - alias: mcfc
+    targets: [manchester city, man_city]
+  - alias: lfc
+    targets: [liverpool]
+  - alias: gunners
+    targets: [arsenal]
+
+  # -- Spain -----------------------------------------------------------------
+  - alias: barca
+    targets: [barcelona]
+  - alias: barça
+    targets: [barcelona]
+  - alias: atleti
+    targets: [atletico madrid, atlético madrid, atletico_madrid]
+  - alias: rma
+    targets: [real madrid, real_madrid]
+
+  # -- Germany ---------------------------------------------------------------
+  - alias: bvb
+    targets: [borussia dortmund, dortmund]
+  - alias: b04
+    targets: [bayer leverkusen, leverkusen]
+  - alias: rbl
+    targets: [rb leipzig, leipzig]
+
+  # -- Italy -----------------------------------------------------------------
+  - alias: juve
+    targets: [juventus]
+  # "Inter" alone is not an alias: as a bare substring it would also match any club
+  # whose name merely contains those letters.
+  - alias: inter milan
+    targets: [internazionale, inter milan, inter_milan]
+  - alias: nerazzurri
+    targets: [internazionale, inter milan, inter_milan]
+  # Rossoneri is AC Milan specifically; "milan" alone would also catch Inter Milan.
+  - alias: rossoneri
+    targets: [ac milan, ac_milan]
+
+  # -- France ----------------------------------------------------------------
+  - alias: psg
+    targets: [paris saint-germain, paris_sg]
+  - alias: paris sg
+    targets: [paris saint-germain, paris_sg]
+  - alias: om
+    targets: [olympique de marseille, marseille]
+  - alias: ol
+    targets: [olympique lyonnais, lyon]
+  - alias: losc
+    targets: [lille]
+
+  # -- deliberately ambiguous ------------------------------------------------
+  # FCB is claimed by both Barcelona and Bayern Munich. Neither is "the" FCB, so the
+  # alias returns both rather than choosing one silently.
+  - alias: fcb
+    targets: [barcelona, bayern munich, bayern_munich]

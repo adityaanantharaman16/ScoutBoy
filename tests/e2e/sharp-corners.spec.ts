@@ -81,13 +81,20 @@ test.describe("Sharp-corner production system", () => {
   test("shared primitives compute to 0px on a real page", async ({ page }) => {
     await page.goto("/");
     await page.getByTestId("results-ledger").waitFor();
+    // Phase 8.2 rebuilt the Discovery rail as a hairline-divided panel rather
+    // than a `.card`, so the panel and every control the new rail introduced are
+    // probed here alongside the primitives that were already covered. `.card`
+    // itself is still asserted, on the dossier, in the surface sweep above and in
+    // the dedicated probe below.
     const radii = await page.evaluate(() => {
       const read = (sel: string) => {
         const el = document.querySelector(sel);
         return el ? getComputedStyle(el).borderRadius : null;
       };
       return {
-        card: read(".card"),
+        rail: read('[data-testid="filter-rail"]'),
+        disclosure: read(".filter-disclosure"),
+        categoryHeader: read(".filter-disclosure-sub"),
         input: read(".input"),
         select: read("select.input"),
         button: read(".btn"),
@@ -98,6 +105,41 @@ test.describe("Sharp-corner production system", () => {
     for (const [key, value] of Object.entries(radii)) {
       expect(value, `${key} radius`).toBe("0px");
     }
+  });
+
+  test("the .card primitive still computes to 0px where it is used", async ({ page }) => {
+    await page.goto("/methodology");
+    await page.getByTestId("methodology-contents").waitFor();
+    const card = await page.evaluate(() => {
+      const el = document.querySelector(".card");
+      return el ? getComputedStyle(el).borderRadius : null;
+    });
+    expect(card, "no .card found to probe").not.toBeNull();
+    expect(card).toBe("0px");
+  });
+
+  test("every Phase 8.2 disclosure surface computes square, open and closed", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    // a compound URL, so the active-criteria rows and every count box render
+    await page.goto("/?q=a&league=e&rolefit_max=95&value_min=1000000");
+    await page.getByTestId("results-ledger").waitFor();
+    expect(await roundedBoxes(page), "collapsed").toEqual([]);
+
+    await page.getByTestId("active-criteria-toggle").click();
+    // Idempotent: this URL already opened Advanced Filters onto its own first
+    // active category, so a blind click would close the region under audit.
+    const advanced = page.getByTestId("advanced-filters-toggle");
+    if ((await advanced.getAttribute("aria-expanded")) !== "true") await advanced.click();
+    for (const category of ["context", "evidence", "market"]) {
+      const header = page.getByTestId(`advanced-category-toggle-${category}`);
+      if ((await header.getAttribute("aria-expanded")) !== "true") await header.click();
+      await expect(page.getByTestId(`advanced-category-fields-${category}`)).toBeVisible();
+      expect(await roundedBoxes(page), `${category} expanded`).toEqual([]);
+    }
+
+    // ...and the new controls are genuinely present in that scan
+    await expect(page.getByTestId("active-criterion").first()).toBeVisible();
+    await expect(page.getByTestId("advanced-filters-toggle-count")).toBeVisible();
   });
 
   test("the Discovery heart/Compare rail keeps its approved geometry", async ({ page }) => {
@@ -177,6 +219,76 @@ test.describe("Discovery filter rail & ledger alignment", () => {
     expect(stuck.y + stuck.height).toBeLessThanOrEqual(720);
     await expect(page.getByTestId("search-input")).toBeInViewport();
     await expect(page.getByLabel("Sort")).toBeInViewport();
+    await expect(page.getByTestId("advanced-filters-toggle")).toBeInViewport();
+  });
+
+  test("the collapsed Phase 8.2 rail is shorter than an all-fields rail would be", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/");
+    await page.getByTestId("results-ledger").waitFor();
+
+    const height = async () => (await page.getByTestId("filter-rail").boundingBox())!.height;
+    const collapsed = await height();
+
+    // Expanding Advanced Filters and one category is what an "everything visible
+    // at once" rail would look like permanently. The collapsed default has to be
+    // materially shorter than that, or progressive disclosure bought nothing.
+    await page.getByTestId("advanced-filters-toggle").click();
+    await page.getByTestId("advanced-category-toggle-evidence").click();
+    const expanded = await height();
+    expect(collapsed).toBeLessThan(expanded);
+    expect(collapsed).toBeLessThan(expanded * 0.75);
+
+    // ...and collapsing puts it back exactly, with no residual height
+    await page.getByTestId("advanced-filters-toggle").click();
+    expect(await height()).toBe(collapsed);
+  });
+
+  test("the expanded rail releases stickiness so nothing is pinned out of reach", async ({
+    page,
+  }) => {
+    // A sticky box taller than the scrollport keeps its overflow permanently
+    // below the fold; the alternative (a nested rail scroller) is not allowed. So
+    // an expanded rail returns to normal document flow and scrolls with the page.
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto("/");
+    await page.getByTestId("results-ledger").waitFor();
+    await expect(page.getByTestId("filter-column")).toHaveCSS("position", "sticky");
+
+    await page.getByTestId("advanced-filters-toggle").click();
+    await page.getByTestId("advanced-category-toggle-evidence").click();
+    await expect(page.getByTestId("filter-column")).toHaveCSS("position", "static");
+
+    // the last control in the rail really is reachable by ordinary page scrolling
+    const last = page.getByTestId("advanced-category-toggle-market");
+    await last.scrollIntoViewIfNeeded();
+    await expect(last).toBeInViewport();
+
+    // and closing it restores the approved sticky behaviour
+    await page.getByTestId("advanced-filters-toggle").click();
+    await expect(page.getByTestId("filter-column")).toHaveCSS("position", "sticky");
+  });
+
+  test("the rail adds no nested scrolling region, open or closed", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto("/?league=Bundesliga&rolefit_max=80");
+    await page.getByTestId("results-ledger").waitFor();
+    await page.getByTestId("active-criteria-toggle").click();
+
+    const scrollers = await page.evaluate(() => {
+      const rail = document.querySelector<HTMLElement>('[data-testid="filter-rail"]')!;
+      return Array.from(rail.querySelectorAll<HTMLElement>("*"))
+        .concat(rail)
+        .filter((el) => {
+          const s = getComputedStyle(el);
+          const scrolls = /auto|scroll/.test(s.overflowY) || /auto|scroll/.test(s.overflowX);
+          return scrolls && el.scrollHeight > el.clientHeight + 1;
+        })
+        .map((el) => el.dataset.testid ?? el.className);
+    });
+    expect(scrollers).toEqual([]);
   });
 
   test("the rail is not sticky below the desktop breakpoint", async ({ page }) => {

@@ -209,20 +209,20 @@ describe("Discovery results pane states", () => {
 
   it("shows a structural skeleton while loading (page identity preserved elsewhere)", () => {
     usePlayerSearchMock.mockReturnValue({ isLoading: true });
-    render(<PlayerSearchResults filters={filters} ageSummary="All Ages" onPage={noop} onCanonicalPage={noop} />);
+    render(<PlayerSearchResults filters={filters} criteriaCount={0} onPage={noop} onCanonicalPage={noop} />);
     expect(screen.getByTestId("ledger-skeleton")).toBeInTheDocument();
     expect(screen.getByTestId("ledger-skeleton")).toHaveAttribute("role", "status");
   });
 
   it("shows an honest empty state with no fabricated rows", () => {
     usePlayerSearchMock.mockReturnValue({ isLoading: false, isError: false, data: { items: [], total: 0, page: 1, page_size: 12, total_pages: 0 } });
-    render(<PlayerSearchResults filters={filters} ageSummary="All Ages" onPage={noop} onCanonicalPage={noop} />);
+    render(<PlayerSearchResults filters={filters} criteriaCount={0} onPage={noop} onCanonicalPage={noop} />);
     expect(screen.getByText(/No players match these filters/)).toBeInTheDocument();
   });
 
   it("shows an alert on request failure", () => {
     usePlayerSearchMock.mockReturnValue({ isLoading: false, isError: true, error: new Error("boom") });
-    render(<PlayerSearchResults filters={filters} ageSummary="All Ages" onPage={noop} onCanonicalPage={noop} />);
+    render(<PlayerSearchResults filters={filters} criteriaCount={0} onPage={noop} onCanonicalPage={noop} />);
     expect(screen.getByRole("alert")).toBeInTheDocument();
   });
 });
