@@ -53,6 +53,65 @@ test("discovery loads and filters", async ({ page }) => {
   expect(page.url()).toContain("age_max=22");
 });
 
+test("the ledger's ranking explanation discloses in every engine", async ({ page }) => {
+  // Phase 8.3. The disclosure is a real <button> over a `hidden` region, so what
+  // must hold on every engine is that pointer AND keyboard operation reveal the
+  // backend's page-level explanation — its key sequence, tie-breaks and
+  // limitation — and that the ledger keeps its width when they do.
+  await page.goto("/");
+  await page.waitForSelector('[data-testid="results-ledger"]');
+
+  const toggle = page.locator('[data-testid="why-this-order-toggle"]');
+  const region = page.locator('[data-testid="why-this-order-region"]');
+  await expect(toggle).toBeVisible();
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(region).toBeHidden();
+  await expect(page.locator('[data-testid="ranking-summary-collapsed"]')).toHaveText(
+    "Ordered by RoleFit, highest first.",
+  );
+
+  const widthBefore = (await page.locator('[data-testid="results-ledger"]').boundingBox())!.width;
+
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect(region).toBeVisible();
+  expect(
+    await page
+      .locator('[data-testid="ranking-key"]')
+      .evaluateAll((nodes) => nodes.map((n) => n.getAttribute("data-ranking-key"))),
+  ).toEqual([
+    "rated_first",
+    "result_role_score",
+    "result_role_confidence",
+    "canonical_name",
+    "player_id",
+  ]);
+  await expect(page.locator('[data-testid="ranking-tie-breakers"]')).toContainText(
+    "Final tie-breakers, always applied last: Canonical Name, Player ID.",
+  );
+  await expect(page.locator('[data-testid="ranking-limitation"]')).toContainText(
+    "ordering, not recruitment suitability",
+  );
+  // Page-level only: no engine may render a player-versus-player reason.
+  expect(await region.textContent()).not.toMatch(/adjacent results|appears above/i);
+
+  const widthAfter = (await page.locator('[data-testid="results-ledger"]').boundingBox())!.width;
+  expect(Math.abs(widthAfter - widthBefore)).toBeLessThanOrEqual(1);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    ),
+  ).toBeLessThanOrEqual(0);
+
+  // The platform's own button keyboard handling, on every engine.
+  await toggle.focus();
+  await page.keyboard.press("Enter");
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await page.keyboard.press("Space");
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect(toggle).toBeFocused();
+});
+
 test("age slider track and ticks hold their geometry in every engine", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator('[data-testid="results-ledger"]')).toBeVisible();

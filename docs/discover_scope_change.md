@@ -76,6 +76,19 @@ Progressive disclosure, the active-criteria list, the range-safety rule and the
 Clear All reset are documented in
 [docs/milestone_8_discovery_contract.md](milestone_8_discovery_contract.md).
 
+**Filters decide inclusion; they never decide order.** Since Phase 8.3 the ledger
+carries a collapsed "Why this order" disclosure that reports the active sort's exact
+ordered key sequence, the role context each result's RoleFit is read from, how unknown
+values are placed, the final tie-breakers and one limitation. No filter appears there
+as a reason for rank — league, club, nationality, minutes, playstyle, age, value and
+RoleFit bounds narrow the cohort and nothing else. A selected role is named there as
+the rating every result is judged by, but under the Age, Expected Asking and Name
+sorts the copy says explicitly that RoleFit did **not** order the page and names the
+sort that did. `sort` is likewise not a narrowing criterion. The explanation and the
+SQL `ORDER BY` are built from one backend-owned sort specification, and it is stated
+in the surface itself that this describes ordering rather than recruitment
+suitability.
+
 ## Age filter
 
 Age is calculated relative to the selected season's end date.

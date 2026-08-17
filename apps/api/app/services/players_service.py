@@ -15,7 +15,7 @@ from app.core.errors import QueryValidationError
 from app.models.orm import Player, RoleRating
 from app.models.schemas import (
     DataSource,
-    Paginated,
+    DiscoverySearchResponse,
     PlayerCardResponse,
     PlayerIdentity,
     PlayerSearchCard,
@@ -28,6 +28,7 @@ from app.repositories import discovery_repo
 from app.repositories import players_repo as repo
 
 from . import _common as C
+from . import discovery_explanation
 
 SEARCH_SCOPES = {"analyzed", "all_records", "high_coverage_u23"}
 AGE_BANDS = {"all", "u23", "24_26", "27_30", "31_plus"}
@@ -50,9 +51,12 @@ SEARCH_SORTS = (
 )
 DEFAULT_SEARCH_SORT = "rolefit_desc"
 
-# Which role context a result's `result_role*` fields describe.
-RESULT_ROLE_BEST = "best_role"
-RESULT_ROLE_SELECTED = "selected_role"
+# Which role context a result's `result_role*` fields describe. The ranking
+# explanation reports the same two values for the same reason, from
+# `discovery_explanation`, so a card and the explanation beside it cannot disagree
+# about which rating did the work.
+RESULT_ROLE_BEST = discovery_explanation.RESULT_ROLE_BEST
+RESULT_ROLE_SELECTED = discovery_explanation.RESULT_ROLE_SELECTED
 
 
 @dataclass
@@ -346,6 +350,22 @@ def _birth_date_window(
     return before, after, True, False
 
 
+def _empty_response(*, sort: str, role, page_size: int) -> DiscoverySearchResponse:
+    """A well-formed zero-result page that still explains the active ordering."""
+    return DiscoverySearchResponse(
+        items=[],
+        total=0,
+        page=1,
+        page_size=page_size,
+        total_pages=0,
+        ranking=discovery_explanation.build(
+            sort=sort,
+            role_key=role,
+            role_display_map=C.role_display_map(),
+        ),
+    )
+
+
 def search_players(
     session: Session,
     *,
@@ -369,7 +389,7 @@ def search_players(
     universe=None,
     page=1,
     page_size=20,
-) -> Paginated[PlayerSearchCard]:
+) -> DiscoverySearchResponse:
     """One page of Discovery results, selected and ordered by the database.
 
     The database does the work: it identifies the qualifying player-season rows,
@@ -377,6 +397,13 @@ def search_players(
     predicate, applies the approved ordering and tie-breaks, counts the distinct
     qualifying players and returns only the requested page. This function normalizes
     the request, canonicalizes the page against the total, and serializes.
+
+    Since Phase 8.3 it also attaches the ranking explanation: the active mode's exact
+    ordered key sequence, the role context every result's RoleFit is read from and
+    whether that rating also ordered the page, how unknown values are placed, and the
+    deterministic final tie-breaks. It is derived entirely from the one sort
+    specification the SQL `ORDER BY` is built from, so it reads no rows and costs no
+    query.
     """
     _validate_query(
         sort=sort,
@@ -387,7 +414,9 @@ def search_players(
     )
     season = repo.get_current_season(session)
     if season is None:
-        return Paginated(items=[], total=0, page=1, page_size=page_size, total_pages=0)
+        # Nothing qualifies, but the request still HAS an active sort, so the
+        # explanation is still the honest answer to "what ranking mode is this?".
+        return _empty_response(sort=sort, role=role, page_size=page_size)
 
     selected_scope = _normalize_scope(scope, universe)
     selected_age_band = age_band if age_band in AGE_BANDS else "all"
@@ -444,7 +473,7 @@ def search_players(
         session, season.id, [row.player_id for row in rows]
     )
     result_role_source = RESULT_ROLE_SELECTED if role else RESULT_ROLE_BEST
-    return Paginated(
+    return DiscoverySearchResponse(
         items=[
             _card_from_row(
                 row,
@@ -459,6 +488,13 @@ def search_players(
         page=effective_page,
         page_size=page_size,
         total_pages=total_pages,
+        # Built from the same sort specification the ORDER BY above was built from,
+        # and from nothing else: no rows are read and no further query is issued.
+        ranking=discovery_explanation.build(
+            sort=sort,
+            role_key=role,
+            role_display_map=C.role_display_map(),
+        ),
     )
 
 

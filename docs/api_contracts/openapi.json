@@ -366,7 +366,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Paginated_PlayerSearchCard_"
+                  "$ref": "#/components/schemas/DiscoverySearchResponse"
                 }
               }
             }
@@ -2247,6 +2247,47 @@
         ],
         "title": "DataSourceMeta"
       },
+      "DiscoverySearchResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PlayerSearchCard"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total_pages": {
+            "type": "integer",
+            "title": "Total Pages"
+          },
+          "ranking": {
+            "$ref": "#/components/schemas/RankingExplanation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size",
+          "total_pages",
+          "ranking"
+        ],
+        "title": "DiscoverySearchResponse",
+        "description": "One page of Discovery results, plus which ordering produced them.\n\nThe five pagination fields are exactly the ones ``Paginated`` has always\ncarried, in the same shape, so every existing client keeps working unchanged.\n``ranking`` is additive."
+      },
       "FaceStat": {
         "properties": {
           "group_key": {
@@ -2534,42 +2575,6 @@
           "formula"
         ],
         "title": "MethodologyResponse"
-      },
-      "Paginated_PlayerSearchCard_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/PlayerSearchCard"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total_pages": {
-            "type": "integer",
-            "title": "Total Pages"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "total",
-          "page",
-          "page_size",
-          "total_pages"
-        ],
-        "title": "Paginated[PlayerSearchCard]"
       },
       "PlayerCardResponse": {
         "properties": {
@@ -3235,6 +3240,165 @@
           "display_name"
         ],
         "title": "PlaystyleMeta"
+      },
+      "RankingExplanation": {
+        "properties": {
+          "sort": {
+            "type": "string",
+            "title": "Sort"
+          },
+          "sort_label": {
+            "type": "string",
+            "title": "Sort Label"
+          },
+          "direction": {
+            "type": "string",
+            "title": "Direction"
+          },
+          "direction_label": {
+            "type": "string",
+            "title": "Direction Label"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "keys": {
+            "items": {
+              "$ref": "#/components/schemas/RankingKey"
+            },
+            "type": "array",
+            "title": "Keys",
+            "default": []
+          },
+          "role_context": {
+            "$ref": "#/components/schemas/RankingRoleContext"
+          },
+          "missing_values": {
+            "type": "string",
+            "title": "Missing Values"
+          },
+          "tie_breakers": {
+            "items": {
+              "$ref": "#/components/schemas/RankingKey"
+            },
+            "type": "array",
+            "title": "Tie Breakers",
+            "default": []
+          },
+          "limitation": {
+            "type": "string",
+            "title": "Limitation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sort",
+          "sort_label",
+          "direction",
+          "direction_label",
+          "summary",
+          "role_context",
+          "missing_values",
+          "limitation"
+        ],
+        "title": "RankingExplanation",
+        "description": "Which ordering this page is in.\n\nOrdering only. It does not describe recruitment quality, suitability or\npriority, and no filter appears here as a reason for rank: filters decide\ninclusion, and only the keys below decide order."
+      },
+      "RankingKey": {
+        "properties": {
+          "position": {
+            "type": "integer",
+            "title": "Position"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "direction": {
+            "type": "string",
+            "title": "Direction"
+          },
+          "direction_label": {
+            "type": "string",
+            "title": "Direction Label"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit"
+          },
+          "rule": {
+            "type": "string",
+            "title": "Rule"
+          }
+        },
+        "type": "object",
+        "required": [
+          "position",
+          "key",
+          "label",
+          "direction",
+          "direction_label",
+          "role",
+          "unit",
+          "rule"
+        ],
+        "title": "RankingKey",
+        "description": "One ordering key, in the exact position the ``ORDER BY`` applies it."
+      },
+      "RankingRoleContext": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "role_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role Key"
+          },
+          "role_display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role Display"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "label",
+          "detail"
+        ],
+        "title": "RankingRoleContext",
+        "description": "Which stored rating supplies the RoleFit shown on every result.\n\n``selected_role`` when the request carries ``role=<key>``: every result's\n``result_role*`` group is that role. ``best_role`` otherwise: each player's own\nstored best role, which may differ from row to row.\n\nWhether that rating also *ordered* the page depends on the active sort, and\n``detail`` says which of the two it is. Under the RoleFit modes the applicable\nscore and confidence are ordering keys; under Age, Expected Asking and Name they\nare displayed context and the named sort does the ordering."
       },
       "RatingRunSummary": {
         "properties": {

@@ -689,6 +689,27 @@ export interface components {
             /** Note */
             note: string;
         };
+        /**
+         * DiscoverySearchResponse
+         * @description One page of Discovery results, plus which ordering produced them.
+         *
+         *     The five pagination fields are exactly the ones ``Paginated`` has always
+         *     carried, in the same shape, so every existing client keeps working unchanged.
+         *     ``ranking`` is additive.
+         */
+        DiscoverySearchResponse: {
+            /** Items */
+            items: components["schemas"]["PlayerSearchCard"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Total Pages */
+            total_pages: number;
+            ranking: components["schemas"]["RankingExplanation"];
+        };
         /** FaceStat */
         FaceStat: {
             /** Group Key */
@@ -807,19 +828,6 @@ export interface components {
             calibration?: components["schemas"]["CalibrationMeta"] | null;
             /** Last Updated */
             last_updated?: string | null;
-        };
-        /** Paginated[PlayerSearchCard] */
-        Paginated_PlayerSearchCard_: {
-            /** Items */
-            items: components["schemas"]["PlayerSearchCard"][];
-            /** Total */
-            total: number;
-            /** Page */
-            page: number;
-            /** Page Size */
-            page_size: number;
-            /** Total Pages */
-            total_pages: number;
         };
         /** PlayerCardResponse */
         PlayerCardResponse: {
@@ -1086,6 +1094,88 @@ export interface components {
             category?: string | null;
             /** Description */
             description?: string | null;
+        };
+        /**
+         * RankingExplanation
+         * @description Which ordering this page is in.
+         *
+         *     Ordering only. It does not describe recruitment quality, suitability or
+         *     priority, and no filter appears here as a reason for rank: filters decide
+         *     inclusion, and only the keys below decide order.
+         */
+        RankingExplanation: {
+            /** Sort */
+            sort: string;
+            /** Sort Label */
+            sort_label: string;
+            /** Direction */
+            direction: string;
+            /** Direction Label */
+            direction_label: string;
+            /** Summary */
+            summary: string;
+            /**
+             * Keys
+             * @default []
+             */
+            keys: components["schemas"]["RankingKey"][];
+            role_context: components["schemas"]["RankingRoleContext"];
+            /** Missing Values */
+            missing_values: string;
+            /**
+             * Tie Breakers
+             * @default []
+             */
+            tie_breakers: components["schemas"]["RankingKey"][];
+            /** Limitation */
+            limitation: string;
+        };
+        /**
+         * RankingKey
+         * @description One ordering key, in the exact position the ``ORDER BY`` applies it.
+         */
+        RankingKey: {
+            /** Position */
+            position: number;
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Direction */
+            direction: string;
+            /** Direction Label */
+            direction_label: string;
+            /** Role */
+            role: string;
+            /** Unit */
+            unit: string;
+            /** Rule */
+            rule: string;
+        };
+        /**
+         * RankingRoleContext
+         * @description Which stored rating supplies the RoleFit shown on every result.
+         *
+         *     ``selected_role`` when the request carries ``role=<key>``: every result's
+         *     ``result_role*`` group is that role. ``best_role`` otherwise: each player's own
+         *     stored best role, which may differ from row to row.
+         *
+         *     Whether that rating also *ordered* the page depends on the active sort, and
+         *     ``detail`` says which of the two it is. Under the RoleFit modes the applicable
+         *     score and confidence are ordering keys; under Age, Expected Asking and Name they
+         *     are displayed context and the named sort does the ordering.
+         */
+        RankingRoleContext: {
+            /** Source */
+            source: string;
+            /** Role Key */
+            role_key?: string | null;
+            /** Role Display */
+            role_display?: string | null;
+            /** Label */
+            label: string;
+            /** Detail */
+            detail: string;
         };
         /** RatingRunSummary */
         RatingRunSummary: {
@@ -1405,7 +1495,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Paginated_PlayerSearchCard_"];
+                    "application/json": components["schemas"]["DiscoverySearchResponse"];
                 };
             };
             /** @description Validation Error */

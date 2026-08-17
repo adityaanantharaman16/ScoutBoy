@@ -24,12 +24,14 @@ import { RoleSelector } from "@/components/player/RoleSelector";
 import { RoleTerritory } from "@/components/player/RoleTerritory";
 import { PlayerSearchFilters } from "@/components/search/PlayerSearchFilters";
 import { ResultCard } from "@/components/search/PlayerSearchResults";
+import { WhyThisOrder } from "@/components/search/WhyThisOrder";
 import { ScoutingStateProvider } from "@/lib/state/scouting-state";
 import type {
   AuditGroupView,
   CompareResponse,
   CompareSide,
   PlayerSearchCard,
+  RankingExplanation,
   RoleRatingSummary,
 } from "@/lib/api/types";
 
@@ -215,6 +217,59 @@ function searchCard(over: Partial<PlayerSearchCard> = {}): PlayerSearchCard {
   } as PlayerSearchCard;
 }
 
+/** A Discovery ranking explanation, shaped exactly as the API sends one. */
+const RANKING = {
+  sort: "rolefit_desc",
+  sort_label: "RoleFit",
+  direction: "descending",
+  direction_label: "highest first",
+  summary: "Ordered by RoleFit, highest first.",
+  keys: [
+    {
+      position: 1,
+      key: "result_role_score",
+      label: "RoleFit Score",
+      direction: "descending",
+      direction_label: "Highest first",
+      role: "measure",
+      unit: "rolefit_score",
+      rule: "The applicable role context's stored RoleFit score, highest first.",
+    },
+    {
+      position: 2,
+      key: "player_id",
+      label: "Player ID",
+      direction: "ascending",
+      direction_label: "Lowest first",
+      role: "tie_breaker",
+      unit: "player_id",
+      rule: "The stable player ID, ascending, decides anything still equal.",
+    },
+  ],
+  role_context: {
+    source: "best_role",
+    role_key: null,
+    role_display: null,
+    label: "Best role for each player",
+    detail:
+      "No role is selected, so the RoleFit on each result is that player's own stored best role.",
+  },
+  missing_values: "Unrated players are placed after every rated player.",
+  tie_breakers: [
+    {
+      position: 2,
+      key: "player_id",
+      label: "Player ID",
+      direction: "ascending",
+      direction_label: "Lowest first",
+      role: "tie_breaker",
+      unit: "player_id",
+      rule: "The stable player ID, ascending, decides anything still equal.",
+    },
+  ],
+  limitation: "This explains ordering, not recruitment suitability.",
+} as unknown as RankingExplanation;
+
 function rating(role: string, display: string, score: number, isBest = false): RoleRatingSummary {
   return {
     role_key: role,
@@ -315,6 +370,13 @@ describe("Sharp-corner production system — rendered surfaces", () => {
 
     const row = wrapped(<ResultCard p={searchCard()} />);
     expect(roundedOffenders(row.container)).toEqual([]);
+  });
+
+  it("renders the ledger's ranking explanation square, closed and open", () => {
+    const { container, getByTestId } = render(<WhyThisOrder ranking={RANKING} />);
+    expect(roundedOffenders(container)).toEqual([]);
+    fireEvent.click(getByTestId("why-this-order-toggle"));
+    expect(roundedOffenders(container)).toEqual([]);
   });
 
   it("renders empty, loading, error and banner states square", () => {

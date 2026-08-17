@@ -92,16 +92,13 @@ from app.models.orm import (
     RoleRating,
     Team,
 )
+from app.repositories import discovery_sort
 
 #: Confidence ordering, mirroring `services._common._CONF_ORDER`. Higher wins the
 #: RoleFit tie-break in BOTH directions, and an absent rating ranks as "unknown".
-CONFIDENCE_RANK = {"unknown": 0, "low": 1, "medium": 2, "high": 3}
-
-#: Sentinel age for a record with no birth date, mirroring the previous Python sort
-#: key so unknown ages stay last in both age directions without relying on the
-#: database's default NULL placement.
-_UNKNOWN_AGE_ASC_SENTINEL = 999.0
-_UNKNOWN_AGE_DESC_SENTINEL = -1.0
+#: Owned by `discovery_sort`, where the confidence key that uses it is declared;
+#: re-exported here because this module's callers have always read it from here.
+CONFIDENCE_RANK = discovery_sort.CONFIDENCE_RANK
 
 _EPOCH = date(1970, 1, 1)
 _DAYS_PER_YEAR = 365.25
@@ -330,14 +327,6 @@ def rounded_age_expr(birth_date: ColumnElement, season_end: Optional[date]):
     epoch_end = (season_end - _EPOCH).days * 86400
     days = (literal(epoch_end) - extract("epoch", birth_date)) / 86400
     return func.round(cast(days / _DAYS_PER_YEAR, Numeric), 1)
-
-
-def _confidence_rank(confidence: ColumnElement):
-    """Stored confidence as an orderable rank: unknown < low < medium < high."""
-    return case(
-        *[(confidence == level, rank) for level, rank in sorted(CONFIDENCE_RANK.items())],
-        else_=CONFIDENCE_RANK["unknown"],
-    )
 
 
 def code_point_collation(session: Session) -> Optional[str]:
@@ -613,34 +602,35 @@ class _Candidates:
         return where
 
     # -- ordering -----------------------------------------------------------
+    def sort_context(self, collation: Optional[str]) -> discovery_sort.SortContext:
+        """The expressions this request's ordering keys are built from.
+
+        Every one is read off the SAME joined row that bounds and serializes the
+        result, which is what makes the displayed role context and the applied
+        ordering structurally incapable of disagreeing (Phase 8.1B).
+        """
+        return discovery_sort.SortContext(
+            score=self.result.final_score,
+            confidence=self.result.confidence,
+            age=rounded_age_expr(Player.birth_date, self.filters.season_end),
+            asking_low=self.market.expected_asking_low_eur,
+            name_key=_name_key(collation),
+            player_id=Player.id,
+        )
+
     def order_by(self, sort: str, collation: Optional[str]) -> list:
         """The approved ordering for one sort mode, with its explicit tie-breaks.
 
-        Every mode ends with canonical name then player id, and every "unknown"
-        carries an explicit rank or sentinel rather than relying on the database's
-        default NULL placement.
-        """
-        f = self.filters
-        score = self.result.final_score
-        rated_first = case((score.is_(None), 1), else_=0)
-        score_value = func.coalesce(score, 0.0)
-        confidence = _confidence_rank(self.result.confidence).desc()
-        age = rounded_age_expr(Player.birth_date, f.season_end)
-        asking_low = self.market.expected_asking_low_eur
-        priced_first = case((asking_low.is_(None), 1), else_=0)
-        price_value = func.coalesce(asking_low, 0.0)
-        tail = [_name_key(collation).asc(), Player.id.asc()]
+        Built by walking the mode's declared key sequence in `discovery_sort`, which
+        is the same tuple the ranking explanation walks. There is deliberately no
+        second table of ORDER BY fragments here: a key added, removed or reordered
+        moves the SQL and the explanation together or not at all.
 
-        primary = {
-            "rolefit_desc": [rated_first.asc(), score_value.desc(), confidence],
-            "rolefit_asc": [rated_first.asc(), score_value.asc(), confidence],
-            "age_asc": [func.coalesce(age, _UNKNOWN_AGE_ASC_SENTINEL).asc()],
-            "age_desc": [(-func.coalesce(age, _UNKNOWN_AGE_DESC_SENTINEL)).asc()],
-            "value_desc": [priced_first.asc(), price_value.desc()],
-            "value_asc": [priced_first.asc(), price_value.asc()],
-            "name_asc": [],
-        }[sort]
-        return primary + tail
+        Every mode still ends with canonical name then player id, and every
+        "unknown" still carries an explicit rank or sentinel rather than relying on
+        the database's default NULL placement — those rules now live on the keys.
+        """
+        return discovery_sort.order_by(sort, self.sort_context(collation))
 
 
 # ---------------------------------------------------------------------------
@@ -666,7 +656,13 @@ def fetch_page(
     limit: int,
     offset: int,
 ) -> list[DiscoveryRow]:
-    """The ordered rows for one page, restricted in the database by LIMIT/OFFSET."""
+    """The ordered rows for one page, restricted in the database by LIMIT/OFFSET.
+
+    The selected columns are exactly what a search card needs. The ordering
+    expressions are applied, never selected: the Phase 8.3 ranking explanation is
+    page-level metadata about the ORDER BY, not a per-row readout of it, so no
+    column exists here purely to be explained.
+    """
     candidates = _Candidates(filters)
     best, market, result = candidates.best, candidates.market, candidates.result
     stmt = candidates.select_from(

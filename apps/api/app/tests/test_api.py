@@ -162,7 +162,11 @@ def test_search_paginated_and_deterministic(client):
     r1 = client.get("/api/players?sort=rolefit_desc&page=1&page_size=5")
     assert r1.status_code == 200
     body = r1.json()
-    assert set(body) == {"items", "total", "page", "page_size", "total_pages"}
+    # The five pagination fields are unchanged; Phase 8.3 added `ranking` beside
+    # them. Both halves are pinned, so neither a dropped pagination field nor a
+    # silently widened response goes unnoticed.
+    assert {"items", "total", "page", "page_size", "total_pages"} <= set(body)
+    assert set(body) == {"items", "total", "page", "page_size", "total_pages", "ranking"}
     assert body["total"] > 0
     assert len(body["items"]) <= 5
     # deterministic: same query, same order

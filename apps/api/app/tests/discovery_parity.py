@@ -25,6 +25,7 @@ from .discovery_cohort import (
     OTHER_ROLE,
     SELECTED_ROLE,
     SORTS,
+    UNICODE_LOWER_COLLISIONS,
     build_cohort,
     load_reference_rows,
     reference_search,
@@ -66,6 +67,7 @@ def assert_discovery_parity(session) -> dict:
     _assert_counting_is_per_player(session, cohort, reference_rows)
     _assert_pagination(session)
     _assert_tie_breaks(session, cohort)
+    _assert_ranking_explanation_matches_the_page(session, cohort)
     _assert_season_without_an_end_date_is_answerable(session, cohort)
     return summary
 
@@ -589,6 +591,126 @@ def _assert_tie_breaks(session, cohort):
     by_name = _search(session, scope="all_records", sort="name_asc").items
     keys = [(item.canonical_name.lower(), item.id) for item in by_name]
     assert keys == sorted(keys)
+
+
+#: The documented key sequence per mode, written out here so both dialects are held
+#: to the SAME contract rather than to whatever `discovery_sort` currently declares.
+_RANKING_KEY_SEQUENCE = {
+    "rolefit_desc": ["rated_first", "result_role_score", "result_role_confidence"],
+    "rolefit_asc": ["rated_first", "result_role_score", "result_role_confidence"],
+    "age_asc": ["age"],
+    "age_desc": ["age"],
+    "value_desc": ["asking_low_known_first", "expected_asking_low_eur"],
+    "value_asc": ["asking_low_known_first", "expected_asking_low_eur"],
+    "name_asc": [],
+}
+
+_CONFIDENCE_ORDER = {"unknown": 0, "low": 1, "medium": 2, "high": 3}
+
+
+def _expected_order(sort, cards):
+    """The served id order, transcribed from the contract over CARD fields.
+
+    Deliberately independent of `discovery_sort`: if the specification and the
+    contract ever disagree on either dialect, this is what notices.
+    """
+
+    def name_then_id(card):
+        return (card.canonical_name.lower(), card.id)
+
+    if sort in ("rolefit_desc", "rolefit_asc"):
+        sign = -1.0 if sort == "rolefit_desc" else 1.0
+
+        def key(card):
+            return (
+                card.result_role_score is None,
+                sign * (card.result_role_score or 0.0),
+                -_CONFIDENCE_ORDER.get(card.result_role_confidence or "unknown", 0),
+                *name_then_id(card),
+            )
+
+    elif sort in ("age_asc", "age_desc"):
+        sign = 1.0 if sort == "age_asc" else -1.0
+
+        def key(card):
+            return (card.age is None, sign * (card.age or 0.0), *name_then_id(card))
+
+    elif sort in ("value_desc", "value_asc"):
+        sign = -1.0 if sort == "value_desc" else 1.0
+
+        def key(card):
+            return (
+                card.expected_asking_low_eur is None,
+                sign * (card.expected_asking_low_eur or 0.0),
+                *name_then_id(card),
+            )
+
+    else:
+        key = name_then_id
+    return [card.id for card in sorted(cards, key=key)]
+
+
+def _assert_ranking_explanation_matches_the_page(session, cohort):
+    """Phase 8.3: the explanation describes the ordering BOTH databases apply.
+
+    Three things are held identical across dialects:
+
+    1. the reported key sequence per mode (the contract, written out above);
+    2. the served order itself, against an independent transcription of that same
+       contract over the serialized card fields;
+    3. the name and player-id tie-breaks, which are where a dialect could most
+       plausibly disagree - PostgreSQL lowercases through ICU and SQLite through a
+       registered `str.lower()`, so two spellings that collapse to one key must land
+       adjacent and in id order on both.
+    """
+    for sort in SORTS:
+        body = _search(session, scope="all_records", sort=sort)
+        ranking = body.ranking
+        # Every mode ends with canonical name then player id. In `name_asc` the name
+        # IS the ordering rather than a tie-break, so only the id is reported as one.
+        expected = _RANKING_KEY_SEQUENCE[sort] + ["canonical_name", "player_id"]
+        tie_breakers = ["player_id"] if sort == "name_asc" else ["canonical_name", "player_id"]
+        assert [k.key for k in ranking.keys] == expected, sort
+        assert [k.key for k in ranking.tie_breakers] == tie_breakers, sort
+        assert ranking.limitation and ranking.summary.endswith("."), sort
+        assert [item.id for item in body.items] == _expected_order(sort, body.items), sort
+
+    # The role context tells the truth about what ordered each mode: RoleFit only
+    # where RoleFit is a key, and the named sort everywhere else.
+    for sort in SORTS:
+        detail = _search(session, scope="all_records", sort=sort, role=SELECTED_ROLE).ranking
+        detail = detail.role_context.detail
+        if sort.startswith("rolefit_"):
+            assert "ordering keys" in detail, sort
+        else:
+            assert "did not order this page" in detail, sort
+        assert "best role" not in detail.lower(), sort
+
+    # The tie-break tail, on the cohort rows built to force it: same name, same score,
+    # same confidence, so only the id can separate them.
+    twins = cohort.ids_of("Cohort Identical Twin")
+    by_role = _search(session, role=SELECTED_ROLE, sort="rolefit_desc")
+    served = [item.id for item in by_role.items]
+    assert served.index(twins[0]) + 1 == served.index(twins[1])
+
+    # Different stored spellings that lowercase to ONE key - `Cohort Kelvin Twin`
+    # spelled with U+212A KELVIN SIGN and with an ASCII K. Nothing can sort between
+    # them, so the id must decide. This is the assertion most exposed to a dialect
+    # difference: the lowered key comes from ICU on PostgreSQL and from a registered
+    # `str.lower()` on SQLite.
+    by_name = [item.id for item in _search(session, scope="all_records", sort="name_asc").items]
+    for first, second in UNICODE_LOWER_COLLISIONS:
+        pair_ids = sorted(cohort.ids_of(first) + cohort.ids_of(second))
+        assert len(pair_ids) == 2, (first, second)
+        assert by_name.index(pair_ids[0]) + 1 == by_name.index(pair_ids[1]), (first, second)
+
+    # The explanation of a one-row page is complete, because it describes the
+    # ordering rather than the rows.
+    one = players_service.search_players(
+        session, scope="all_records", sort="name_asc", page=1, page_size=1
+    )
+    assert len(one.items) == 1
+    assert one.ranking.keys and one.ranking.tie_breakers and one.ranking.limitation
 
 
 def _assert_season_without_an_end_date_is_answerable(session, cohort):

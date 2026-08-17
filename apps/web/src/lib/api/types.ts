@@ -35,6 +35,18 @@ export type SimilarResponse = S["SimilarResponse"];
 export type Methodology = S["MethodologyResponse"];
 export type PlayerPlaystylesResponse = S["PlayerPlaystylesResponse"];
 
+// ---- Discovery ranking explanation (Phase 8.3, locked to OpenAPI) ----
+//
+// The backend owns the ordering rules AND their description: both come from one
+// sort specification that also builds the SQL `ORDER BY`. These aliases exist so
+// the surface renders what the API says rather than encoding the ordering rules a
+// second time in the browser. There is deliberately no frontend key list, no
+// direction table and no comparator.
+export type DiscoverySearchResponse = S["DiscoverySearchResponse"];
+export type RankingExplanation = S["RankingExplanation"];
+export type RankingKey = S["RankingKey"];
+export type RankingRoleContext = S["RankingRoleContext"];
+
 // ---- generic pagination wrapper (FastAPI emits a concrete Paginated_X_ per type;
 // this generic mirrors that shape so hooks can stay generic over the item type) ----
 export interface Paginated<T> {

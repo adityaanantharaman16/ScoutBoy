@@ -164,7 +164,7 @@ browser: one request carries every predicate and the ledger renders exactly the 
 | Age Threshold | `age_min` **or** `age_max` | core | five-stop one-sided threshold (see [Discover scopes](#discover-scopes)) |
 | Position Group | `position_group` | core | `ATT` / `MID` / `DEF` / `GK` |
 | Role | `role` | core | selected-role context |
-| Sort | `sort` | core | six representable modes; **not** a narrowing criterion |
+| Sort | `sort` | core | six representable modes; **not** a narrowing criterion, and the only thing that decides order |
 | League | `league` | Advanced → Context | case-insensitive substring over slug, name **and country** |
 | Club | `club` | Advanced → Context | case-insensitive substring, plus a deterministic alias table |
 | Nationality | `nationality` | Advanced → Context | case-insensitive **substring** |
@@ -477,6 +477,52 @@ disclosure open — including at 320px and at 200% desktop zoom. See
 [docs/milestone_8_discovery_contract.md](docs/milestone_8_discovery_contract.md) for the
 control matrix, the units, the range rule, the alias registry and the recorded evidence.
 
+## Deterministic ranking explanation (Milestone 8, Phase 8.3)
+
+*Implemented and supervisory-audited.*
+
+Discovery already retrieved, filtered, ordered, counted and paged deterministically. Phase 8.3
+makes it state **which ordering it applied**, using the real backend ordering rules. No scoring
+model, calibration or ranking behaviour changed, and there is no new composite score, no
+recommendation and no suitability label.
+
+The ledger gained one compact, collapsed-by-default **Why this order** disclosure, between its
+count header and the first result — not in the filter rail, which narrows the cohort rather
+than explaining rank, and not per row. Opened, it states the active sort ("Ordered by RoleFit,
+highest first."), the exact ordered key sequence the database applied with one sentence of rule
+each, which role context each result's RoleFit is read from, how unknown values are placed, the
+final tie-breakers, and the limitation that this describes ordering rather than recruitment
+suitability.
+
+It is deliberately **page-level**: it explains the ordering, not individual players, and it
+compares no two results. So it stays a few short rows tall whatever the page size, and reads
+identically on every page of the same query.
+
+**One sort specification drives both the SQL and the explanation.** The ordering used to exist
+only as `ORDER BY` fragments; a parallel description map beside them would have been free to
+drift, and a stale ranking explanation is worse than none. The key sequence is now declared once
+in `apps/api/app/repositories/discovery_sort.py`, and each key carries its `ORDER BY` element
+and its identity, label, direction and rule together. Tests hold it structurally, including one
+that removes a key from a specification and asserts that **both** the compiled SQL and the
+reported sequence lose an entry, and one that differences every mode's whole served order
+against an independent transcription of the written contract.
+
+Unknown-versus-known placement is stated explicitly per mode, Expected Asking always says it
+uses the lower endpoint (never the high one, never a midpoint), and confidence is described as
+what it is: a tie-break that speaks only after an equal score, and only in the RoleFit modes.
+The role context distinguishes the two things it is easy to conflate — which stored rating every
+result *displays*, and whether that rating also *ordered* the page. Under Age, Expected Asking
+and Name it says plainly that RoleFit did not order the page and names the sort that did. Every
+sentence is a fixed template over the specification — nothing is generated and no external
+service is involved.
+
+The request still costs **four SQL statements**, unchanged. The explanation reads no rows and
+issues no query of its own; it is built from the active sort and role alone.
+`GET /api/players` now returns `DiscoverySearchResponse`: the five pagination fields unchanged,
+plus `ranking`. See
+[docs/milestone_8_discovery_contract.md](docs/milestone_8_discovery_contract.md) for the full
+key sequences, the copy contract, the evidence and the limitations.
+
 ---
 
 ## Commands (`make help` for all)
@@ -539,7 +585,8 @@ FastAPI serves an OpenAPI schema (`/docs`, or `make openapi` →
 [`docs/api_contracts/openapi.json`](docs/api_contracts/openapi.json)). Endpoints:
 
 ```
-GET  /api/players                      search (filters, pagination, deterministic sort)
+GET  /api/players                      search (filters, pagination, deterministic sort,
+                                       plus `ranking`: why this page is in this order)
 GET  /api/players/{id}                 full player card
 GET  /api/players/{id}/ratings         RoleFit ratings + audit breakdowns
 GET  /api/players/{id}/playstyles      badges + concerns with why_applied
@@ -562,6 +609,14 @@ GET  /api/admin/freshness              provider freshness/health
 GET  /api/admin/coverage               observed coverage and completeness
 ```
 
+`GET /api/players` responds with `DiscoverySearchResponse`: the five pagination fields
+(`items`, `total`, `page`, `page_size`, `total_pages`) exactly as before, plus `ranking` — the
+active sort's ordered key sequence, the role context, unknown-value placement, the final
+tie-breakers, and an explicit statement that this describes ordering rather than recruitment
+suitability. It is page-level: it names no player and compares no two results. It is derived
+from the same sort specification that builds the query's own `ORDER BY`, costs no extra
+statement, and contains no generated prose.
+
 The frontend consumes a single typed module (`apps/web/src/lib/api/types.ts`). Run
 `make check-api-contract` after API schema changes; if the first run updates stale artifacts, rerun
 it to verify freshness before committing.
@@ -574,8 +629,9 @@ it to verify freshness before committing.
 | --- | --- | --- |
 | Python/domain | pytest | ratings, market, API, adapters, real-schema aggregation, provenance, eligibility, covered minutes, reports |
 | Frontend | Vitest | formatters + component rendering, including honest missing/low-confidence states |
-| E2E | Playwright | search → card → audit → leaderboard → compare → methodology |
-| PostgreSQL smoke | pytest + service DB | migrations → sample ingest → recompute → readiness → API read |
+| E2E | Playwright | search → card → audit → leaderboard → compare → methodology, plus the Discovery ranking explanation |
+| Cross-browser | Playwright (Chromium/Firefox/WebKit) | the mandatory flows on all three engines |
+| PostgreSQL smoke | pytest + service DB | migrations → sample ingest → recompute → readiness → API read, plus the full Discovery parity body |
 
 ```bash
 make test          # pytest + vitest
@@ -632,6 +688,15 @@ auditing, and a full-stack container smoke. See [CONTRIBUTING.md](CONTRIBUTING.m
   in-process; similarity in particular needs the whole position-group cohort in memory. The volume
   evidence for Discovery is a deterministic 5,000-record SQLite fixture, which is not a production
   capacity claim.
+- The Discovery ranking explanation (Phase 8.3) describes **ordering only** — which stored values
+  the database sorted by, in what order, and how it places the ones it does not know. It is not a
+  recommendation, a suitability judgement or a rating of any kind, and it says so on screen. It is
+  page-level by design: it does not explain why one particular player sits above another, which a
+  scout reads off the sorted column itself. It also does not explain how a RoleFit score was
+  *produced*: that remains the dossier's job, and the rating audit groups were deliberately left
+  out of Discovery rather than duplicated there. The ties the committed 24-player sample cannot
+  produce (equal scores, unrated players, unknown values, colliding names) are proven in the
+  backend against a synthetic cohort built to contain a tie at every level.
 - There is no end-user authentication or public rate limiting. Admin routes use a shared token;
   it is optional only in development/test and mandatory in production mode.
 - The containers and CI make delivery reproducible, but this remains a production-shaped portfolio

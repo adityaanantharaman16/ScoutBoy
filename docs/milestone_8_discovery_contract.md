@@ -1035,3 +1035,382 @@ paste, clearing, malformed-draft withholding, reload and back/forward.
   No production player was fabricated.
 - **Nationality has no enumeration**; it remains free text over stored values.
 - **`portgual` is one reported misspelling**, not a spelling corrector.
+
+---
+
+## Phase 8.3 — Deterministic ranking explanation
+
+**Status: implemented and supervisory-audited — 2026-08-17.**
+
+Discovery already retrieved, filtered, ordered, counted and paged deterministically.
+What it could not do was say *which ordering it had applied*. Phase 8.3 answers that
+with the real backend ordering rules — and with nothing else.
+
+It is an explainability phase. **No scoring model changed, no calibration changed, no
+ranking changed, and no new composite score exists.** The ordering contract below is
+the Phase 8.1B contract, unaltered; what is new is that it now has one authoritative
+machine-readable form that the SQL and the explanation are both built from.
+
+It is deliberately **page-level**. It describes the ordering, not the results: it names
+no player, quotes no player's values and compares no two rows. A scout reads which
+player sits above which off the sorted ledger itself; what the ledger could not tell
+them, and now does, is what the sort actually did and in what order.
+
+The six questions the surface answers, and where each is answered:
+
+| Question | Answered by |
+| --- | --- |
+| What ranking mode is active? | `ranking.summary`, `ranking.sort`, `ranking.direction` |
+| What exact ordered key sequence does it use? | `ranking.keys`, first key first |
+| Which role context supplies each result's RoleFit, and did it order the page? | `ranking.role_context` |
+| How are unknown values placed? | `ranking.missing_values`, plus each key's own rule |
+| What tie-breakers apply? | `ranking.tie_breakers`, derived from `keys` |
+| What can and cannot be inferred? | `ranking.limitation` |
+
+### One sort specification, two consumers
+
+The whole phase rests on one structural decision: **there is no second description of
+the ordering.**
+
+Before 8.3 the ordering existed only as a dict of SQLAlchemy `ORDER BY` fragments
+inside `_Candidates.order_by`. The obvious way to explain it — a parallel map of
+labels and sentences — would have been free to drift from the SQL the moment either
+was edited, and a stale ranking explanation is worse than none: it is a confident
+statement about something the database did not do.
+
+So the sequence is declared **once**, in
+`apps/api/app/repositories/discovery_sort.py`, as an ordered tuple of `SortKey`
+objects per mode. Each key carries, inseparably:
+
+| Member | What it is |
+| --- | --- |
+| `order(ctx)` | the `ORDER BY` element the database sorts by |
+| `key` / `label` / `direction` / `direction_label` / `role` / `unit` / `rule` | its identity and its one deterministic sentence |
+
+`_Candidates.order_by` builds SQL by walking a mode's tuple;
+`services/discovery_explanation.py` walks the identical tuple. Adding, removing or
+reordering a key therefore moves both at once. The reported tie-breakers are derived
+from `keys` through `SortSpec.tie_breakers` rather than listed beside it, and
+"does this mode order by RoleFit at all?" is derived through `SortSpec.orders_by_rolefit`
+rather than declared, for the same reason.
+
+**This is held structurally, not by convention.** In
+`apps/api/app/tests/test_discovery_ranking.py`:
+
+1. `test_the_sql_order_by_is_exactly_the_declared_key_sequence` compiles the real
+   `ORDER BY` of a Discovery page statement and consumes it one declared key at a
+   time: each key's own compiled expression must be the next clause, and when the last
+   key is consumed nothing may remain. A key dropped, reordered, duplicated,
+   described-but-never-applied or applied-but-never-described fails here.
+2. `test_changing_the_specification_moves_the_sql_and_the_explanation_together`
+   removes the final tie-break from one mode's specification and asserts that **both**
+   the compiled SQL and the reported key sequence lose an entry. A hand-written
+   description map would fail this immediately.
+3. `test_the_served_order_is_the_documented_one` differences every mode's whole served
+   page, under three role contexts, against an **independent oracle** — a transcription
+   of the written contract over the serialized card fields that never calls
+   `discovery_sort`. That is what makes the reported sequence meaningful rather than
+   merely self-consistent.
+
+The frontend renders backend-owned structured data and encodes no ordering rule of its
+own; a source scan holds it to that (see *Frontend* below).
+
+### The ordering contract, unchanged and now named
+
+Each row is one declared key. "Placement" keys put known values before unknown ones;
+"measure" keys order by a stored value; "tie-breaker" keys only ever resolve rows the
+rest left equal.
+
+| Mode | Key sequence (machine keys, in order) |
+| --- | --- |
+| `rolefit_desc` | `rated_first` → `result_role_score` (desc) → `result_role_confidence` (desc) → `canonical_name` → `player_id` |
+| `rolefit_asc` | `rated_first` → `result_role_score` (asc) → `result_role_confidence` (desc) → `canonical_name` → `player_id` |
+| `age_asc` | `age` (asc, unknown last) → `canonical_name` → `player_id` |
+| `age_desc` | `age` (desc, unknown last) → `canonical_name` → `player_id` |
+| `value_desc` | `asking_low_known_first` → `expected_asking_low_eur` (desc) → `canonical_name` → `player_id` |
+| `value_asc` | `asking_low_known_first` → `expected_asking_low_eur` (asc) → `canonical_name` → `player_id` |
+| `name_asc` | `canonical_name` → `player_id` |
+
+Notes that matter, all pinned by test:
+
+- **Expected Asking uses the LOW endpoint.** Never the high endpoint, never a midpoint.
+  The key's own `rule` sentence rules both out in so many words, and a test asserts no
+  key whose machine name contains "high" exists in any mode.
+- **Confidence is an ordering key only in the RoleFit modes**, only *after* the score,
+  and descending in **both** directions. A test asserts it is absent everywhere else
+  and never precedes the score.
+- **Every mode ends with canonical name then player id.** In `name_asc` the name is the
+  ordering rather than a tie-break, so only the id is reported as a tie-breaker — which
+  is what the SQL does.
+- **Age folds its unknown placement into one key**, because that is exactly what the
+  SQL does: `COALESCE(age, 999) ASC` and `-COALESCE(age, -1) ASC` are single
+  expressions carrying both the direction and the "unknown last" rule. RoleFit and
+  asking price have a *separate* placement expression in SQL, so they have a separate
+  key. The explanation is asymmetric here because the SQL is; `missing_values` states
+  the semantics uniformly for every mode.
+- `age_desc` is API-only, as before: the Sort control does not offer it, and a URL
+  carrying it is not forwarded.
+
+### Role context
+
+`ranking.role_context` reports **two separate facts**, because conflating them is
+exactly the mistake this text exists to avoid.
+
+**Which stored rating every result displays**, never conflating the two contexts:
+
+- **`selected_role`** — `role=<key>` is active. Every result's `result_role*` group is
+  that role, and the explanation names it. `best_role*` is never read.
+- **`best_role`** — no role selected. `result_role*` is each player's own stored best
+  role, which may differ from row to row, and the detail sentence says so rather than
+  naming a single role the page does not have.
+
+**And whether that rating ordered anything.** Only `rolefit_desc` and `rolefit_asc`
+order by it; `age_asc`, `age_desc`, `value_desc`, `value_asc` and `name_asc` order by
+something else entirely. So the detail sentence branches:
+
+| Mode | What the detail says |
+| --- | --- |
+| RoleFit modes | "…That rating's stored score and confidence are two of the ordering keys below, and are what this page is ordered by." |
+| Age / Expected Asking / Name | "…That rating is what each result DISPLAYS. It did not order this page: the ordering comes from the *Age* sort (*youngest first*), as the keys below state." |
+
+The branch is taken on `SortSpec.orders_by_rolefit`, which is derived from the key
+sequence itself, so the copy cannot claim RoleFit ordered a page RoleFit had no part
+in. Tests assert the RoleFit modes make the claim and the other five never do, and that
+a selected role's detail never mentions a best role.
+
+A regression test drives the Phase 8.1A defect directly: the cohort's
+`Cohort Conflicted Winger` is 42.0 in the selected role and 88.0 in another, and under
+`role=<selected>` the page must be ordered by 42.0 — which the independent order oracle,
+reading `result_role_score`, is what proves.
+
+### The copy contract
+
+**Every sentence is a fixed template over the specification. Nothing is generated**, and
+no external service is involved. Examples of the shipped copy:
+
+- "Ordered by RoleFit, highest first."
+- "Only on an equal score: High Confidence, then Medium, then Low, then Unknown.
+  Descending in both RoleFit directions."
+- "The stored expected-asking LOW endpoint, highest first. Never the high endpoint and
+  never a midpoint of the two."
+- "A player with no known birth date has an unknown age and is placed after every known
+  age, in both directions."
+- "The stable player ID, ascending, decides anything still equal."
+- "This explains ordering, not recruitment suitability. …"
+
+A copy test sweeps every sentence of every mode for "recommend", "suitab", "priority",
+"best signing", "should sign", "target", "verdict" and "boost". The single permitted
+occurrence of "suitability" is the limitation sentence, which exists to deny it. A
+compound-filter request is included in the sweep, so no filter can appear as a reason
+for rank. Every sentence is bounded and terminated, and a test asserts the serialized
+`ranking` block contains no cohort player's name.
+
+### Page independence
+
+Because the explanation describes the ordering rather than the rows, it is **identical
+on every page of the same query** — a test asserts pages 1, 2 and 3 serialize to the
+same object — and it is well-formed and complete for a page of one result, for a zero-
+result page, and for a database with no season at all. There is no page-boundary caveat
+to state, because nothing here is row-specific.
+
+### Query cost
+
+**Unchanged: four statements** — current season, count, page, page playstyles — and two
+for an empty result. The explanation issues no query of its own and reads no rows: it
+is built from the active sort and the role context alone. `test_the_explanation_needs_no_session_at_all`
+calls the builder with no database in reach and asserts the result is byte-identical to
+the served one.
+
+The page query selects exactly what a search card needs; no column exists in it to be
+explained. (An earlier revision added two ordering-evidence columns for a per-row
+feature that has since been removed, and they were removed with it.) The
+four-statement shape and the documented eight-statement ceiling are unchanged, and the
+5,000-record volume gate still passes.
+
+**Rating audit groups were deliberately NOT surfaced.** They were permitted as optional
+page-level context; adding them would have cost a fifth statement and a second
+"why this score" surface inside Discovery, where the dossier already owns that
+question. The trade is recorded here rather than taken silently.
+
+### Frontend: "Why this order"
+
+One compact, collapsed-by-default disclosure **inside the results ledger**, between the
+count header and the first result row.
+
+- **Not in the filter rail.** The rail owns cohort narrowing; a filter never explains
+  rank. A test asserts the disclosure is absent from `filter-column` entirely and that
+  the phrase does not appear there.
+- **Not per row.** One disclosure for the page: no explanation panel per result, no
+  repeated "Why?" button.
+- Collapsed, it is one 44px row: the label plus the active-sort line ("Ordered by
+  RoleFit, highest first."). It does not become a second header — the cohort counts
+  stay in the ledger header above it.
+- Expanded, it is one flat square region divided by internal hairlines into three
+  sections, in this order: the active sort (summary, role context, unknown-value
+  placement), the ordered rule sequence as repeated rectangular rows followed by the
+  tie-breaker sentence, and the limitation. Nothing sits between the rules and the
+  limitation, and the limitation is last — asserted in Vitest and in Playwright. Long
+  role labels and long rule sentences wrap; nothing truncates into unreadability and
+  nothing scrolls.
+- It **does not grow with the page**. A Vitest case renders a 1-result page and a
+  12-result page and asserts the region's markup is identical.
+
+**Geometry and motion.** Every rectangle is 90 degrees — a computed-radius scan of the
+whole open region asserts it. No pill, chip, bubble, gradient, glass effect or
+decorative shadow. Open state is an inset marker plus a `+`/`−` glyph, paint only, so
+opening cannot move the ledger, the rail or their shared top edge. The row joins the
+existing `background-color, box-shadow` transition rule rather than adding a cadence;
+**no layout property is animated**, and under `prefers-reduced-motion: reduce` the final
+state is reached in the same frame with zero running animations. The single sanctioned
+rectangular radius (`.rail-box-discovery`) is untouched and no second exception was
+created.
+
+**Accessibility.** A real `<button>` with `aria-expanded` and `aria-controls`; Enter and
+Space are the platform's (no key handler shadows them, asserted by source scan); the
+accessible name leads with the visible label and states the purpose ("Why this order.
+Ordered by RoleFit, highest first."). The region stays in the DOM in both states and is
+toggled with `hidden`, so `aria-controls` always resolves and no content is focusable
+while shut. The region introduces **no focusable element at all**, so nothing can trap
+focus and nothing can be stranded when it closes — focus stays on the control. The
+focus ring is the product's shared 2px `--pitch` outline; the row is 44px tall at every
+width.
+
+**No frontend comparator.** `WhyThisOrder.tsx` renders `ranking` as supplied. A source
+scan asserts it contains no ordering-key name, direction label or rule text as a
+literal; no `.sort(`, `.reverse(`, `localeCompare` or `Math.min`/`Math.max`; no
+relational operator applied to any response value; and that the only comparison in the
+file at all is `tieBreakers.length > 0`. A rendering test feeds it a deliberately
+reversed key sequence and asserts it renders unchanged.
+
+### API contract
+
+`GET /api/players` now returns **`DiscoverySearchResponse`** instead of the generic
+`Paginated[PlayerSearchCard]`. The five pagination fields (`items`, `total`, `page`,
+`page_size`, `total_pages`) are unchanged in name, type and meaning; `ranking` is
+additive. A dedicated schema rather than a `ranking` field on the generic model, because
+ranking is a Discovery concern and every other paginated response would otherwise have
+carried a field it can never fill.
+
+New schemas: `RankingExplanation`, `RankingKey`, `RankingRoleContext`.
+`docs/api_contracts/openapi.json` and `apps/web/src/lib/api/schema.gen.ts` were
+regenerated; `Paginated_PlayerSearchCard_` no longer appears in the generated types
+because nothing references it any more.
+
+`RankingExplanation` in full:
+
+```
+sort, sort_label, direction, direction_label, summary
+keys[]          RankingKey: position, key, label, direction, direction_label,
+                            role, unit, rule
+role_context    RankingRoleContext: source, role_key, role_display, label, detail
+missing_values
+tie_breakers[]  RankingKey, derived from keys
+limitation
+```
+
+### Evidence
+
+All figures below are from commands actually executed on this machine.
+
+**Backend — 674 passed, 7 skipped; coverage 91.86% (gate 90%).** `discovery_sort.py`
+and `discovery_explanation.py` are both at 100%; `discovery_repo.py` is at 99%.
+
+`test_discovery_ranking.py` (150 tests) covers: every mode's exact key sequence and
+directions, written out longhand from the contract rather than read back from
+`SORT_SPECS`; the SQL/specification identity tests above; the whole served order of
+every mode under three role contexts against the independent oracle; rated/unrated,
+known/unknown age and known/unknown asking placement; confidence tie-breaking in both
+RoleFit directions; Unicode-aware lowercased name ordering and the id fall-through for
+names that lowercase to one key; selected-role and best-role correctness; the
+sort-aware role-context copy, including that the five non-RoleFit modes never claim
+RoleFit ordered the page; profile-only honesty; paging, one-result, zero-result and
+seasonless behaviour; page-to-page identity of the explanation; byte-identical repeated
+responses; the four-statement count; the no-per-player-id N+1 gate; and the copy
+contract.
+
+**SQLite / PostgreSQL parity.** `_assert_ranking_explanation_matches_the_page` in
+`discovery_parity.py`, which both the SQLite suite and the PostgreSQL smoke run,
+asserts the reported key sequence per mode (written out again, independently), the
+served order of every mode against a second independent transcription, the sort-aware
+role-context copy, and the tie-break tails — including the `Cohort Kelvin Twin` pair,
+two different stored spellings that lowercase to one key, which is the assertion most
+exposed to a dialect difference. **PostgreSQL 16: 5 passed**, against a migrated,
+ingested and recomputed database.
+
+**Frontend — 653 passed across 22 files.**
+`discovery-ranking-explanation.test.tsx` (45) covers the collapsed default, expanded
+content, exact key-sequence rendering including a reversed sequence, ledger-not-rail
+placement, the limitation rendering immediately after the rules and last, the
+page-level absences (no adjacent section, no player named, no first-visible note),
+identical markup for a 1-result and a 12-result page, the selected-role and best-role
+contexts, the five non-RoleFit modes' "did not order this page" copy, every
+representable sort, a real control → URL → request → explanation round trip,
+one-result / zero-result / loading / error / ranking-absent states, the accessibility
+contract, long-label containment, the absence of a nested scroller, square geometry and
+the no-comparator source scan. `sharp-corners.test.tsx` carries a rendered-DOM audit of
+the region open and closed.
+
+**Browser — 365 passed** in the Playwright suite against a production build, of which
+`discovery-ranking.spec.ts` is 45: the default and selected-role explanations, the
+"did not order this page" copy under Age / Expected Asking / Name, all six representable
+sorts, per-mode unknown-value wording, the lower-endpoint wording, the confidence
+tie-break position, page 2 asserting an identical explanation and no row named,
+Next/Prev, hard load / reload / back-forward, compound filters proving no filter becomes
+a reason for rank, keyboard disclosure with Enter and Space, focus retention, target
+size, axe at 1280/640/320 with the region **open** (zero violations), the WCAG
+text-spacing override, forced colours, seven viewports (320/390/640/768/1024/1280/1440)
+asserting zero document overflow and an unchanged ledger and rail width, the Milestone
+8.2 390px min-content regression, no nested scroller, a computed-radius sweep, no
+animated layout property, and reduced motion.
+
+One unrelated test (`motion.spec.ts`, reduced-motion scroll behaviour) failed once on
+the parallel run with a Windows `ERR_NO_BUFFER_SPACE` socket error and passed on re-run;
+that is a local socket-exhaustion artifact, not a product failure.
+
+**Cross-browser — 36 passed (12 × Chromium/WebKit/Firefox)**: the smoke suite opens the
+disclosure by pointer and by keyboard on every engine, asserts the backend key sequence
+and the tie-breaker sentence render, asserts no player-versus-player text appears, and
+asserts the ledger keeps its width.
+
+**Containers — full-stack Docker smoke passed**: build, PostgreSQL, migration,
+bootstrap, API liveness and readiness, web root, and a clean teardown of every
+container, volume and network.
+
+### Limitations and deliberate omissions
+
+- **No per-player ordering explanation is offered, by decision.** The surface does not
+  say why one particular result sits above another; that is legible from the sorted
+  column of the ledger itself, and the earlier per-pair implementation made the open
+  region as tall as the page for it. What was genuinely missing — which sort is active,
+  what it orders by, in what order, and what happens to unknown values — is what
+  remains. The whole vertical slice behind the removed feature (its API fields, its
+  service code, its extra page-query columns and its tests) was removed with it rather
+  than left as dead architecture.
+- **The committed 24-player sample fixture is fully rated, priced and dated**, so it
+  produces no confidence tie, no unrated player, no unknown value and no colliding
+  name. Since the explanation is page-level, none of those states changes a word of it,
+  and the ORDERING they affect is proven exhaustively against a synthetic cohort built
+  to contain a tie at every level. No production player was fabricated in the fixture
+  database, and no browser test intercepts the API.
+- **Rating audit groups are not surfaced**, by decision (see *Query cost*). The dossier
+  remains the deeper "why this score" surface; Phase 8.3 does not duplicate it inside
+  Discovery.
+- **The name ordering is the database's own lowered key**, which on PostgreSQL is ICU's.
+  The Phase 8.1B residual is inherited rather than added to: 40 of 1,433 cased code
+  points (35 Vithkuqi, four recent Latin additions, one Glagolitic) are left unchanged
+  by ICU where CPython lowercases them, none of them in name-bearing ranges, and
+  `test_postgres_smoke.py` still fails if that stops being true.
+- **Open state is local presentation state**, deliberately not in the URL. Whether it
+  survives a page change therefore depends on whether the new page resolves from React
+  Query's cache; a reload always starts collapsed. Neither is load-bearing.
+- **The leaderboard, the dossier and Analysis Scope are untouched.** No confidence,
+  evidence-state or concern filter was added.
+- The Leverkusen-centered pilot limitation is unchanged. Nothing here widens coverage or
+  makes any claim about data quality.
+- **Visual-regression baselines were not compared and not regenerated**, for the
+  unchanged Phase 8.1B/8.2 reason: the committed images were captured with Chromium
+  1208 / WebKit 2248 and the pinned Playwright requires 1228 / 2311, so a pixel
+  difference on this machine would measure rasterization rather than the product. The
+  Discovery baselines will legitimately change — the ledger has a new row — and
+  regenerating them belongs with a release review on the reference platform.
+  `tests/visual/` is untouched by this phase.

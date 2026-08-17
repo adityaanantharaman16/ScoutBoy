@@ -5,6 +5,7 @@ import { apiGet } from "./client";
 import type { operations } from "./schema.gen";
 import type {
   CompareResponse,
+  DiscoverySearchResponse,
   Methodology,
   Paginated,
   PlayerCard,
@@ -40,12 +41,21 @@ export function playerSearchQueryKey(filters: SearchFilters) {
   return ["players", filters] as const;
 }
 
+/**
+ * One page of Discovery results.
+ *
+ * The response carries the five pagination fields it always has, plus `ranking`:
+ * the backend's own page-level explanation of the ordering it just applied — the
+ * active mode's exact key sequence, the role context, unknown-value placement and
+ * the final tie-breaks. It is rendered as supplied; no ordering rule is re-derived
+ * here.
+ */
 export function usePlayerSearch(filters: SearchFilters) {
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: playerSearchQueryKey(filters),
     queryFn: () =>
-      apiGet<Paginated<PlayerSearchCard>>("/players", filters as Record<string, unknown>),
+      apiGet<DiscoverySearchResponse>("/players", filters as Record<string, unknown>),
   });
 
   /**

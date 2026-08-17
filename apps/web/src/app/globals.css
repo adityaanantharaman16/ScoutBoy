@@ -745,6 +745,76 @@ select.input[size]:not([size="1"]) {
   }
 }
 
+/* ---------------------------------------------------------------------------
+   Results ledger: "Why this order" (Phase 8.3)
+   ---------------------------------------------------------------------------
+   One collapsed-by-default disclosure INSIDE the ledger, between its count header
+   and the first player row — not in the filter rail, which owns cohort narrowing
+   rather than order, and not per row, which would put a "Why?" button on every
+   result and stop the ledger being scannable.
+
+   Its content is page-level: the active sort, the ordered rule sequence, the final
+   tie-breakers and one limitation. It says nothing about individual players, so it
+   stays a few short rows tall however many results the page carries.
+
+   Geometry is the ledger's own: square, flat, hairline-separated, full-bleed rows
+   with no border of their own, so opening the region adds height and nothing else.
+   It cannot widen the ledger (every row is `min-width: 0` and wraps), it adds no
+   scroller of either axis, and no dimension is animated: the open state is an
+   inset marker plus a +/- glyph, exactly as the rail's disclosures do it, so a
+   reduced-motion user reaches the same final state in the same frame. --------- */
+.ledger-explain {
+  appearance: none;
+  background: var(--panel);
+  border: 0;
+  border-radius: 0;
+  color: var(--ink);
+  cursor: pointer;
+  /* Comfortably above the 24px minimum (WCAG 2.2 SC 2.5.8) at every width, and
+     at the 44px the mobile system asks of a full-width row control. */
+  min-height: 44px;
+  text-align: left;
+  @apply flex w-full items-center justify-between gap-3 px-4 py-2;
+}
+
+.ledger-explain:hover {
+  background: var(--panel-muted);
+}
+
+.ledger-explain:active {
+  background: var(--track);
+}
+
+/* Paint only, so opening the region cannot move the ledger or its rail. */
+.ledger-explain[aria-expanded="true"] {
+  box-shadow: inset 3px 0 0 var(--pitch);
+}
+
+.ledger-explain-glyph {
+  color: var(--ink-soft);
+  @apply shrink-0 text-sm font-bold leading-none;
+}
+
+/* One section of the expanded region. */
+.ledger-explain-block {
+  @apply min-w-0 px-4 py-3;
+}
+
+/* One numbered ordering rule: a repeated rectangle, separated from its
+   neighbours by the list's own hairline. Long key labels and long rule sentences
+   wrap here rather than forcing a min-content width the ledger would then have to
+   grow to. */
+.ledger-explain-row {
+  @apply flex min-w-0 items-start gap-3 px-4 py-2.5;
+}
+
+/* The rule's position in the sequence. Deliberately plain tabular text rather
+   than a filled badge: this region introduces no new shape. */
+.ledger-explain-index {
+  color: var(--ink-soft);
+  @apply shrink-0 text-[11px] font-bold leading-5;
+}
+
 /* Two equal action regions in one hairline box: two columns below lg (each half
    of the row width), two rows at lg+ (each half of the full-height rail). */
 .rail-box {
@@ -908,10 +978,13 @@ select.input[size]:not([size="1"]) {
      properties are timed separately rather than averaged. The filter rail's
      disclosure rows join the same rule: their `aria-expanded` marker is exactly
      the same kind of reversible inset state, and reusing the declaration keeps
-     one cadence rather than adding a fourth. */
+     one cadence rather than adding a fourth. The ledger's "Why this order" row
+     is the same control in the same two channels, so it joins them rather than
+     introducing a cadence of its own. */
   .rail-action,
   .age-direction-action,
-  .filter-disclosure {
+  .filter-disclosure,
+  .ledger-explain {
     transition-property: background-color, box-shadow;
     transition-duration: var(--motion-feedback), var(--motion-state);
     transition-timing-function: var(--motion-ease-out), var(--motion-ease-standard);

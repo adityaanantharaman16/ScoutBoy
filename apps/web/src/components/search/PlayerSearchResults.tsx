@@ -17,6 +17,8 @@ import { usePlayerSearch } from "@/lib/api/hooks";
 import type { PlayerSearchCard } from "@/lib/api/types";
 import { formatAge } from "@/lib/formatters";
 
+import { WhyThisOrder } from "./WhyThisOrder";
+
 // A single row of the ranked ledger — not an isolated card, and not a nested
 // collection of cards. Three structural regions at lg+ (player information, the
 // RoleFit hero, a full-height action rail); a clean stack below it. The hierarchy
@@ -174,6 +176,16 @@ export function PlayerSearchResults({
           </span>
           <span>Ranked ledger</span>
         </div>
+        {/* Why this order — one collapsed disclosure for the whole page, between
+            the count header and the first result. It belongs to the ledger
+            because it explains the ledger's ORDER; the filter rail beside it
+            owns cohort narrowing, and a filter never explains rank.
+
+            Everything it shows is `data.ranking`, which the API derives from the
+            same sort specification that built its own SQL `ORDER BY`. Nothing
+            about the ordering rules is re-derived in the browser. It is absent
+            only if a response somehow arrives without one. */}
+        {data.ranking && <WhyThisOrder ranking={data.ranking} />}
         {data.items.map((p) => (
           <ResultCard key={p.id} p={p} />
         ))}

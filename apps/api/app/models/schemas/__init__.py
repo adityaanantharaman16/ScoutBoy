@@ -3,6 +3,12 @@ from __future__ import annotations
 from .admin import IngestResult, RatingRunSummary, RecomputeResult
 from .common import DataSource, Paginated
 from .compare import CompareResponse, CompareSide
+from .discovery import (
+    DiscoverySearchResponse,
+    RankingExplanation,
+    RankingKey,
+    RankingRoleContext,
+)
 from .market import MarketPanel
 from .methodology import MethodologyResponse
 from .player import (
@@ -24,6 +30,10 @@ from .similar import SimilarGroup, SimilarPlayer, SimilarResponse
 __all__ = [
     "DataSource",
     "Paginated",
+    "DiscoverySearchResponse",
+    "RankingExplanation",
+    "RankingKey",
+    "RankingRoleContext",
     "PlayerIdentity",
     "PlayerSearchCard",
     "PlayerCardResponse",

@@ -9,11 +9,10 @@ from sqlalchemy.orm import Session
 from app.core.db import get_db
 from app.core.errors import NotFoundError
 from app.models.schemas import (
+    DiscoverySearchResponse,
     MarketPanel,
-    Paginated,
     PlayerCardResponse,
     PlayerPlaystylesResponse,
-    PlayerSearchCard,
     RoleRatingDetail,
     SimilarResponse,
 )
@@ -40,7 +39,12 @@ MIN_MINUTES_FILTER_MAX = MINUTES_FILTER_MAX
 PAGE_SIZE_MAX = 100
 
 
-@router.get("", response_model=Paginated[PlayerSearchCard])
+# The response carries the five pagination fields it always has, plus `ranking`:
+# the Phase 8.3 explanation of the ordering the query just applied. A dedicated
+# schema rather than a `ranking` field bolted onto the generic `Paginated`, because
+# ranking is a Discovery concern and every other paginated response would otherwise
+# have had to carry a field it can never fill.
+@router.get("", response_model=DiscoverySearchResponse)
 def search_players(
     q: Optional[str] = Query(
         None,
