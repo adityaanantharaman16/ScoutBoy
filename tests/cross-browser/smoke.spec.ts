@@ -243,6 +243,52 @@ test("compare queue drives a completed comparison", async ({ page }) => {
   await expect(page.locator('[data-testid="compare-a"]')).toBeVisible();
 });
 
+test("the compare tray stands down on the comparison page in every engine", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForSelector('[data-testid="result-row"]');
+  await page.locator('[data-testid="compare-action"]').nth(0).click();
+  await page.locator('[data-testid="compare-action"]').nth(1).click();
+
+  const tray = page.locator('[data-testid="compare-tray"]');
+  await expect(tray).toBeVisible();
+  await tray.getByRole("link", { name: /Open comparison/ }).click();
+  await page.waitForLoadState("networkidle");
+
+  // Suppressed by route, so it is gone here...
+  await expect(tray).toHaveCount(0);
+  // ...while the comparison itself still has the two players, and the queue is
+  // still the user's: hiding the tray must not discard the selection.
+  await expect(page.locator('[data-testid="compare-a"]')).toBeVisible();
+  const queued = await page.evaluate(
+    () => JSON.parse(localStorage.getItem("scoutboy.compareQueue.v1") ?? "[]").length,
+  );
+  expect(queued).toBe(2);
+
+  // Leaving brings it back, unchanged.
+  await page.locator('[data-testid="nav-discover"]').first().click();
+  await page.waitForSelector('[data-testid="result-row"]');
+  await expect(tray).toBeVisible();
+});
+
+test("no account surface appears in an auth-free build, in every engine", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForSelector('[data-testid="result-row"]');
+
+  // Accounts are optional for a deployment too: with no provider configured the
+  // header, the bottom rail and the private API all stay out of the way.
+  await expect(page.locator('[data-testid="account-sign-in"]')).toHaveCount(0);
+  await expect(page.locator('[data-testid="account-entry-resolving"]')).toHaveCount(0);
+  await expect(page.locator('[data-testid="account-entry-unavailable"]')).toHaveCount(0);
+  await expect(page.locator('[data-testid="account-suggestion"]')).toHaveCount(0);
+
+  await page.locator('[data-testid="favorite-action"]').first().click();
+  const counter = page.locator('[data-testid="favorites-counter"]');
+  await expect(counter).toContainText("saved on this device");
+  await expect(counter).toHaveAttribute("data-favorites-mode", "guest");
+  // Still nothing offered after a save.
+  await expect(page.locator('[data-testid="account-suggestion"]')).toHaveCount(0);
+});
+
 test("mobile navigation opens and navigates", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");

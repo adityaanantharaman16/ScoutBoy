@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useRef, useState } from "react";
 
 import { MOTION_EXIT_MS, usePresence } from "@/lib/motion/presence";
 import { useScoutingState, type PlayerRef } from "@/lib/state/scouting-state";
@@ -249,9 +250,29 @@ export function CardActionBar({
  * Under reduced motion the hold collapses to zero and the tray mounts/unmounts in
  * the same commit, with no translation.
  */
+/** The comparison route. The tray is an invitation to go here, so it stops here. */
+export const COMPARE_ROUTE = "/compare";
+
 export function CompareTray() {
   const { compareQueue, removeCompare, clearCompare } = useScoutingState();
-  const { visible, leaving } = usePresence(compareQueue.length > 0, MOTION_EXIT_MS);
+  const pathname = usePathname();
+  /**
+   * The tray exists to carry a scout from wherever they are TO the comparison.
+   * On the comparison itself it has no errand left: the two players are already
+   * on screen, in full, with their own controls. So it stands down there.
+   *
+   * Suppressed by ROUTE, never by mutating the queue: the selection is the
+   * user's, it stays in `scoutboy.compareQueue.v1` untouched, the comparison page
+   * still receives it, and leaving `/compare` brings the tray straight back with
+   * the same two players. Folding the route into `usePresence`'s `active` rather
+   * than returning early keeps the established exit animation on the way out and
+   * collapses it under reduced motion, exactly as an emptied queue does.
+   */
+  const onComparePage = pathname === COMPARE_ROUTE;
+  const { visible, leaving } = usePresence(
+    compareQueue.length > 0 && !onComparePage,
+    MOTION_EXIT_MS,
+  );
   // Keeps the last non-empty queue on screen for the 120ms exit, so the tray
   // animates out carrying the content it had rather than blanking to "Add one
   // more player" first. Adjusted during render, never from a ref read.
@@ -260,46 +281,14 @@ export function CompareTray() {
   const trayRef = useRef<HTMLElement | null>(null);
 
   /**
-   * WCAG 2.2 SC 2.4.11 Focus Not Obscured (Minimum).
-   *
-   * Reproduced during the closeout: with the tray open at the top of Discovery,
-   * tabbing to the third player link left it at y=686 inside a tray occupying
-   * 626–708 — entirely hidden. `scroll-padding-bottom` (kept, in globals.css)
-   * does not help on its own, because the browser only consults it when it
-   * decides to scroll, and here the element is already technically "in view".
-   *
-   * This is the smallest correction that resolves it: when focus lands on
-   * something the fixed tray overlaps, nudge the page so the control clears it.
-   *
-   * `behavior: "instant"`, NOT `"auto"`. Per the CSSOM View spec `"auto"` means
-   * "use the element's `scroll-behavior` CSS value" — and this document sets
-   * `scroll-behavior: smooth` under `no-preference`, so `"auto"` would start a
-   * smooth page scroll: page-wide motion the cadence rejects, and a delay before
-   * the focused control is actually visible. `"instant"` forces the immediate
-   * jump this needs, in both motion preferences.
-   *
-   * Pointer users cannot trigger it, since the tray already intercepts clicks
-   * over the region it covers.
+   * WCAG 2.2 SC 2.4.11 Focus Not Obscured (Minimum) is still guaranteed for this
+   * tray; the implementation simply moved. It now lives on the shared bottom
+   * rail ({@link BottomRail}), which is the element that is actually positioned
+   * and which also carries the account suggestion — so one guard covers both
+   * anchored surfaces instead of each growing a copy. See
+   * `lib/a11y/focus-not-obscured.ts` for the full reasoning and the measured
+   * failure it fixes.
    */
-  useEffect(() => {
-    if (!visible) return;
-    const onFocusIn = (event: FocusEvent) => {
-      const target = event.target as HTMLElement | null;
-      const tray = trayRef.current;
-      if (!target || !tray || tray.contains(target)) return;
-
-      const focused = target.getBoundingClientRect();
-      const bar = tray.getBoundingClientRect();
-      const overlaps = focused.bottom > bar.top && focused.top < bar.bottom;
-      if (!overlaps) return;
-
-      // Scrolling down moves the focused control up, out from under the tray.
-      window.scrollBy({ top: focused.bottom - bar.top + 8, behavior: "instant" });
-    };
-    document.addEventListener("focusin", onFocusIn);
-    return () => document.removeEventListener("focusin", onFocusIn);
-  }, [visible]);
-
   if (!visible) return null;
   const queue = compareQueue.length > 0 ? compareQueue : held;
 
@@ -309,7 +298,11 @@ export function CompareTray() {
   return (
     <aside
       ref={trayRef}
-      className={`fixed inset-x-3 bottom-3 z-40 mx-auto max-w-5xl border border-line-strong bg-ink px-3 py-3 text-paper shadow-sm sm:px-4 ${
+      // Positioning now belongs to the shared bottom rail in `providers.tsx`, so
+      // the account suggestion can stack above this instead of over it. The
+      // rendered box is unchanged: the rail reproduces the exact geometry this
+      // element used to declare for itself.
+      className={`pointer-events-auto border border-line-strong bg-ink px-3 py-3 text-paper shadow-sm sm:px-4 ${
         leaving ? "tray-exit" : "tray-enter"
       }`}
       aria-label="Compare queue"

@@ -845,3 +845,61 @@ test.describe("Reflow, zoom and text spacing", () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// Milestone 8.4A — the bottom rail and the comparison page
+// ---------------------------------------------------------------------------
+
+test.describe("Bottom rail and comparison accessibility", () => {
+  test("the comparison page passes axe with a populated device queue", async ({ page }) => {
+    await seedDeviceState(page);
+    await page.goto("/compare");
+    await page.waitForSelector('[data-testid="compare-a"]');
+    await settle(page);
+    await expectNoA11yViolations(page, "compare page, queue populated, tray suppressed");
+  });
+
+  test("the compare tray passes axe wherever it does appear", async ({ page }) => {
+    await seedDeviceState(page);
+    await settle(page);
+    await expect(page.locator('[data-testid="compare-tray"]')).toBeVisible();
+    await expectNoA11yViolations(page, "discovery with the compare tray");
+  });
+
+  test("suppressing the tray leaves the comparison fully keyboard operable", async ({ page }) => {
+    await seedDeviceState(page);
+    await page.goto("/compare");
+    await page.waitForSelector('[data-testid="compare-a"]');
+    await settle(page);
+
+    // With the tray gone there is nothing anchored over the page, so no focused
+    // control can be obscured by it.
+    await expect(page.locator('[data-testid="compare-tray"]')).toHaveCount(0);
+
+    const reached: string[] = [];
+    for (let i = 0; i < 25; i += 1) {
+      await page.keyboard.press("Tab");
+      const info = await page.evaluate(() => {
+        const el = document.activeElement as HTMLElement | null;
+        if (!el || el === document.body) return null;
+        const r = el.getBoundingClientRect();
+        return {
+          id: el.dataset.testid ?? el.tagName,
+          visible: r.width > 0 && r.height > 0,
+          // Nothing may sit on top of the focused control.
+          covered: (() => {
+            const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+            return !!top && top !== el && !el.contains(top) && !top.contains(el);
+          })(),
+        };
+      });
+      if (!info) continue;
+      reached.push(info.id);
+      expect(info.visible, `zero-size focus target ${info.id}`).toBe(true);
+      expect(info.covered, `focused control obscured on /compare: ${info.id}`).toBe(false);
+    }
+    expect(reached.length).toBeGreaterThan(3);
+    // The comparison's own selectors are reachable.
+    expect(reached).toContain("compare-a");
+  });
+});

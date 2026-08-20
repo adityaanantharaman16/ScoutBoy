@@ -525,6 +525,43 @@ key sequences, the copy contract, the evidence and the limitations.
 
 ---
 
+## Optional accounts and durable favorites (Milestone 8, Phase 8.4A)
+
+**Accounts are optional twice over: optional for a visitor, and optional for a
+deployment.** With no Clerk configuration present, ScoutBoy is exactly the
+anonymous application it has always been - no provider is mounted, no session
+request is made, no account UI is rendered, and My Favorites lives in browser
+storage under `scoutboy.shortlist.v1`. Everything below is additive.
+
+Signing in changes one thing: where the favourites list is stored.
+
+- **No account** - `My Favorites N · saved on this device`
+- **Signed in** - `My Favorites N · saved to your account`
+
+Discovery, dossiers, leaderboards, Compare and Methodology stay public in both
+modes. There is no authentication wall, forced redirect, blocking modal, or
+disabled feature. The comparison queue is unchanged and stays device local.
+
+This phase deliberately supersedes the earlier roadmap constraint that Milestone
+8.4 remain device-local; the change was product direction, and the reasoning is
+recorded in the milestone document.
+
+**Identity is Clerk's, storage is ours.** ScoutBoy implements no passwords, no
+sessions, no resets and no email delivery, and it stores nothing about a person
+beyond an opaque external subject and the issuer that vouched for it - no email,
+name, avatar or provider token. Private `/api/me/*` requests are authorized from
+a token whose signature, `exp`, `nbf`, `iss` and `azp` are verified on every
+call; the subject is taken from the token and from nowhere else.
+
+Enable it by setting a Clerk publishable key for the frontend and the issuer plus
+authorized parties for the backend (see `.env.example`). Enabling auth with
+incomplete configuration fails loudly at start-up rather than serving a verifier
+that is not anchored to a tenant.
+
+Full contract, database model, merge semantics, state machine, privacy boundary,
+provider-owned surfaces and limitations:
+[`docs/milestone_8_4a_optional_accounts.md`](docs/milestone_8_4a_optional_accounts.md).
+
 ## Commands (`make help` for all)
 
 | Command | What it does |
@@ -595,6 +632,10 @@ GET  /api/players/{id}/similar         style / quality / cheaper / higher-upside
 GET  /api/roles/{role_key}/rankings    role leaderboard
 GET  /api/compare                      side-by-side + why one rates higher
 GET  /api/methodology                  methodology metadata for the UI
+GET  /api/me/favorites                 (account) canonical ordered My Favorites
+PUT  /api/me/favorites/{player_id}     (account) idempotent add
+DEL  /api/me/favorites/{player_id}     (account) idempotent remove
+POST /api/me/favorites/merge           (account) union a guest list into the account
 GET  /healthz                          process liveness
 GET  /readyz                           database + migration readiness
 POST /api/admin/ingest                 (local admin) trigger ingestion
@@ -697,8 +738,17 @@ auditing, and a full-stack container smoke. See [CONTRIBUTING.md](CONTRIBUTING.m
   out of Discovery rather than duplicated there. The ties the committed 24-player sample cannot
   produce (equal scores, unrated players, unknown values, colliding names) are proven in the
   backend against a synthetic cohort built to contain a tie at every level.
-- There is no end-user authentication or public rate limiting. Admin routes use a shared token;
-  it is optional only in development/test and mandatory in production mode.
+- End-user accounts are OPTIONAL and off by default (Phase 8.4A). When enabled, Clerk owns
+  identity and ScoutBoy verifies the token's signature, expiry, issuer and authorized party on
+  every private `/api/me/*` request; account isolation is enforced structurally, since no request
+  can name a user. The account behaviour has been verified only against deterministic offline
+  tests: **no live Clerk tenant was available**, so no real sign-up, sign-in, sign-out or
+  cross-device persistence has been exercised. Clerk's own hosted pages (its Account Portal, any
+  provider-hosted OAuth or verification step, its CAPTCHA widget) are provider-owned and cannot be
+  themed to ScoutBoy's design system.
+- There is still no public rate limiting, audit logging, or CSP, and Phase 8.4A is deliberately
+  **not** the Milestone 9 security audit. Admin routes use a shared token; it is optional only in
+  development/test and mandatory in production mode.
 - The containers and CI make delivery reproducible, but this remains a production-shaped portfolio
   project without a chosen deployment host, monitoring vendor, uptime target, or commercial SLA.
 

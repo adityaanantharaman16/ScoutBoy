@@ -1060,6 +1060,19 @@ select.input[size]:not([size="1"]) {
     animation: sb-rise-out var(--motion-exit) var(--motion-ease-in);
   }
 
+  /* The account suggestion shares the tray's boundary, so it shares the tray's
+     cadence exactly: the same keyframes, the same two duration tokens, the same
+     easings. It introduces no motion vocabulary of its own, and under
+     `reduce` it appears and disappears in the same commit like everything
+     else. */
+  .callout-enter {
+    animation: sb-rise-in var(--motion-enter) var(--motion-ease-out);
+  }
+
+  .callout-exit {
+    animation: sb-rise-out var(--motion-exit) var(--motion-ease-in);
+  }
+
   /* A newly queued player token: opacity only. It points at WHICH name joined
      the queue; the tray itself already reported that something did. */
   .tray-token-enter {

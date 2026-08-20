@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+from .account import (
+    MAX_MERGE_PLAYER_IDS,
+    FavoriteMutationResponse,
+    FavoritesMergeRequest,
+    FavoritesMergeResponse,
+    FavoritesResponse,
+)
 from .admin import IngestResult, RatingRunSummary, RecomputeResult
 from .common import DataSource, Paginated
 from .compare import CompareResponse, CompareSide
@@ -58,4 +65,9 @@ __all__ = [
     "RatingRunSummary",
     "IngestResult",
     "RecomputeResult",
+    "FavoritesResponse",
+    "FavoriteMutationResponse",
+    "FavoritesMergeRequest",
+    "FavoritesMergeResponse",
+    "MAX_MERGE_PLAYER_IDS",
 ]

@@ -27,6 +27,15 @@ services:
       SCOUTBOY_ENVIRONMENT: production
       SCOUTBOY_ADMIN_TOKEN: ${SCOUTBOY_ADMIN_TOKEN:?Set SCOUTBOY_ADMIN_TOKEN for the full stack}
       SCOUTBOY_WEB_ORIGINS: ${SCOUTBOY_WEB_ORIGINS:-http://localhost:3000}
+      # Optional accounts (Milestone 8.4A). Every one defaults to the anonymous
+      # product, so `make docker-smoke` needs no Clerk tenant. Setting
+      # SCOUTBOY_AUTH_ENABLED=true without an issuer and authorized parties makes
+      # the API refuse to start, rather than serving an unanchored verifier.
+      SCOUTBOY_AUTH_ENABLED: ${SCOUTBOY_AUTH_ENABLED:-false}
+      SCOUTBOY_CLERK_ISSUER: ${SCOUTBOY_CLERK_ISSUER:-}
+      SCOUTBOY_CLERK_AUTHORIZED_PARTIES: ${SCOUTBOY_CLERK_AUTHORIZED_PARTIES:-}
+      SCOUTBOY_CLERK_JWKS_URL: ${SCOUTBOY_CLERK_JWKS_URL:-}
+      SCOUTBOY_CLERK_JWT_AUDIENCE: ${SCOUTBOY_CLERK_JWT_AUDIENCE:-}
     command: ["alembic", "upgrade", "head"]
     depends_on:
       db:
@@ -76,6 +85,11 @@ services:
       dockerfile: apps/web/Dockerfile
       args:
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000/api}
+        # Browser-safe publishable key only. The Clerk SECRET key is never built
+        # into the bundle and ScoutBoy's frontend has no use for one. Empty =>
+        # the image is the anonymous build, which is the default here.
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}
+        NEXT_PUBLIC_SCOUTBOY_AUTH_ENABLED: ${NEXT_PUBLIC_SCOUTBOY_AUTH_ENABLED:-}
     environment:
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000/api}
     ports:

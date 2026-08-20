@@ -28,6 +28,41 @@ export async function apiGet<T>(path: string, params?: Record<string, unknown>):
   return res.json() as Promise<T>;
 }
 
+/**
+ * A request to the private `/api/me/*` surface.
+ *
+ * The bearer token is passed in and used immediately; it is never written to
+ * `localStorage`, `sessionStorage`, a cookie this app manages, or any module
+ * variable. Clerk owns the session, and the only thing that leaves this function
+ * is one `Authorization` header on one request.
+ */
+export async function apiAuthed<T>(
+  path: string,
+  token: string,
+  init: { method?: string; body?: unknown } = {},
+): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    method: init.method ?? "GET",
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+      ...(init.body === undefined ? {} : { "Content-Type": "application/json" }),
+    },
+    body: init.body === undefined ? undefined : JSON.stringify(init.body),
+  });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      const parsed = (await res.json())?.detail;
+      if (typeof parsed === "string") detail = parsed;
+    } catch {
+      /* ignore */
+    }
+    throw new ApiError(res.status, detail);
+  }
+  return res.json() as Promise<T>;
+}
+
 export async function apiPost<T>(path: string, params?: Record<string, unknown>): Promise<T> {
   const url = new URL(`${API_BASE_URL}${path}`);
   if (params) {

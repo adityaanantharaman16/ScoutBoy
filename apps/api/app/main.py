@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import admin, compare, health, methodology, players, roles
+from app.api.routes import admin, compare, health, me, methodology, players, roles
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -28,7 +28,19 @@ app.add_middleware(
 )
 
 API_PREFIX = "/api"
-for r in (players.router, roles.router, compare.router, methodology.router, admin.router):
+# `me` is the one private router. It is registered unconditionally rather than
+# behind `settings.auth_enabled`, so the tracked OpenAPI contract is a property
+# of the code and not of whichever environment happened to export it. A
+# deployment with no identity provider answers these routes with 503 (see
+# `AuthDisabledError`); the public routers beside it are untouched by accounts.
+for r in (
+    players.router,
+    roles.router,
+    compare.router,
+    methodology.router,
+    admin.router,
+    me.router,
+):
     app.include_router(r, prefix=API_PREFIX)
 
 app.include_router(health.router)

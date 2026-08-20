@@ -327,6 +327,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/favorites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Favorites
+         * @description The signed-in account's canonical ordered My Favorites list.
+         *
+         *     Performs no write. An account that has never saved anything has no row, and
+         *     the honest answer for it is the empty list - not a freshly inserted row.
+         */
+        get: operations["list_favorites_api_me_favorites_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/favorites/{player_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Add Favorite
+         * @description Idempotently add a player.
+         *
+         *     The player is checked before the insert, so a stale browser id becomes an
+         *     honest 404 rather than a dangling reference that would resolve to nothing on
+         *     the next read.
+         */
+        put: operations["add_favorite_api_me_favorites__player_id__put"];
+        post?: never;
+        /**
+         * Remove Favorite
+         * @description Idempotently remove a player.
+         *
+         *     Deliberately does NOT 404 on an unknown player: the caller's goal is "this
+         *     player is not on my list", and that is already true. Removing something a
+         *     previous request removed is a success, so a retried delete behaves the same
+         *     as the first attempt.
+         *
+         *     Also deliberately does not CREATE an account row. A removal stores nothing,
+         *     so an account with no row already satisfies the request; inserting one would
+         *     be a write with no purpose whose only effect is to falsify "browsing writes
+         *     nothing".
+         */
+        delete: operations["remove_favorite_api_me_favorites__player_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/favorites/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Merge Favorites
+         * @description Union a guest's browser-local list into the signed-in account.
+         *
+         *     Existing account favourites keep their order; previously unseen guest IDs are
+         *     appended in guest order. Duplicates collapse to their first occurrence and
+         *     unresolvable IDs are reported rather than saved, so the client can retire its
+         *     guest list on the strength of this response alone.
+         */
+        post: operations["merge_favorites_api_me_favorites_merge_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/healthz": {
         parameters: {
             query?: never;
@@ -725,6 +811,104 @@ export interface components {
              * @default []
              */
             metrics: components["schemas"]["SubStat"][];
+        };
+        /**
+         * FavoriteMutationResponse
+         * @description The canonical list after a single add or remove, plus what changed.
+         *
+         *     `changed` is false when the request was a no-op — favouriting a player that
+         *     was already saved, or removing one that was not. Both are successes: the
+         *     endpoints are idempotent, so the caller can retry a dropped request without
+         *     reasoning about whether the first attempt landed.
+         */
+        FavoriteMutationResponse: {
+            /**
+             * Player Ids
+             * @description Player IDs in canonical order: oldest saved first, with the stable row id breaking ties inside a single merge.
+             */
+            player_ids: number[];
+            /**
+             * Count
+             * @description Number of players on the account's list.
+             */
+            count: number;
+            /**
+             * Player Id
+             * @description The player the request addressed.
+             */
+            player_id: number;
+            /**
+             * Changed
+             * @description True when this request altered the list, false when it was already in that state.
+             */
+            changed: boolean;
+        };
+        /**
+         * FavoritesMergeRequest
+         * @description A guest's browser-local list, offered to the account it just signed in to.
+         */
+        FavoritesMergeRequest: {
+            /**
+             * Player Ids
+             * @description Ordered guest favourite player IDs. Duplicates are collapsed to their first occurrence; IDs that do not resolve to a player are reported back rather than saved.
+             */
+            player_ids?: number[];
+        };
+        /**
+         * FavoritesMergeResponse
+         * @description The canonical list after a merge, and an honest account of each input ID.
+         *
+         *     The three disposition lists are disjoint and together cover every distinct ID
+         *     the request offered, so a client can tell exactly what happened to a guest
+         *     list rather than inferring it from a length change.
+         */
+        FavoritesMergeResponse: {
+            /**
+             * Player Ids
+             * @description Player IDs in canonical order: oldest saved first, with the stable row id breaking ties inside a single merge.
+             */
+            player_ids: number[];
+            /**
+             * Count
+             * @description Number of players on the account's list.
+             */
+            count: number;
+            /**
+             * Added
+             * @description Guest IDs that were not on the account and have now been appended, in guest order.
+             */
+            added: number[];
+            /**
+             * Already Present
+             * @description Guest IDs the account had already saved. Their existing position is unchanged.
+             */
+            already_present: number[];
+            /**
+             * Unknown
+             * @description Guest IDs that resolve to no player. Nothing was saved for these.
+             */
+            unknown: number[];
+        };
+        /**
+         * FavoritesResponse
+         * @description The authenticated account's canonical, ordered favourite player IDs.
+         *
+         *     Every field is REQUIRED. A Pydantic `default_factory` would publish these as
+         *     optional in the OpenAPI contract, which would be a lie about a response the
+         *     server always sends in full - and would force every consumer to write a
+         *     `?? []` that can never actually fire.
+         */
+        FavoritesResponse: {
+            /**
+             * Player Ids
+             * @description Player IDs in canonical order: oldest saved first, with the stable row id breaking ties inside a single merge.
+             */
+            player_ids: number[];
+            /**
+             * Count
+             * @description Number of players on the account's list.
+             */
+            count: number;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -2077,6 +2261,195 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    list_favorites_api_me_favorites_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FavoritesResponse"];
+                };
+            };
+            /** @description Missing, malformed, expired, forged or misscoped token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description This deployment has no identity provider configured. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    add_favorite_api_me_favorites__player_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The player to save. */
+                player_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FavoriteMutationResponse"];
+                };
+            };
+            /** @description Missing, malformed, expired, forged or misscoped token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description This deployment has no identity provider configured. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    remove_favorite_api_me_favorites__player_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The player to unsave. */
+                player_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FavoriteMutationResponse"];
+                };
+            };
+            /** @description Missing, malformed, expired, forged or misscoped token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description This deployment has no identity provider configured. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    merge_favorites_api_me_favorites_merge_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FavoritesMergeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FavoritesMergeResponse"];
+                };
+            };
+            /** @description Missing, malformed, expired, forged or misscoped token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description A concurrent change prevented the merge from completing; retry. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description This deployment has no identity provider configured. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

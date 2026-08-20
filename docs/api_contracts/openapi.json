@@ -1379,6 +1379,217 @@
         }
       }
     },
+    "/api/me/favorites": {
+      "get": {
+        "tags": [
+          "account"
+        ],
+        "summary": "List Favorites",
+        "description": "The signed-in account's canonical ordered My Favorites list.\n\nPerforms no write. An account that has never saved anything has no row, and\nthe honest answer for it is the empty list - not a freshly inserted row.",
+        "operationId": "list_favorites_api_me_favorites_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FavoritesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, expired, forged or misscoped token."
+          },
+          "503": {
+            "description": "This deployment has no identity provider configured."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/favorites/{player_id}": {
+      "put": {
+        "tags": [
+          "account"
+        ],
+        "summary": "Add Favorite",
+        "description": "Idempotently add a player.\n\nThe player is checked before the insert, so a stale browser id becomes an\nhonest 404 rather than a dangling reference that would resolve to nothing on\nthe next read.",
+        "operationId": "add_favorite_api_me_favorites__player_id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "player_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "The player to save.",
+              "title": "Player Id"
+            },
+            "description": "The player to save."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FavoriteMutationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, expired, forged or misscoped token."
+          },
+          "503": {
+            "description": "This deployment has no identity provider configured."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "account"
+        ],
+        "summary": "Remove Favorite",
+        "description": "Idempotently remove a player.\n\nDeliberately does NOT 404 on an unknown player: the caller's goal is \"this\nplayer is not on my list\", and that is already true. Removing something a\nprevious request removed is a success, so a retried delete behaves the same\nas the first attempt.\n\nAlso deliberately does not CREATE an account row. A removal stores nothing,\nso an account with no row already satisfies the request; inserting one would\nbe a write with no purpose whose only effect is to falsify \"browsing writes\nnothing\".",
+        "operationId": "remove_favorite_api_me_favorites__player_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "player_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "The player to unsave.",
+              "title": "Player Id"
+            },
+            "description": "The player to unsave."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FavoriteMutationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, expired, forged or misscoped token."
+          },
+          "503": {
+            "description": "This deployment has no identity provider configured."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/favorites/merge": {
+      "post": {
+        "tags": [
+          "account"
+        ],
+        "summary": "Merge Favorites",
+        "description": "Union a guest's browser-local list into the signed-in account.\n\nExisting account favourites keep their order; previously unseen guest IDs are\nappended in guest order. Duplicates collapse to their first occurrence and\nunresolvable IDs are reported rather than saved, so the client can retire its\nguest list on the strength of this response alone.",
+        "operationId": "merge_favorites_api_me_favorites_merge_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FavoritesMergeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FavoritesMergeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, expired, forged or misscoped token."
+          },
+          "503": {
+            "description": "This deployment has no identity provider configured."
+          },
+          "409": {
+            "description": "A concurrent change prevented the merge from completing; retry."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/healthz": {
       "get": {
         "tags": [
@@ -2329,6 +2540,134 @@
           "confidence"
         ],
         "title": "FaceStat"
+      },
+      "FavoriteMutationResponse": {
+        "properties": {
+          "player_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Player Ids",
+            "description": "Player IDs in canonical order: oldest saved first, with the stable row id breaking ties inside a single merge."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of players on the account's list."
+          },
+          "player_id": {
+            "type": "integer",
+            "title": "Player Id",
+            "description": "The player the request addressed."
+          },
+          "changed": {
+            "type": "boolean",
+            "title": "Changed",
+            "description": "True when this request altered the list, false when it was already in that state."
+          }
+        },
+        "type": "object",
+        "required": [
+          "player_ids",
+          "count",
+          "player_id",
+          "changed"
+        ],
+        "title": "FavoriteMutationResponse",
+        "description": "The canonical list after a single add or remove, plus what changed.\n\n`changed` is false when the request was a no-op \u2014 favouriting a player that\nwas already saved, or removing one that was not. Both are successes: the\nendpoints are idempotent, so the caller can retry a dropped request without\nreasoning about whether the first attempt landed."
+      },
+      "FavoritesMergeRequest": {
+        "properties": {
+          "player_ids": {
+            "items": {
+              "type": "integer",
+              "exclusiveMinimum": 0.0
+            },
+            "type": "array",
+            "maxItems": 500,
+            "title": "Player Ids",
+            "description": "Ordered guest favourite player IDs. Duplicates are collapsed to their first occurrence; IDs that do not resolve to a player are reported back rather than saved."
+          }
+        },
+        "type": "object",
+        "title": "FavoritesMergeRequest",
+        "description": "A guest's browser-local list, offered to the account it just signed in to."
+      },
+      "FavoritesMergeResponse": {
+        "properties": {
+          "player_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Player Ids",
+            "description": "Player IDs in canonical order: oldest saved first, with the stable row id breaking ties inside a single merge."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of players on the account's list."
+          },
+          "added": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Added",
+            "description": "Guest IDs that were not on the account and have now been appended, in guest order."
+          },
+          "already_present": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Already Present",
+            "description": "Guest IDs the account had already saved. Their existing position is unchanged."
+          },
+          "unknown": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Unknown",
+            "description": "Guest IDs that resolve to no player. Nothing was saved for these."
+          }
+        },
+        "type": "object",
+        "required": [
+          "player_ids",
+          "count",
+          "added",
+          "already_present",
+          "unknown"
+        ],
+        "title": "FavoritesMergeResponse",
+        "description": "The canonical list after a merge, and an honest account of each input ID.\n\nThe three disposition lists are disjoint and together cover every distinct ID\nthe request offered, so a client can tell exactly what happened to a guest\nlist rather than inferring it from a length change."
+      },
+      "FavoritesResponse": {
+        "properties": {
+          "player_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Player Ids",
+            "description": "Player IDs in canonical order: oldest saved first, with the stable row id breaking ties inside a single merge."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of players on the account's list."
+          }
+        },
+        "type": "object",
+        "required": [
+          "player_ids",
+          "count"
+        ],
+        "title": "FavoritesResponse",
+        "description": "The authenticated account's canonical, ordered favourite player IDs.\n\nEvery field is REQUIRED. A Pydantic `default_factory` would publish these as\noptional in the OpenAPI contract, which would be a lie about a response the\nserver always sends in full - and would force every consumer to write a\n`?? []` that can never actually fire."
       },
       "HTTPValidationError": {
         "properties": {
@@ -4112,6 +4451,13 @@
           "type"
         ],
         "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "description": "Clerk session token",
+        "scheme": "bearer"
       }
     }
   }

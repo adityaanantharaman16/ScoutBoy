@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from .accounts import AppUser, UserFavorite
 from .base import Base
 from .entities import (
     Appearance,
@@ -67,4 +68,6 @@ __all__ = [
     "DataQualityReport",
     "QuarantineRecord",
     "SourceSnapshot",
+    "AppUser",
+    "UserFavorite",
 ]

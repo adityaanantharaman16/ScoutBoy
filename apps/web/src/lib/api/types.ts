@@ -35,6 +35,11 @@ export type SimilarResponse = S["SimilarResponse"];
 export type Methodology = S["MethodologyResponse"];
 export type PlayerPlaystylesResponse = S["PlayerPlaystylesResponse"];
 
+// ---- private account surface (Milestone 8.4A, locked to OpenAPI) ----
+export type FavoritesResponse = S["FavoritesResponse"];
+export type FavoriteMutationResponse = S["FavoriteMutationResponse"];
+export type FavoritesMergeResponse = S["FavoritesMergeResponse"];
+
 // ---- Discovery ranking explanation (Phase 8.3, locked to OpenAPI) ----
 //
 // The backend owns the ordering rules AND their description: both come from one

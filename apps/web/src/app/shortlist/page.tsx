@@ -12,7 +12,11 @@ import {
 import { SavedPlayerActionRail } from "@/components/common/PlayerActions";
 import { SCOPE_BANNER } from "@/lib/constants";
 import { usePlayersByIds } from "@/lib/api/hooks";
-import { useScoutingState } from "@/lib/state/scouting-state";
+import {
+  favoritesScopeLabel,
+  useScoutingState,
+  type FavoritesMode,
+} from "@/lib/state/scouting-state";
 import type { PlayerCard } from "@/lib/api/types";
 import { formatAge } from "@/lib/formatters";
 
@@ -75,8 +79,36 @@ function SavedRecord({
   );
 }
 
+/**
+ * Where the list lives, said plainly.
+ *
+ * One sentence per favourites mode, because each mode is a different truth. The
+ * guest sentence is the one this page has always carried; the others exist so the
+ * page never claims account durability it cannot demonstrate — including the
+ * unconfirmed case, where the players really are still here and saying so is the
+ * whole point.
+ */
+function scopeLead(mode: FavoritesMode): string {
+  switch (mode) {
+    case "account":
+      return "Players you have set aside to revisit. These are saved to your account, so they are here when you come back or sign in on another device.";
+    case "account-saving":
+      return "Players you have set aside to revisit. Saving your latest change to your account.";
+    case "account-loading":
+      return "Players you have set aside to revisit. Syncing this list with your account.";
+    case "account-unconfirmed":
+      return "Players you have set aside to revisit. These are still stored on this device and are not in your account yet, because the last sync did not complete. Nothing has been lost.";
+    case "resolving":
+      return "Players you have set aside to revisit. Checking whether you are signed in.";
+    case "account-desynced":
+      return "Players you have set aside to revisit. Your last change could not be saved to your account.";
+    default:
+      return "Players you have set aside to revisit. These are stored in this browser only - saved on this device, not synced to an account.";
+  }
+}
+
 export default function ShortlistPage() {
-  const { shortlistIds, removeShortlist } = useScoutingState();
+  const { shortlistIds, removeShortlist, favorites } = useScoutingState();
   const queries = usePlayersByIds(shortlistIds);
   const loading = queries.some((q) => q.isLoading);
   const cards = queries.flatMap((q) => (q.data ? [q.data] : []));
@@ -88,13 +120,32 @@ export default function ShortlistPage() {
       <PageHeader
         eyebrow="My Favorites"
         title="Saved Players"
-        lead="Players you have set aside to revisit. These are stored in this browser only - saved on this device, not synced to an account."
+        lead={scopeLead(favorites.mode)}
         meta={
           cards.length > 0
-            ? `${cards.length} resolved player${cards.length === 1 ? "" : "s"} · saved on this device`
+            ? `${cards.length} resolved player${cards.length === 1 ? "" : "s"} · ${favoritesScopeLabel(favorites.mode)}`
             : undefined
         }
       />
+
+      {/* The synchronization failure state: non-destructive, explicit, and
+          retryable. The saved players are still listed below and still on this
+          device, so nothing is lost while it is showing. */}
+      {favorites.syncError && (
+        <div className="mb-4" data-testid="favorites-sync-error">
+          <ErrorState message={favorites.syncError} />
+          <div className="mt-2">
+            <button
+              type="button"
+              className="btn px-3 py-2 text-xs"
+              data-testid="favorites-sync-retry"
+              onClick={favorites.retrySync}
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      )}
 
       {shortlistIds.length === 0 && (
         <EmptyState
@@ -133,7 +184,11 @@ export default function ShortlistPage() {
           data-testid="shortlist-ledger"
         >
           {cards.map((card) => (
-            <SavedRecord key={card.identity.id} card={card} onRemove={removeShortlist} />
+            <SavedRecord
+              key={card.identity.id}
+              card={card}
+              onRemove={(id) => removeShortlist(id, card.identity.canonical_name)}
+            />
           ))}
         </div>
       )}

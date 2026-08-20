@@ -4,8 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+import { useAuthSession } from "@/lib/auth/session";
 import { MOTION_EXIT_MS, usePresence } from "@/lib/motion/presence";
-import { useScoutingState } from "@/lib/state/scouting-state";
+import { favoritesScopeLabel, useScoutingState } from "@/lib/state/scouting-state";
 
 // Test ids are declared, not derived from the label: the presentation copy is
 // "My Favorites" while the route, storage keys and stable id stay `shortlist`.
@@ -17,9 +18,83 @@ const LINKS = [
   { href: "/methodology", label: "Methodology", testId: "nav-methodology" },
 ];
 
+/**
+ * The account entry, present only when this build offers accounts.
+ *
+ * Deliberately NOT Clerk's `<UserButton>`: its trigger is a circular avatar, and
+ * ScoutBoy has no circular geometry outside genuinely curved illustration. This
+ * is the same square, hairline-bounded `.btn` every other control in the header
+ * uses, so the account surfaces the header owns look like the rest of the
+ * product. Clerk's own sign-in / sign-up dialogs are themed through
+ * `SCOUTBOY_CLERK_APPEARANCE`.
+ */
+function AccountEntry() {
+  const { effectiveStatus, enabled, openSignIn, signOut } = useAuthSession();
+  if (!enabled) return null;
+
+  // The SAME resolution state the favourites counter uses. Reading raw `status`
+  // here is what previously left the header on "Checking account" indefinitely
+  // while the counter had already fallen back to device-local wording.
+  if (effectiveStatus === "resolving") {
+    return (
+      <span
+        className="whitespace-nowrap border border-line bg-paper px-3 py-1 text-xs font-semibold text-ink-soft"
+        data-testid="account-entry-resolving"
+      >
+        Checking account
+      </span>
+    );
+  }
+
+  // The provider never answered. Offering "Sign in" here would be offering a
+  // control that cannot open, so the state is reported instead. Same chip, same
+  // geometry, honest copy.
+  if (effectiveStatus === "unavailable") {
+    return (
+      <span
+        className="whitespace-nowrap border border-line bg-paper px-3 py-1 text-xs font-semibold text-ink-soft"
+        data-testid="account-entry-unavailable"
+      >
+        Accounts unavailable
+      </span>
+    );
+  }
+
+  if (effectiveStatus === "authenticated") {
+    return (
+      <div className="flex items-center gap-2" data-testid="account-entry-authenticated">
+        <span className="whitespace-nowrap border border-line bg-paper px-3 py-1 text-xs font-semibold text-ink-muted">
+          Account
+        </span>
+        <button
+          type="button"
+          className="btn px-2.5 py-1.5 text-xs"
+          data-testid="account-sign-out"
+          onClick={() => {
+            void signOut();
+          }}
+        >
+          Sign out
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      className="btn px-2.5 py-1.5 text-xs"
+      data-testid="account-sign-in"
+      onClick={openSignIn}
+    >
+      Sign in
+    </button>
+  );
+}
+
 export function NavBar() {
   const pathname = usePathname();
-  const { shortlistIds } = useScoutingState();
+  const { shortlistIds, favorites } = useScoutingState();
   const [open, setOpen] = useState(false);
   // Holds the menu displayed for its 120ms exit only. `aria-expanded` below stays
   // bound to `open`, never to `visible`, so the announced state is correct the
@@ -91,15 +166,31 @@ export function NavBar() {
           })}
         </div>
 
-        {/* My Favorites counter — always visible, never wraps internally, keeps
-            the "saved on this device" wording. */}
+        {/* My Favorites counter — always visible, never wraps internally. The
+            scope phrase is derived from where the list actually lives, so it
+            says "saved on this device" for a guest and "saved to your account"
+            for an account holder, and never claims either one while the session
+            is still resolving or a sync has failed.
+
+            While resolving, the NUMBER is withheld rather than shown as 0: a
+            returning account holder must not read "My Favorites 0" for a frame
+            before their real list arrives. */}
         <div
           className="ml-auto whitespace-nowrap border border-line bg-paper px-3 py-1 text-xs font-semibold text-ink-muted"
           data-testid="favorites-counter"
+          data-favorites-mode={favorites.mode}
         >
-          My Favorites <span className="font-mono text-pitch-dark">{shortlistIds.length}</span> ·
-          saved on this device
+          {favorites.count === null ? (
+            <>My Favorites · {favoritesScopeLabel(favorites.mode)}</>
+          ) : (
+            <>
+              My Favorites <span className="font-mono text-pitch-dark">{shortlistIds.length}</span>{" "}
+              · {favoritesScopeLabel(favorites.mode)}
+            </>
+          )}
         </div>
+
+        <AccountEntry />
       </nav>
     </header>
   );
