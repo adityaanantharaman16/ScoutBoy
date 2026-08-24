@@ -1113,6 +1113,13 @@ function Provided({
  * stable and neither subtree ever swaps hooks. The account subtree is the only
  * one that touches React Query, which is why an auth-free build (and every
  * existing unit test) never needs a QueryClient to render favourites.
+ *
+ * Milestone 8.4B deliberately does NOT compose `SavedWorkProvider` in here. It is
+ * mounted beside this one in `providers.tsx` instead, so that a test which mounts
+ * a control under `ScoutingStateProvider` alone issues exactly the favourites
+ * requests it did before — nesting made every such tree also load saved views and
+ * saved comparisons, which silently changed what the favourites suite's
+ * request-count assertions were counting.
  */
 export function ScoutingStateProvider({ children }: { children: React.ReactNode }) {
   const session = useAuthSession();

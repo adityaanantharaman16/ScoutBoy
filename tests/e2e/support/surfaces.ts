@@ -84,6 +84,30 @@ export const SURFACES: Surface[] = [
     path: "/shortlist",
     ready: "h1",
   },
+  // Milestone 8.4B. Three sections on one surface, so all three are inventoried:
+  // an audit that only ever visited the default would never see the two
+  // collections the milestone added.
+  {
+    id: "saved-favorites",
+    label: "Saved work - Favorites",
+    path: "/saved",
+    ready: '[data-testid="saved-sections"]',
+    heading: "Saved",
+  },
+  {
+    id: "saved-views",
+    label: "Saved work - Views",
+    path: "/saved?section=views",
+    ready: '[data-testid="saved-sections"]',
+    heading: "Saved",
+  },
+  {
+    id: "saved-comparisons",
+    label: "Saved work - Comparisons",
+    path: "/saved?section=comparisons",
+    ready: '[data-testid="saved-sections"]',
+    heading: "Saved",
+  },
   {
     id: "methodology",
     label: "Methodology",

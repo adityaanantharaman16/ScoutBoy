@@ -114,3 +114,128 @@ describe("Production route titles", () => {
     expect(new Set(titles).size).toBe(titles.length);
   });
 });
+
+
+// ---------------------------------------------------------------------------
+// Title Case action labels
+//
+// Every VISIBLE button and link label on the optional-account, saved-work and
+// comparison-tray surfaces capitalizes each word. Descriptions, notices, error
+// messages and headings are deliberately NOT covered: they are prose, and title
+// casing them would be a different (and wrong) rule.
+// ---------------------------------------------------------------------------
+
+/** `file → the exact visible label strings it must render.` */
+const TITLE_CASE_ACTIONS: Array<[string, string[]]> = [
+  ["components/saved/SaveViewControl.tsx", ["Save View", "Saved View", "Rename View"]],
+  [
+    "components/saved/SaveComparisonControl.tsx",
+    ["Save Comparison", "Saved Comparison", "Rename Comparison"],
+  ],
+  ["components/saved/ViewsPanel.tsx", ["Try Again", "Go To Discovery", "Rename View"]],
+  [
+    "components/saved/ComparisonsPanel.tsx",
+    ["Try Again", "Go To Compare", "Rename Comparison"],
+  ],
+  ["components/saved/FavoritesPanel.tsx", ["Try Again", "Go To Discovery"]],
+  ["components/account/AccountSuggestion.tsx", ["Create Account", "Sign In", "Not Now"]],
+  ["components/common/NavBar.tsx", ["Sign In", "Sign Out"]],
+  ["components/common/PlayerActions.tsx", ["Open Comparison"]],
+];
+
+/**
+ * The lower-case spellings these labels used to carry.
+ *
+ * Asserted as ABSENT from rendered strings so a future edit cannot quietly
+ * reintroduce one. Checked against comment-stripped source, because the prose
+ * above a control legitimately discusses it in a sentence.
+ */
+const RETIRED_ACTION_SPELLINGS = [
+  "Save view",
+  "Saved view",
+  "Save comparison",
+  "Saved comparison",
+  "Rename view",
+  "Rename comparison",
+  "Try again",
+  "Go to discovery",
+  "Go to compare",
+  "Create account",
+  "Not now",
+  "Open comparison",
+];
+
+/** Strips block and line comments so documentation prose is never scanned. */
+function withoutComments(source: string): string {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/(^|[^:])\/\/.*$/gm, "$1");
+}
+
+describe("Title Case action labels", () => {
+  it.each(TITLE_CASE_ACTIONS)("%s renders %s", (relPath, labels) => {
+    const source = readFileSync(join(SRC, relPath), "utf8");
+    for (const label of labels) {
+      expect(source, `${relPath} must render "${label}"`).toContain(label);
+    }
+  });
+
+  it("no longer carries any retired lower-case action spelling", () => {
+    const offenders: string[] = [];
+    for (const [relPath] of TITLE_CASE_ACTIONS) {
+      const body = withoutComments(readFileSync(join(SRC, relPath), "utf8"));
+      for (const retired of RETIRED_ACTION_SPELLINGS) {
+        if (body.includes(retired)) offenders.push(`${relPath}: ${retired}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it("leaves prose alone: a sentence is still a sentence", () => {
+    // "Try again in a moment." is a message, not a control, and must stay in
+    // sentence case. Title-casing it would be the over-application this rule
+    // exists to avoid.
+    const state = readFileSync(join(SRC, "lib/state/saved-work.tsx"), "utf8");
+    expect(state).toContain("Try again in a moment.");
+    expect(state).not.toContain("Try Again in a moment.");
+  });
+
+  it("keeps accepted one-word labels unchanged", () => {
+    const panel = readFileSync(join(SRC, "components/saved/NamePanel.tsx"), "utf8");
+    for (const single of ["Remove", "Confirm", "Cancel"]) {
+      // The label on its own JSX text line. Matched per line rather than by exact
+      // surrounding whitespace, because this checkout stores CRLF.
+      expect(panel, `NamePanel must still render "${single}"`).toMatch(
+        new RegExp(`^\\s*${single}\\s*$`, "m"),
+      );
+    }
+    const nav = readFileSync(join(SRC, "components/common/NavBar.tsx"), "utf8");
+    expect(nav).toContain('label: "Saved"');
+    expect(nav).toContain("<span>Menu</span>");
+  });
+});
+
+describe("Label in Name (WCAG 2.2 SC 2.5.3)", () => {
+  /**
+   * A control's accessible name must CONTAIN its visible label, so somebody
+   * saying "Save View" out loud addresses the thing they can see. The two save
+   * triggers failed this even before Title Case ("Save this Discovery view"
+   * never contained "Save view"), so this locks in the corrected form.
+   */
+  it.each([
+    ["components/saved/SaveViewControl.tsx", ["Save View:", "Saved View:"]],
+    ["components/saved/SaveComparisonControl.tsx", ["Save Comparison:", "Saved Comparison:"]],
+  ])("%s prefixes its accessible name with the visible label", (relPath, prefixes) => {
+    const source = readFileSync(join(SRC, relPath), "utf8");
+    for (const prefix of prefixes) {
+      expect(source, `${relPath} accessible name must start with "${prefix}"`).toContain(prefix);
+    }
+  });
+
+  it("names the confirm-remove Cancel action after its visible label", () => {
+    const panel = readFileSync(join(SRC, "components/saved/NamePanel.tsx"), "utf8");
+    expect(panel).toContain("Cancel removing ${what}");
+    // The previous "Keep X" shared no words with the visible "Cancel".
+    expect(panel).not.toContain("`Keep ${what}`");
+  });
+});

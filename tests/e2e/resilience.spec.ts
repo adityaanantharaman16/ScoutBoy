@@ -265,7 +265,7 @@ test.describe("Degraded data and failure states", () => {
     const tray = page.locator('[data-testid="compare-tray"]');
     await expect(tray).toContainText("Add one more player");
     // The comparison entry point is disabled rather than misleadingly active.
-    const open = tray.getByRole("link", { name: /Open comparison/ });
+    const open = tray.getByRole("link", { name: /Open Comparison/ });
     await expect(open).toHaveAttribute("aria-disabled", "true");
   });
 
@@ -371,7 +371,16 @@ test.describe("Interaction stress", () => {
     await page.goForward();
     await page.waitForLoadState("networkidle");
     expect(page.url()).toBe(filtered);
-    await expect(page.locator('[data-testid="results-ledger"], [role="status"]')).toBeVisible();
+    // Scoped to the Results region. The page now also carries the Save view
+    // control's own polite live region (8.4B), so an unscoped `[role="status"]`
+    // no longer identifies the results pane uniquely. The assertion is unchanged:
+    // the results pane rendered, either as a ledger or as an empty/loading status.
+    await expect(
+      page
+        .getByRole("region", { name: "Results" })
+        .locator('[data-testid="results-ledger"], [role="status"]')
+        .first(),
+    ).toBeVisible();
     // the control itself came back with the URL, not just the address bar
     await expect(page.getByTestId("age-threshold-value")).toHaveText("25 Years");
     await expect(page.getByTestId("age-direction-younger")).toHaveAttribute(

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { MOTION_EXIT_MS, usePresence } from "@/lib/motion/presence";
 import { useAuthSession } from "@/lib/auth/session";
 import { isSuppressed, recordDismissal } from "@/lib/auth/suggestion-state";
+import { useSavedWork } from "@/lib/state/saved-work";
 import { useScoutingState } from "@/lib/state/scouting-state";
 
 /**
@@ -46,20 +47,38 @@ function markShownThisSession(): void {
  * control the user just pressed does not move a pixel when it appears.
  *
  * When it appears, precisely:
- *   - a GUEST added a player they had not saved before (`guestSaveSignal`), and
+ *   - a GUEST completed their first durable save of this session — favouriting a
+ *     player, saving a Discovery view, or saving a comparison setup — and
  *   - this build offers accounts, and
  *   - nobody is signed in, and
  *   - it has not already been shown this browser session, and
  *   - no explicit "Not now" is inside its cooling-off window.
  *
- * Which means: never on load, never after a removal, never merely because saved
- * players exist, never for an account holder, never in an auth-free build, and
- * never from Compare — the comparison queue is not account-synchronized in this
- * phase, so offering an account there would be promising something untrue.
+ * Which means: never on load, never after a removal, never after a FAILED write,
+ * never merely because saved work exists, never for an account holder, and never
+ * in an auth-free build.
+ *
+ * ONE suggestion, three triggers. Milestone 8.4B added two more kinds of durable
+ * artifact, and giving each its own callout would mean a scout who favourites a
+ * player, saves a view and saves a comparison in one session gets asked to create
+ * an account three times. The two signals are summed and the once-per-session
+ * latch is shared, so the offer is still made once — and it is now made after
+ * whichever durable action happened to come first.
+ *
+ * It no longer excludes Compare. In 8.4A the comparison queue was not
+ * account-synchronized, so offering an account from that surface would have
+ * promised something untrue; a saved comparison SETUP genuinely does sync, so the
+ * offer is honest there now. The transient queue still does not sync, and the
+ * tray still says so.
  */
 export function AccountSuggestion() {
   const { effectiveStatus, enabled, openSignIn, openSignUp } = useAuthSession();
   const { favorites } = useScoutingState();
+  const { guestSaveSignal: savedWorkSignal } = useSavedWork();
+  // Summed rather than watched separately: any increment moves the total, and the
+  // shared once-per-session latch below means the FIRST durable save of a session
+  // is the only one that can open it.
+  const saveSignal = favorites.guestSaveSignal + savedWorkSignal;
   const [open, setOpen] = useState(false);
   // `effectiveStatus`, so this agrees with the counter and the header rather
   // than running its own idea of whether the session is known. A provider that
@@ -87,11 +106,11 @@ export function AccountSuggestion() {
     // The first observed value is the baseline, never a trigger: mounting with a
     // signal already at 3 must not open anything.
     if (lastSignal.current === null) {
-      lastSignal.current = favorites.guestSaveSignal;
+      lastSignal.current = saveSignal;
       return;
     }
-    if (favorites.guestSaveSignal === lastSignal.current) return;
-    lastSignal.current = favorites.guestSaveSignal;
+    if (saveSignal === lastSignal.current) return;
+    lastSignal.current = saveSignal;
 
     if (!eligible) return;
     if (shownThisSession()) return;
@@ -101,10 +120,11 @@ export function AccountSuggestion() {
     returnFocusTo.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
     /* eslint-disable-next-line react-hooks/set-state-in-effect --
-     * This is a reaction to a completed save, not derived render state: the save
-     * has already been written before the signal it increments is observed. */
+     * This is a reaction to a completed save, not derived render state: every
+     * signal that reaches here has already been written to browser storage, and a
+     * FAILED write never increments one. */
     setOpen(true);
-  }, [favorites.guestSaveSignal, eligible]);
+  }, [saveSignal, eligible]);
 
   /**
    * Returns focus only if it is currently INSIDE the offer. Dismissing with
@@ -160,8 +180,7 @@ export function AccountSuggestion() {
             that announcement rather than interrupting it.
           */}
           <p className="text-sm text-ink" role="status" data-testid="account-suggestion-message">
-            Saved on this device. Create an account to keep your favorites when you return or
-            switch devices.
+            Saved on this device. Create an account to keep saved work across devices.
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
@@ -174,7 +193,7 @@ export function AccountSuggestion() {
               openSignUp();
             }}
           >
-            Create account
+            Create Account
           </button>
           <button
             type="button"
@@ -185,7 +204,7 @@ export function AccountSuggestion() {
               openSignIn();
             }}
           >
-            Sign in
+            Sign In
           </button>
           <button
             type="button"
@@ -193,7 +212,7 @@ export function AccountSuggestion() {
             data-testid="account-suggestion-dismiss"
             onClick={dismiss}
           >
-            Not now
+            Not Now
           </button>
         </div>
       </div>

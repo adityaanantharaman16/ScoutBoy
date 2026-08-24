@@ -352,7 +352,7 @@ export function CompareTray() {
             className={`btn btn-primary ${queue.length < 2 ? "pointer-events-none opacity-55" : ""}`}
             aria-disabled={queue.length < 2}
           >
-            Open comparison
+            Open Comparison
           </Link>
         </div>
       </div>

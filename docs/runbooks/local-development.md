@@ -46,7 +46,7 @@ Compose requires an explicit token. Set a strong `SCOUTBOY_ADMIN_TOKEN` and expl
 `SCOUTBOY_WEB_ORIGINS` for any deployment. Compose is a delivery reference, not a hosted production
 platform.
 
-## Optional accounts (Milestone 8.4A)
+## Optional accounts and saved work (Milestones 8.4A / 8.4B)
 
 **Skip this entire section unless you specifically want to work on accounts.**
 Every command above runs the anonymous product with no Clerk tenant, no keys and
@@ -95,9 +95,38 @@ make docker-up
 | API refuses to start, `SCOUTBOY_CLERK_ISSUER is required` | `SCOUTBOY_AUTH_ENABLED=true` with no issuer |
 | API refuses to start, `must be an https URL` | An `http://` issuer or JWKS URL |
 | Build fails, `NEXT_PUBLIC_SCOUTBOY_AUTH_ENABLED is set but ...` | Forced on without a publishable key |
-| `/api/me/favorites` returns **503** | The API has accounts disabled |
+| `/api/me/favorites` or `/api/me/saved-views` returns **503** | The API has accounts disabled |
 | `/api/me/favorites` returns **401** with `authorized party is not accepted` | The browser origin is missing from `SCOUTBOY_CLERK_AUTHORIZED_PARTIES` |
 | `/api/me/favorites` returns **401** with `issuer is not accepted` | Frontend and backend point at different Clerk instances |
 | Account UI missing while signed in elsewhere | The web build was made without the publishable key |
+
+### Saved work (8.4B)
+
+Saved Discovery views and saved comparison setups need **no configuration at all**.
+They work in the plain anonymous stack above, stored in browser storage under
+`scoutboy.savedViews.v1` and `scoutboy.savedComparisons.v1`. Enabling Clerk with
+the four variables above is what additionally synchronizes them to an account, via
+`/api/me/saved-views` and `/api/me/saved-comparisons`.
+
+Useful during development:
+
+```bash
+# Inspect a device collection from the browser console.
+JSON.parse(localStorage.getItem("scoutboy.savedViews.v1"))
+JSON.parse(localStorage.getItem("scoutboy.savedComparisons.v1"))
+
+# Reset just the saved work, leaving My Favorites and the compare queue alone.
+localStorage.removeItem("scoutboy.savedViews.v1")
+localStorage.removeItem("scoutboy.savedComparisons.v1")
+```
+
+Both keys hold a `{"version": 1, "items": [...]}` envelope. Hand-editing one to an
+unknown version, malformed JSON or a bare array is a supported way to exercise the
+recovery paths: the surface renders its empty state rather than throwing, and
+nothing is deleted from storage.
+
+`make db-migrate` applies `0008_saved_work`. Downgrading it
+(`.venv/bin/alembic downgrade 0007_optional_accounts`) removes only the two 8.4B
+tables and leaves 8.4A accounts and favourites working.
 
 Never commit real Clerk keys. `.env` is untracked; keep it that way.

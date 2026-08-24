@@ -72,10 +72,53 @@ Controls that are in force on that boundary:
   Backend tests generate an RSA key pair in-process and verify real tokens against it; frontend
   tests inject the application's own auth boundary.
 
+## Saved work (Milestone 8.4B)
+
+8.4B extends the same optional-account boundary to two further durable collections: saved Discovery
+views and saved comparison setups. It introduces no new configuration, no new secret, and no new
+identity mechanism - the six new `/api/me/*` routes are authorized by exactly the token verification
+described above, and answer 503 when no identity provider is configured.
+
+Controls specific to this surface:
+
+- **No arbitrary string reaches storage.** A saved Discovery view is a fixed set of typed,
+  individually bounded columns - never a URL, query string, redirect target or opaque blob. A saved
+  comparison is two integer player references plus a role key. There is no field anywhere in the
+  contract that accepts a URL, so `javascript:` and `data:` payloads are unrepresentable rather than
+  filtered.
+- **No analytical result is persisted.** A saved comparison stores participants and a role and has
+  no column for a score, conclusion, confidence value or evidence summary, so a stale figure cannot
+  later be presented as current.
+- **Ownership stays unrepresentable from outside.** No `user_id` path parameter, no owner field in
+  any body, no header outside `Authorization` that names a person. The `client_id` in a path
+  addresses a row *within* the caller's own account; a well-formed id belonging to another account
+  resolves to nothing, and a rename of one returns 404 - the same shape as "does not exist" - so the
+  response is not an existence oracle. Every service function takes an account object, never an id.
+- **`client_id` is a canonical UUID on both the body and the path**, declared once and applied to
+  both. Queries are parameterized throughout.
+- **Reads and no-op mutations create no account row.** An idempotent delete, a rename of a
+  non-existent item, and a merge with nothing storable all leave no database trace.
+- **Bounded everywhere:** 200 items per merge body, 200 items per collection per account, 80-character
+  labels, 120-character free-text filter predicates, and schema ceilings on every numeric bound.
+- **Labels are plain text and are stored verbatim.** They are rendered as React text and are never
+  interpolated into markup, a URL or SQL. Explicit tests store `<img src=x onerror=alert(1)>` and
+  `<script>alert(1)</script>` and assert that neither becomes markup, at the API, unit and E2E layers.
+  Control characters (C0, DEL, C1, U+2028/U+2029) are rejected.
+- **Enumerated values are checked against live configuration** (roles, sorts, position groups,
+  playstyles), so a saved view cannot hold a filter the interface cannot display or the API accept.
+- **No account data is written to browser storage**, and private query caches are partitioned by
+  account key and dropped on identity change.
+
+Deleting an account cascades its saved work. Deleting a *player* does not: the comparison foreign
+keys are `ON DELETE SET NULL`, so a data refresh cannot silently destroy a scout's saved setups, and
+the interface reports the unavailable side honestly instead of resolving a dangling reference.
+
+See `docs/milestone_8_4b_saved_work.md`.
+
 This phase is **not** the comprehensive security audit planned for Milestone 9. Rate limiting on
 the private endpoints, audit logging, a formal threat model, security headers/CSP, penetration
 testing, and a data-retention and deletion policy all remain outstanding. See
-`docs/milestone_8_4a_optional_accounts.md`.
+`docs/milestone_8_4a_optional_accounts.md` and `docs/milestone_8_4b_saved_work.md`.
 
 Never commit credentials, `.env` files, Clerk keys, database dumps, raw provider payloads, or
 licensed data. Rotate any credential immediately if it is exposed, even if a later commit removes

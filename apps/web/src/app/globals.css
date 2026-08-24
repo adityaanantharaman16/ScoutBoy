@@ -1034,7 +1034,18 @@ select.input[size]:not([size="1"]) {
      applied to the whole pane as one atomic unit — which is what guarantees the
      result count and the rows can never be seen disagreeing. No stagger, no
      fly-in, no reorder animation. Mount-triggered, so it needs no key, no
-     state, and no timer. */
+     state, and no timer.
+
+     NOT for a pane whose text is close to its contrast floor. A browser
+     composites this opacity into the text colour, so mid-fade the ink really is
+     a blend with the paper behind it. `--ink-soft` on `--panel` rests at 5.39:1
+     against SC 1.4.3's 4.5:1, which the blend breaches from about 93% opacity
+     downward — so every frame of the fade is a frame that text is not legible
+     enough. `EmptyState` and `ErrorState` therefore appear in one commit instead
+     (see components/common/index.tsx); the populated results pane, whose content
+     is `--ink` at ~15:1, keeps this treatment. Raising the keyframe's floor is
+     not an alternative: the only floors that stay compliant are visually
+     indistinguishable from no fade. */
   .pane-enter {
     animation: sb-fade-in var(--motion-enter) var(--motion-ease-out);
   }

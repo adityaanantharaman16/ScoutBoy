@@ -1,5 +1,33 @@
 # Milestone 8 — Discovery Contract & Advanced Discovery
 
+## Phase index
+
+| Phase | Subject | Record |
+| --- | --- | --- |
+| 8.1A | Discovery contract correctness | this document |
+| 8.1B | Discovery query execution moves into the database | this document |
+| 8.2 | Advanced Discovery interface (+ corrective pass) | this document |
+| 8.3 | Deterministic ranking explanation | this document |
+| 8.4A | Optional accounts and durable favorites | [`milestone_8_4a_optional_accounts.md`](milestone_8_4a_optional_accounts.md) |
+| 8.4B | Saved work and decision continuity | [`milestone_8_4b_saved_work.md`](milestone_8_4b_saved_work.md) |
+| 8.5 | Cross-surface terminology audit | not started |
+| 8.6 | Milestone closeout | not started |
+
+Phases 8.4A and 8.4B introduce an optional account boundary and durable saved
+work, so they carry their own records rather than extending this one. Everything
+they touch in Discovery is additive: the filter rail, its URL contract, the
+ranking explanation and the ledger are unchanged in behaviour.
+
+**8.4B does change one thing this document owns**, and it is a consolidation
+rather than a new rule. The canonical serialization of a Discovery view — which
+parameters a filter state carries, which defaults are omitted, how a legacy
+`age_band` normalizes, how an off-stop age snaps, how an incoherent inclusive pair
+resolves — moved out of `SearchExperience` into
+`apps/web/src/lib/filters/canonical.ts`, so the rail, the URL, saved-view identity,
+reopening, device storage and the API contract all derive it from one place. The
+rules themselves are exactly the ones this document already specifies; they simply
+now have a single implementation. See §2 of the 8.4B record.
+
 ## Phase 8.1A — Discovery contract correctness
 
 **Status: complete — supervisory audit passed 2026-08-16.**

@@ -32,6 +32,26 @@ from .player import (
 )
 from .ratings import AuditBreakdown, RoleRatingDetail
 from .roles import RoleLeaderboard, RoleRankingRow
+from .saved_work import (
+    MAX_COLLECTION_ITEMS,
+    MAX_MERGE_ITEMS,
+    DiscoveryViewFilters,
+    MergeRejection,
+    SavedComparisonInput,
+    SavedComparisonMutationResponse,
+    SavedComparisonRecord,
+    SavedComparisonSide,
+    SavedComparisonsMergeRequest,
+    SavedComparisonsMergeResponse,
+    SavedComparisonsResponse,
+    SavedLabel,
+    SavedViewInput,
+    SavedViewMutationResponse,
+    SavedViewRecord,
+    SavedViewsMergeRequest,
+    SavedViewsMergeResponse,
+    SavedViewsResponse,
+)
 from .similar import SimilarGroup, SimilarPlayer, SimilarResponse
 
 __all__ = [
@@ -70,4 +90,22 @@ __all__ = [
     "FavoritesMergeRequest",
     "FavoritesMergeResponse",
     "MAX_MERGE_PLAYER_IDS",
+    "DiscoveryViewFilters",
+    "SavedLabel",
+    "SavedViewInput",
+    "SavedViewRecord",
+    "SavedViewsResponse",
+    "SavedViewMutationResponse",
+    "SavedViewsMergeRequest",
+    "SavedViewsMergeResponse",
+    "SavedComparisonInput",
+    "SavedComparisonSide",
+    "SavedComparisonRecord",
+    "SavedComparisonsResponse",
+    "SavedComparisonMutationResponse",
+    "SavedComparisonsMergeRequest",
+    "SavedComparisonsMergeResponse",
+    "MergeRejection",
+    "MAX_MERGE_ITEMS",
+    "MAX_COLLECTION_ITEMS",
 ]

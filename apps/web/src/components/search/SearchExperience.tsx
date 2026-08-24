@@ -4,22 +4,21 @@ import { useMemo } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 import { PageHeader, ScopeBanner } from "@/components/common";
-import { SCOPE_BANNER, SEARCH_SCOPE_KEYS } from "@/lib/constants";
+import { SaveViewControl } from "@/components/saved/SaveViewControl";
 import {
-  ageBounds,
-  ageSelectionFromBounds,
-  coherentBounds,
-  DEFAULT_DISCOVERY_FILTERS,
-  legacyAgeBandSelection,
-  parseAgeBound,
-  parseAskingEur,
-  parseMinutesThreshold,
-  parsePage,
-  parsePageSize,
-  parseRoleFitThreshold,
-  parseSortOption,
-  parseTextFilter,
-} from "@/lib/filters";
+  DEFAULT_PAGE,
+  DEFAULT_PAGE_SIZE,
+  DEFAULT_SEARCH_SCOPE,
+  DEFAULT_SORT,
+  SCOPE_BANNER,
+  SEARCH_SCOPE_KEYS,
+} from "@/lib/constants";
+import { DEFAULT_DISCOVERY_FILTERS, parsePage } from "@/lib/filters";
+import {
+  discoveryViewFromFilters,
+  discoveryViewFromParams,
+  discoveryViewToParams,
+} from "@/lib/filters/canonical";
 import { activeCriteria } from "@/lib/filters/criteria";
 import type { SearchFilters } from "@/lib/api/hooks";
 import { usePlaystyleOptions } from "@/lib/api/hooks";
@@ -28,6 +27,19 @@ import { PlayerSearchFilters } from "./PlayerSearchFilters";
 import { PlayerSearchResults } from "./PlayerSearchResults";
 
 const DEFAULT_FILTERS: SearchFilters = { ...DEFAULT_DISCOVERY_FILTERS };
+
+/**
+ * The Analysis Scope a URL carries, validated.
+ *
+ * Not a Discovery control any more (Phase 8.1A retired it) and deliberately not
+ * part of a saved view — but a scope-bearing URL must still load and still mean
+ * what it said, so it is validated here and carried through the request. Unknown
+ * values fall back to the default rather than reaching the API.
+ */
+function scopeFromParams(params: URLSearchParams): string {
+  const scope = params.get("scope") ?? DEFAULT_SEARCH_SCOPE;
+  return (SEARCH_SCOPE_KEYS as readonly string[]).includes(scope) ? scope : DEFAULT_SEARCH_SCOPE;
+}
 
 export function SearchExperience() {
   const pathname = usePathname();
@@ -42,89 +54,49 @@ export function SearchExperience() {
    */
   const playstyleOptions = usePlaystyleOptions();
 
+  /**
+   * The canonical Discovery view this URL means.
+   *
+   * ONE hydration path, shared with saved views, saved-view identity, device
+   * storage and the API contract (see `lib/filters/canonical.ts`). Every
+   * normalization the rail needs — legacy `age_band`, off-stop age snapping,
+   * single-sided age bounds, coherent inclusive pairs, domain-correct clamping,
+   * unrepresentable sort falling back to the default — happens in there, so a
+   * hard load, a back/forward restore and a reopened saved view cannot produce
+   * three different states from the same parameters.
+   */
+  const view = useMemo(
+    () => discoveryViewFromParams(new URLSearchParams(searchParams.toString())),
+    [searchParams],
+  );
+
   const filters = useMemo<SearchFilters>(() => {
-    const scope = searchParams.get("scope") ?? DEFAULT_DISCOVERY_FILTERS.scope;
-
-    // Age hydration, in precedence order:
-    //   1. explicit age_min / age_max (what the control writes)
-    //   2. a legacy age_band, normalized once into a one-sided threshold
-    //   3. no age bound at all
-    // Whichever wins is re-expressed through `ageBounds`, so the request can only
-    // ever carry a snapped, single-sided bound — never an off-stop value, never
-    // both sides, and never `age_band` itself.
-    const explicitAge = ageSelectionFromBounds(
-      parseAgeBound(searchParams.get("age_min")),
-      parseAgeBound(searchParams.get("age_max")),
-    );
-    const ageSelection =
-      explicitAge.direction != null
-        ? explicitAge
-        : (legacyAgeBandSelection(searchParams.get("age_band")) ?? explicitAge);
-
-    // Inclusive pairs are made coherent on the way in, not just on the way out.
-    // A hand-crafted `?rolefit_min=80&rolefit_max=20` (or the market equivalent,
-    // which the API answers with a 422) has no edited side, so the documented
-    // rule treats the MINIMUM as authoritative and raises the ceiling to it. The
-    // control, the active summary and the request therefore all read 80-80, and
-    // the next interaction writes that canonical pair back to the URL.
-    const roleFit = coherentBounds(
-      parseRoleFitThreshold(searchParams.get("rolefit_min")),
-      parseRoleFitThreshold(searchParams.get("rolefit_max")),
-      "min",
-    );
-    const asking = coherentBounds(
-      parseAskingEur(searchParams.get("value_min")),
-      parseAskingEur(searchParams.get("value_max")),
-      "min",
-    );
-
+    const params = new URLSearchParams(searchParams.toString());
     return {
       ...DEFAULT_FILTERS,
-      q: parseTextFilter(searchParams.get("q")),
-      // Not a Discovery control any more, but a scope-bearing URL must still load
-      // and still mean what it said. Unknown values fall back to the default.
-      scope: (SEARCH_SCOPE_KEYS as readonly string[]).includes(scope)
-        ? scope
-        : DEFAULT_DISCOVERY_FILTERS.scope,
-      ...ageBounds(ageSelection),
-      position_group: searchParams.get("position_group") || undefined,
-      role: searchParams.get("role") || undefined,
-      // Phase 8.2 Context group. Case-insensitive substring for league and club,
-      // case-insensitive EQUALITY for nationality — the backend's own semantics;
-      // nothing is re-filtered in the browser.
-      league: parseTextFilter(searchParams.get("league")),
-      club: parseTextFilter(searchParams.get("club")),
-      nationality: parseTextFilter(searchParams.get("nationality")),
-      playstyle: parseTextFilter(searchParams.get("playstyle")),
-      // Clamped on the way in as well as on the way out, through the parser for the
-      // right DOMAIN in each case: a hand-crafted ?rolefit_min=-5 or
-      // ?min_minutes=25000 never reaches the API unbounded, and a realistic
-      // ?min_minutes=1500 is no longer crushed to 99 by a RoleFit-shaped ceiling.
-      min_minutes: parseMinutesThreshold(searchParams.get("min_minutes")),
-      rolefit_min: roleFit.min,
-      rolefit_max: roleFit.max,
-      // Absolute EUR, exactly as the API contract states. The rail types these in
-      // millions; the conversion happens in the control, never in the URL.
-      value_min: asking.min,
-      value_max: asking.max,
-      // Unknown or unrepresentable values are replaced by the defaults rather than
-      // forwarded, so the API never sees a request the rail cannot also display.
-      sort: parseSortOption(searchParams.get("sort")),
-      page: parsePage(searchParams.get("page")) ?? DEFAULT_FILTERS.page,
-      page_size: parsePageSize(searchParams.get("page_size")) ?? DEFAULT_FILTERS.page_size,
+      ...view,
+      // The three request fields a canonical view deliberately does not carry.
+      scope: scopeFromParams(params),
+      sort: view.sort ?? DEFAULT_SORT,
+      page_size: view.page_size ?? DEFAULT_PAGE_SIZE,
+      page: parsePage(params.get("page")) ?? DEFAULT_PAGE,
     };
-  }, [searchParams]);
+  }, [searchParams, view]);
 
   const setFilters = (next: SearchFilters) => {
-    const params = new URLSearchParams();
-    Object.entries(next).forEach(([key, value]) => {
-      if (value == null || value === "") return;
-      if (key === "scope" && value === DEFAULT_FILTERS.scope) return;
-      if (key === "sort" && value === DEFAULT_FILTERS.sort) return;
-      if (key === "page" && value === DEFAULT_FILTERS.page) return;
-      if (key === "page_size" && value === DEFAULT_FILTERS.page_size) return;
-      params.set(key, String(value));
-    });
+    // Serialized through the SAME canonicalizer that parsed it, so the URL the
+    // rail writes and the URL a saved view opens are byte-identical for the same
+    // cohort. Before this, the two derived their own default-omission rules and
+    // could disagree about whether `?sort=rolefit_desc` was part of the view.
+    const params = discoveryViewToParams(discoveryViewFromFilters(next as Record<string, unknown>));
+
+    // Page and scope are request state, not view state, so they are appended
+    // here. Both are omitted at their defaults, which is what keeps the root URL
+    // clean and keeps a saved view's href free of a page number.
+    if (next.page != null && next.page !== DEFAULT_PAGE) params.set("page", String(next.page));
+    const scope = next.scope ?? DEFAULT_SEARCH_SCOPE;
+    if (scope !== DEFAULT_SEARCH_SCOPE) params.set("scope", scope);
+
     const suffix = params.toString();
     const url = suffix ? `${pathname}?${suffix}` : pathname;
 
@@ -186,6 +158,28 @@ export function SearchExperience() {
         eyebrow="Player discovery"
         title="Discover players"
         lead="Scan the available player pool and narrow it down. Detailed RoleFit analysis is shown only where evidence supports it."
+        /**
+         * Save view lives in the heading's existing control slot.
+         *
+         * Not in the FILTER RAIL: it is 248px wide and already intentionally
+         * dense, and adding collection management there would push the controls a
+         * scout came for below the fold.
+         *
+         * Not in a new bar above the ledger either, which is the more obvious
+         * "results-level" spot: the ledger's own count header is deliberately
+         * INSIDE its bordered container precisely so the rail and the ledger start
+         * at the same y on desktop without a faked spacer. A row above the ledger
+         * would reintroduce exactly the misalignment that arrangement exists to
+         * avoid.
+         *
+         * This slot is always present, so a cohort with no matches — the case
+         * where coming back later matters most — can still be saved.
+         */
+        aside={
+          <div className="flex justify-start sm:justify-end">
+            <SaveViewControl view={view} />
+          </div>
+        }
       />
       {/* Filter rail (subordinate) beside the results ledger on desktop; stacked
           above the ledger on tablet/mobile. */}

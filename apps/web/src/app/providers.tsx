@@ -7,6 +7,7 @@ import { BottomRail } from "@/components/common/BottomRail";
 import { ScoutingLiveRegion } from "@/components/common/PlayerActions";
 import { ClerkAuthProvider } from "@/lib/auth/clerk-session";
 import { AUTH_ENABLED, DisabledAuthProvider } from "@/lib/auth/session";
+import { SavedWorkProvider } from "@/lib/state/saved-work";
 import { ScoutingStateProvider } from "@/lib/state/scouting-state";
 
 /**
@@ -32,10 +33,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={client}>
       <AuthBoundary>
+        {/* Siblings, not one nested inside the other: My Favorites, saved views
+            and saved comparisons are three INDEPENDENT durable collections, and a
+            failed saved-views merge must not be able to disturb the favourites
+            state machine. The account suggestion reads a save signal from both and
+            offers itself once. */}
         <ScoutingStateProvider>
-          {children}
-          <BottomRail />
-          <ScoutingLiveRegion />
+          <SavedWorkProvider>
+            {children}
+            <BottomRail />
+            <ScoutingLiveRegion />
+          </SavedWorkProvider>
         </ScoutingStateProvider>
       </AuthBoundary>
     </QueryClientProvider>

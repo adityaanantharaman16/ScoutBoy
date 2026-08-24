@@ -1590,6 +1590,532 @@
         ]
       }
     },
+    "/api/me/saved-views": {
+      "get": {
+        "tags": [
+          "account"
+        ],
+        "summary": "List Saved Views",
+        "description": "The account's canonical ordered saved Discovery views. **Never writes.**",
+        "operationId": "list_saved_views_api_me_saved_views_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedViewsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, expired, forged or misscoped token."
+          },
+          "503": {
+            "description": "This deployment has no identity provider configured."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "account"
+        ],
+        "summary": "Save View",
+        "description": "Idempotently store one saved Discovery view.\n\nIdempotent on two independent identities: the canonical fingerprint of the\nfilter state (so saving the same configuration again renames the existing view\nrather than duplicating it) and the client-generated id (so a create whose\nresponse was lost is retried onto the same row).",
+        "operationId": "save_view_api_me_saved_views_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavedViewInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedViewMutationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, expired, forged or misscoped token."
+          },
+          "503": {
+            "description": "This deployment has no identity provider configured."
+          },
+          "422": {
+            "description": "Unrepresentable filters, an unknown key, or a full collection."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/saved-views/merge": {
+      "post": {
+        "tags": [
+          "account"
+        ],
+        "summary": "Merge Saved Views",
+        "description": "Union a guest's device saved views into the signed-in account.\n\nExisting account views keep their order AND their labels; previously unseen\ndevice views are appended in device order. Items whose filters no longer\nvalidate are reported in `rejected` rather than stored, so a stale device\nartifact can never write an unrepresentable filter into the account.",
+        "operationId": "merge_saved_views_api_me_saved_views_merge_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavedViewsMergeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedViewsMergeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, expired, forged or misscoped token."
+          },
+          "503": {
+            "description": "This deployment has no identity provider configured."
+          },
+          "409": {
+            "description": "A concurrent change prevented the merge from completing; retry."
+          },
+          "422": {
+            "description": "Unrepresentable filters, an unknown key, or a full collection."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/saved-views/{client_id}": {
+      "patch": {
+        "tags": [
+          "account"
+        ],
+        "summary": "Rename Saved View",
+        "description": "Rename one saved view. 404 when this account has no such item.\n\nDeliberately on the read dependency: renaming something that does not exist\nstores nothing, so it must not be the request that creates an account row.",
+        "operationId": "rename_saved_view_api_me_saved_views__client_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 36,
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "description": "The saved view to rename.",
+              "title": "Client Id"
+            },
+            "description": "The saved view to rename."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavedLabel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedViewMutationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, expired, forged or misscoped token."
+          },
+          "503": {
+            "description": "This deployment has no identity provider configured."
+          },
+          "404": {
+            "description": "No such saved item on this account."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "account"
+        ],
+        "summary": "Remove Saved View",
+        "description": "Idempotently remove one saved view.\n\nNever 404s: the caller's goal is \"this view is not on my list\", and for an id\nthat is not there that is already true, so a retried delete behaves exactly\nlike the first attempt. Creates no account row for the same reason a removal\nstores nothing.",
+        "operationId": "remove_saved_view_api_me_saved_views__client_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 36,
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "description": "The saved view to remove.",
+              "title": "Client Id"
+            },
+            "description": "The saved view to remove."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedViewMutationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, expired, forged or misscoped token."
+          },
+          "503": {
+            "description": "This deployment has no identity provider configured."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/saved-comparisons": {
+      "get": {
+        "tags": [
+          "account"
+        ],
+        "summary": "List Saved Comparisons",
+        "description": "The account's canonical ordered saved comparison setups. **Never writes.**\n\nA side whose player has since been removed is reported with `player_id: null`,\n`available: false` and the name it was saved under - never as a player that\nstill exists, and never by silently dropping the saved setup.",
+        "operationId": "list_saved_comparisons_api_me_saved_comparisons_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedComparisonsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, expired, forged or misscoped token."
+          },
+          "503": {
+            "description": "This deployment has no identity provider configured."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "account"
+        ],
+        "summary": "Save Comparison",
+        "description": "Idempotently store one saved comparison setup.\n\nBoth players must exist at the moment the setup is first saved, so a stale\ndevice artifact cannot manufacture the \"player unavailable\" state. A player\nremoved AFTERWARDS is a different thing entirely, and the saved setup survives\nit.",
+        "operationId": "save_comparison_api_me_saved_comparisons_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavedComparisonInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedComparisonMutationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, expired, forged or misscoped token."
+          },
+          "503": {
+            "description": "This deployment has no identity provider configured."
+          },
+          "422": {
+            "description": "Unrepresentable filters, an unknown key, or a full collection."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/saved-comparisons/merge": {
+      "post": {
+        "tags": [
+          "account"
+        ],
+        "summary": "Merge Saved Comparisons",
+        "description": "Union a guest's device comparison setups into the signed-in account.",
+        "operationId": "merge_saved_comparisons_api_me_saved_comparisons_merge_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavedComparisonsMergeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedComparisonsMergeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, expired, forged or misscoped token."
+          },
+          "503": {
+            "description": "This deployment has no identity provider configured."
+          },
+          "409": {
+            "description": "A concurrent change prevented the merge from completing; retry."
+          },
+          "422": {
+            "description": "Unrepresentable filters, an unknown key, or a full collection."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/saved-comparisons/{client_id}": {
+      "patch": {
+        "tags": [
+          "account"
+        ],
+        "summary": "Rename Saved Comparison",
+        "description": "Rename one saved comparison. 404 when this account has no such item.",
+        "operationId": "rename_saved_comparison_api_me_saved_comparisons__client_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 36,
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "description": "The saved comparison to rename.",
+              "title": "Client Id"
+            },
+            "description": "The saved comparison to rename."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavedLabel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedComparisonMutationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, expired, forged or misscoped token."
+          },
+          "503": {
+            "description": "This deployment has no identity provider configured."
+          },
+          "404": {
+            "description": "No such saved item on this account."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "account"
+        ],
+        "summary": "Remove Saved Comparison",
+        "description": "Idempotently remove one saved comparison. Never 404s, and creates no row.",
+        "operationId": "remove_saved_comparison_api_me_saved_comparisons__client_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 36,
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "description": "The saved comparison to remove.",
+              "title": "Client Id"
+            },
+            "description": "The saved comparison to remove."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedComparisonMutationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed, expired, forged or misscoped token."
+          },
+          "503": {
+            "description": "This deployment has no identity provider configured."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/healthz": {
       "get": {
         "tags": [
@@ -2499,6 +3025,218 @@
         "title": "DiscoverySearchResponse",
         "description": "One page of Discovery results, plus which ordering produced them.\n\nThe five pagination fields are exactly the ones ``Paginated`` has always\ncarried, in the same shape, so every existing client keeps working unchanged.\n``ranking`` is additive."
       },
+      "DiscoveryViewFilters": {
+        "properties": {
+          "q": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Q"
+          },
+          "position_group": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16,
+                "minLength": 1,
+                "pattern": "^[A-Z]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Group"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "league": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "League"
+          },
+          "club": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Club"
+          },
+          "nationality": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nationality"
+          },
+          "playstyle": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Playstyle"
+          },
+          "age_min": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Min"
+          },
+          "age_max": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Max"
+          },
+          "min_minutes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Minutes"
+          },
+          "rolefit_min": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 99.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rolefit Min"
+          },
+          "rolefit_max": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 99.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rolefit Max"
+          },
+          "value_min": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000000000000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Min"
+          },
+          "value_max": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000000000000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Max"
+          },
+          "sort": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort"
+          },
+          "page_size": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Size"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "DiscoveryViewFilters",
+        "description": "The representable Discovery state, as typed fields.\n\nAbsent (`None`) means \"this criterion is not part of the view\", which is the\nsame thing omitting the parameter from the URL means. There is no sentinel and\nno empty string standing in for absence - `model_config` forbids unknown keys,\nso a stale or hand-crafted body carrying `scope`, `universe`, `age_band` or\n`page` is a 422 rather than a silently ignored extra.\n\nTwo parameters are deliberately unrepresentable:\n\n* `scope` / `universe` - Analysis Scope was retired from Discovery in Phase\n  8.1A. A legacy URL still loads, but nothing may persist it.\n* `page` - opening a saved view always starts on page 1, so the page number is\n  not part of what a view means."
+      },
       "FaceStat": {
         "properties": {
           "group_key": {
@@ -2812,6 +3550,27 @@
         },
         "type": "object",
         "title": "MarketPanel"
+      },
+      "MergeRejection": {
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "title": "Client Id",
+            "description": "The device item this concerns."
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "A short, non-echoing explanation, e.g. 'unknown role' or 'player not found'."
+          }
+        },
+        "type": "object",
+        "required": [
+          "client_id",
+          "reason"
+        ],
+        "title": "MergeRejection",
+        "description": "One device item the server refused, and why.\n\nA rejection is reported rather than silently dropped, so the device can show\nthe scout exactly which saved item could not travel and let them fix or delete\nit - the alternative is a merge that quietly loses work and reports success."
       },
       "MethodologyResponse": {
         "properties": {
@@ -4159,6 +4918,530 @@
           "confidence"
         ],
         "title": "RoleRatingSummary"
+      },
+      "SavedComparisonInput": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Label",
+            "description": "User-authored plain text. Outer whitespace is trimmed; control characters are rejected; the value is never interpreted as markup, a URL or a redirect target."
+          },
+          "client_id": {
+            "type": "string",
+            "maxLength": 36,
+            "minLength": 1,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "title": "Client Id",
+            "description": "A client-generated UUID, so a retried create cannot duplicate a row."
+          },
+          "player_a_id": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Player A Id",
+            "description": "Player 1 - a meaningful screen position."
+          },
+          "player_b_id": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Player B Id",
+            "description": "Player 2 - a meaningful screen position."
+          },
+          "player_a_label": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Player A Label",
+            "description": "Player 1's display name at save time, so a later deletion can be explained."
+          },
+          "player_b_label": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Player B Label",
+            "description": "Player 2's display name at save time."
+          },
+          "role_key": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role Key",
+            "description": "The explicitly selected role. Automatic Role is canonically null."
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "client_id",
+          "player_a_id",
+          "player_b_id",
+          "player_a_label",
+          "player_b_label"
+        ],
+        "title": "SavedComparisonInput",
+        "description": "One saved comparison setup, as a client offers it.\n\nA SETUP, not a result: two ordered player ids and an optional role. There is\ndeliberately no field for a score, conclusion, confidence value or evidence\nsummary, so a stale analytical number cannot be persisted and later shown as\nthough it were current."
+      },
+      "SavedComparisonMutationResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SavedComparisonRecord"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "Oldest saved first."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of saved comparisons on the account."
+          },
+          "item": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SavedComparisonRecord"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The affected setup, or null when a removal left nothing to report."
+          },
+          "disposition": {
+            "type": "string",
+            "title": "Disposition",
+            "description": "'created', 'updated', 'removed' or 'unchanged'."
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "count",
+          "item",
+          "disposition"
+        ],
+        "title": "SavedComparisonMutationResponse",
+        "description": "The canonical list after one create, upsert or rename, plus what happened."
+      },
+      "SavedComparisonRecord": {
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "title": "Client Id",
+            "description": "The stable id this setup is addressed by."
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "The user-authored plain-text name."
+          },
+          "player_a": {
+            "$ref": "#/components/schemas/SavedComparisonSide",
+            "description": "Player 1."
+          },
+          "player_b": {
+            "$ref": "#/components/schemas/SavedComparisonSide",
+            "description": "Player 2."
+          },
+          "role_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role Key",
+            "description": "The saved role, or null for Automatic Role."
+          },
+          "fingerprint": {
+            "type": "string",
+            "title": "Fingerprint",
+            "description": "Server-computed canonical identity of the ordered pair and role."
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At",
+            "description": "ISO-8601 UTC timestamp of first save."
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At",
+            "description": "ISO-8601 UTC timestamp of the last change."
+          }
+        },
+        "type": "object",
+        "required": [
+          "client_id",
+          "label",
+          "player_a",
+          "player_b",
+          "role_key",
+          "fingerprint",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "SavedComparisonRecord",
+        "description": "One saved comparison setup, as the server reports it."
+      },
+      "SavedComparisonSide": {
+        "properties": {
+          "player_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Player Id",
+            "description": "The player, or null once that player is no longer available."
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "The display name saved with the setup."
+          },
+          "available": {
+            "type": "boolean",
+            "title": "Available",
+            "description": "False when the player has been removed since the setup was saved."
+          }
+        },
+        "type": "object",
+        "required": [
+          "player_id",
+          "label",
+          "available"
+        ],
+        "title": "SavedComparisonSide",
+        "description": "One participant, reported honestly whether or not the player still exists."
+      },
+      "SavedComparisonsMergeRequest": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SavedComparisonInput"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "Items",
+            "description": "Ordered device saved comparisons."
+          }
+        },
+        "type": "object",
+        "title": "SavedComparisonsMergeRequest",
+        "description": "A guest's device comparison setups, offered to the account."
+      },
+      "SavedComparisonsMergeResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SavedComparisonRecord"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "Oldest saved first."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of saved comparisons on the account."
+          },
+          "added": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Added",
+            "description": "Device client_ids appended, in device order."
+          },
+          "already_present": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Already Present",
+            "description": "Device client_ids whose canonical identity the account already held."
+          },
+          "rejected": {
+            "items": {
+              "$ref": "#/components/schemas/MergeRejection"
+            },
+            "type": "array",
+            "title": "Rejected",
+            "description": "Device items that failed validation. Nothing was stored for these."
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "count",
+          "added",
+          "already_present",
+          "rejected"
+        ],
+        "title": "SavedComparisonsMergeResponse",
+        "description": "The canonical list after a merge, and what happened to each input item."
+      },
+      "SavedComparisonsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SavedComparisonRecord"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "Oldest saved first."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of saved comparisons on the account."
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "count"
+        ],
+        "title": "SavedComparisonsResponse",
+        "description": "The account's canonical, ordered saved comparison setups."
+      },
+      "SavedLabel": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Label",
+            "description": "User-authored plain text. Outer whitespace is trimmed; control characters are rejected; the value is never interpreted as markup, a URL or a redirect target."
+          }
+        },
+        "type": "object",
+        "required": [
+          "label"
+        ],
+        "title": "SavedLabel",
+        "description": "The one label rule, shared by both artifact types and by rename."
+      },
+      "SavedViewInput": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Label",
+            "description": "User-authored plain text. Outer whitespace is trimmed; control characters are rejected; the value is never interpreted as markup, a URL or a redirect target."
+          },
+          "client_id": {
+            "type": "string",
+            "maxLength": 36,
+            "minLength": 1,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "title": "Client Id",
+            "description": "A client-generated UUID, so a retried create cannot duplicate a row."
+          },
+          "filters": {
+            "$ref": "#/components/schemas/DiscoveryViewFilters",
+            "description": "The representable Discovery state. An empty object is the unfiltered view."
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "client_id"
+        ],
+        "title": "SavedViewInput",
+        "description": "One saved Discovery view, as a client offers it."
+      },
+      "SavedViewMutationResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SavedViewRecord"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "Oldest saved first, with the stable row id breaking ties inside one merge."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of saved views on the account."
+          },
+          "item": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SavedViewRecord"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The affected view, or null when a removal left nothing to report."
+          },
+          "disposition": {
+            "type": "string",
+            "title": "Disposition",
+            "description": "'created' when a new view was stored, 'updated' when an existing logical view was renamed or refreshed, 'removed' after a delete, and 'unchanged' when the request was already satisfied."
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "count",
+          "item",
+          "disposition"
+        ],
+        "title": "SavedViewMutationResponse",
+        "description": "The canonical list after one create, upsert or rename, plus what happened."
+      },
+      "SavedViewRecord": {
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "title": "Client Id",
+            "description": "The stable id this view is addressed by."
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "The user-authored plain-text name."
+          },
+          "filters": {
+            "$ref": "#/components/schemas/DiscoveryViewFilters",
+            "description": "The representable Discovery state."
+          },
+          "fingerprint": {
+            "type": "string",
+            "title": "Fingerprint",
+            "description": "Server-computed canonical identity of the filter state."
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At",
+            "description": "ISO-8601 UTC timestamp of first save."
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At",
+            "description": "ISO-8601 UTC timestamp of the last change."
+          }
+        },
+        "type": "object",
+        "required": [
+          "client_id",
+          "label",
+          "filters",
+          "fingerprint",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "SavedViewRecord",
+        "description": "One saved Discovery view, as the server reports it.\n\n`fingerprint` is included so a client can recognise its own logical duplicate\nwithout re-deriving the rule. It is computed server-side from the stored,\nvalidated fields, so two clients cannot disagree about what a view means and\nno client can split one logical view into two by sending its own digest."
+      },
+      "SavedViewsMergeRequest": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SavedViewInput"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "Items",
+            "description": "Ordered device saved views. Items already present by canonical identity keep the account's existing label and position; items that fail validation are reported back rather than stored."
+          }
+        },
+        "type": "object",
+        "title": "SavedViewsMergeRequest",
+        "description": "A guest's device collection, offered to the account it just signed in to."
+      },
+      "SavedViewsMergeResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SavedViewRecord"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "Oldest saved first, with the stable row id breaking ties inside one merge."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of saved views on the account."
+          },
+          "added": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Added",
+            "description": "Device client_ids appended to the account, in device order."
+          },
+          "already_present": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Already Present",
+            "description": "Device client_ids whose canonical identity the account already held."
+          },
+          "rejected": {
+            "items": {
+              "$ref": "#/components/schemas/MergeRejection"
+            },
+            "type": "array",
+            "title": "Rejected",
+            "description": "Device items that failed validation. Nothing was stored for these."
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "count",
+          "added",
+          "already_present",
+          "rejected"
+        ],
+        "title": "SavedViewsMergeResponse",
+        "description": "The canonical list after a merge, and an honest account of each input item.\n\nThe three disposition lists are disjoint and together cover every distinct\n`client_id` the request offered, so a client can tell exactly what happened to\nits device collection rather than inferring it from a length change."
+      },
+      "SavedViewsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SavedViewRecord"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "Oldest saved first, with the stable row id breaking ties inside one merge."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of saved views on the account."
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "count"
+        ],
+        "title": "SavedViewsResponse",
+        "description": "The account's canonical, ordered saved views.\n\nEvery field is REQUIRED, for the reason `FavoritesResponse` documents: the\nserver always sends them in full, and publishing them as optional would be a\nlie the whole frontend then has to write `?? []` around."
       },
       "SimilarGroup": {
         "properties": {

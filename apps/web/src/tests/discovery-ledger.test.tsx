@@ -549,21 +549,39 @@ describe("My Favorites terminology", () => {
       </ScoutingStateProvider>,
     );
 
-  it("labels the navigation destination and counter My Favorites", () => {
+  // Milestone 8.4B replaced the "My Favorites" navigation slot with ONE "Saved"
+  // entry covering favourites, saved Discovery views and saved comparisons. The
+  // COUNTER still reports My Favorites specifically and by name, because that is
+  // the number a scout watches while they work — so the terminology this suite
+  // was written to protect is still asserted, on the surface that still carries it.
+  it("labels the counter My Favorites, and never Shortlist", () => {
     renderNav();
-    const link = screen.getByTestId("nav-shortlist");
-    expect(link).toHaveTextContent("My Favorites");
-    expect(link).not.toHaveTextContent("Shortlist");
     expect(screen.getByTestId("favorites-counter")).toHaveTextContent(
       "My Favorites 0 · saved on this device",
     );
+    expect(screen.getByTestId("favorites-counter")).not.toHaveTextContent("Shortlist");
   });
 
-  it("keeps the /shortlist route and the stable nav test id", () => {
+  it("gives saved work exactly one navigation entry, and no more", () => {
     renderNav();
-    expect(screen.getByTestId("nav-shortlist")).toHaveAttribute("href", "/shortlist");
-    // no test id is derived from the new label (which would contain a space)
+    const entry = screen.getByTestId("nav-saved");
+    expect(entry).toHaveTextContent("Saved");
+    expect(entry).not.toHaveTextContent("Shortlist");
+    expect(entry).toHaveAttribute("href", "/saved");
+    // No second top-level slot was added for views or comparisons.
+    expect(screen.queryByTestId("nav-views")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("nav-comparisons")).not.toBeInTheDocument();
+    // …and no test id is derived from a label (which would contain a space).
     expect(screen.queryByTestId("nav-my favorites")).not.toBeInTheDocument();
+  });
+
+  it("keeps /shortlist reachable for existing bookmarks", () => {
+    renderNav();
+    // The legacy route is no longer IN the navigation, but it still renders the
+    // Favorites surface rather than 404ing. That is asserted against the route
+    // itself by `cross-surface.test.tsx` (which renders `ShortlistPage` directly)
+    // and end to end by `tests/e2e/saved-work.spec.ts`.
+    expect(screen.queryByTestId("nav-shortlist")).not.toBeInTheDocument();
   });
 
   it("stores favourited ids under the unchanged local-storage key, in order", () => {

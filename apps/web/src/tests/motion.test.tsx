@@ -706,7 +706,9 @@ describe("Mobile navigation motion", () => {
     renderNav();
     fireEvent.click(screen.getByTestId("nav-menu-toggle"));
     expect(screen.getByTestId("nav-discover")).toHaveAttribute("href", "/");
-    expect(screen.getByTestId("nav-shortlist")).toHaveAttribute("href", "/shortlist");
+    // 8.4B: the My Favorites slot became one "Saved" entry covering favourites,
+    // saved views and saved comparisons. The counter is unchanged.
+    expect(screen.getByTestId("nav-saved")).toHaveAttribute("href", "/saved");
     expect(screen.getByTestId("favorites-counter")).toHaveTextContent("My Favorites");
   });
 
@@ -738,15 +740,85 @@ describe("Content replacement motion", () => {
     expect(container.querySelector('[role="status"]')).toBeInTheDocument();
   });
 
-  it("settles the empty and error states with the same restrained pane treatment", () => {
+  /**
+   * The empty and error states are the one place this cadence deliberately has
+   * no entrance at all.
+   *
+   * `pane-enter` fades from `opacity: 0`, and the browser composites that into
+   * the text colour — mid-fade the ink IS a blend with the paper behind it.
+   * `--ink-soft` on `--panel` rests at 5.39:1 against SC 1.4.3's 4.5:1, so the
+   * blend is non-conformant from roughly 93% opacity downward and an automated
+   * scan that lands mid-fade reports a real `color-contrast` failure on the empty
+   * comparison message. The 0.89:1 of headroom means no compliant floor is
+   * visually distinguishable from no fade, so these states appear in one commit.
+   *
+   * That is a MOTION decision only: the resting appearance is untouched.
+   */
+  it("gives the empty and error states no entrance, so their text is legible in the first frame", () => {
     const { container: empty } = render(<EmptyState label="No players match these filters." />);
-    expect(empty.firstElementChild!.className).toContain("pane-enter");
+    const emptyPane = empty.firstElementChild!;
+    expect(emptyPane.className).not.toContain("-enter");
+    expect(emptyPane.innerHTML).not.toContain("-enter");
     expect(empty.querySelector('[role="status"]')).toBeInTheDocument();
 
     const { container: error } = render(<ErrorState message="Failed to load players." />);
-    expect(error.firstElementChild!.className).toContain("pane-enter");
+    const errorPane = error.firstElementChild!;
+    expect(errorPane.className).not.toContain("-enter");
+    expect(errorPane.innerHTML).not.toContain("-enter");
     // The alert is present at mount, so the announcement is never delayed.
     expect(error.querySelector('[role="alert"]')).toHaveTextContent("Failed to load players.");
+  });
+
+  it("keeps the approved resting presentation of both states exactly as it was", () => {
+    // Every class the audited resting appearance depends on — colour, type,
+    // spacing, alignment, border — survives the motion change untouched. Only
+    // `pane-enter` is gone.
+    const { container: empty } = render(<EmptyState label="No players match these filters." />);
+    for (const cls of [
+      "flex",
+      "flex-col",
+      "items-center",
+      "gap-3",
+      "border",
+      "border-line",
+      "bg-paper-panel",
+      "px-4",
+      "py-10",
+      "text-center",
+      "text-sm",
+      "text-ink-soft",
+    ]) {
+      expect(empty.firstElementChild!.className.split(/\s+/)).toContain(cls);
+    }
+
+    const { container: error } = render(<ErrorState message="Failed to load players." />);
+    for (const cls of [
+      "border",
+      "border-accent-red/50",
+      "bg-[#f4e8e3]",
+      "px-4",
+      "py-6",
+      "text-center",
+      "text-sm",
+      "font-semibold",
+      "text-accent-red",
+    ]) {
+      expect(error.firstElementChild!.className.split(/\s+/)).toContain(cls);
+    }
+    // Square, like everything else. No rounding crept in with the change.
+    expect(empty.firstElementChild!.className).not.toMatch(/rounded/);
+    expect(error.firstElementChild!.className).not.toMatch(/rounded/);
+  });
+
+  it("records in the stylesheet WHY pane-enter is withheld from text at its contrast floor", () => {
+    // The reason lives next to the rule it constrains, so the next person to add
+    // an entrance to a status pane meets the arithmetic before the regression.
+    const rule = GLOBALS.slice(GLOBALS.indexOf(".pane-enter") - 1400, GLOBALS.indexOf(".pane-enter"));
+    expect(rule).toContain("--ink-soft");
+    expect(rule).toContain("4.5:1");
+    // And the keyframe itself is unchanged: still a plain fade for the panes that
+    // can afford one.
+    expect(GLOBALS).toMatch(/@keyframes sb-fade-in \{\s*from \{\s*opacity: 0;/);
   });
 
   it("settles the whole results ledger as one unit so count and rows cannot disagree", () => {

@@ -288,8 +288,11 @@ describe("Account suggestion", () => {
 
     const message = screen.getByTestId("account-suggestion-message");
     expect(message).toHaveAttribute("role", "status");
+    // 8.4B generalized the offer: it now covers saved views and saved comparison
+    // setups as well as favourites, so the copy names saved work rather than
+    // favourites alone. One offer, three triggers.
     expect(message).toHaveTextContent(
-      "Saved on this device. Create an account to keep your favorites when you return or switch devices.",
+      "Saved on this device. Create an account to keep saved work across devices.",
     );
     // The existing favourites live region keeps its own unchanged sentence, so
     // the two do not read the same wording twice.

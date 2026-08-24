@@ -562,6 +562,62 @@ Full contract, database model, merge semantics, state machine, privacy boundary,
 provider-owned surfaces and limitations:
 [`docs/milestone_8_4a_optional_accounts.md`](docs/milestone_8_4a_optional_accounts.md).
 
+## Saved work and decision continuity (Milestone 8, Phase 8.4B)
+
+8.4A made a list of *players* durable. 8.4B makes the *decisions* durable: the
+Discovery setup that produced a cohort, and the comparison setup that weighed two
+players in a role. Both work fully without an account.
+
+The journey this closes: discover a cohort, save the exact Discovery setup,
+favourite candidates, compare two of them in a chosen role, save that comparison
+setup, close the browser, come back, continue - and optionally sign in and find
+that work on another device.
+
+**Two new durable artifacts.**
+
+- **Saved Discovery views.** `Save View` sits in the Discovery page heading. It
+  stores the representable filter and sort state and nothing else: never the page
+  number (a saved view always opens on page 1), never the retired Analysis Scope,
+  never an unknown or malformed parameter. Two configurations that canonicalize to
+  the same cohort are the same saved view, so saving one twice renames it rather
+  than duplicating it.
+- **Saved comparison setups.** `Save Comparison` sits with the Compare selectors.
+  It stores two players in their chosen screen positions and the selected role -
+  and **no analytical result**. There is no column for a score, conclusion or
+  confidence value, and no request field that would accept one, so reopening
+  always runs current ScoutBoy analysis. `a=7&b=5` is not the same saved setup as
+  `a=5&b=7`.
+
+**One Saved Work surface.** `/saved` carries three URL-addressable sections -
+Favorites, Views, Comparisons - one open at a time, defaulting to Favorites.
+Section state survives reload and back/forward. The navigation's `My Favorites`
+slot became one `Saved` entry rather than gaining two more; `/shortlist` still
+renders the favourites surface for existing bookmarks.
+
+**The Compare URL contract is now complete.** `a`, `b` and an explicit `role` are
+all canonical parameters, Automatic Role omits `role` entirely, every selector
+change updates the address bar, and hard load, reload, back and forward restore
+all three. The comparison **queue** is unchanged and stays device local.
+
+**Guest storage is versioned.** `scoutboy.savedViews.v1` and
+`scoutboy.savedComparisons.v1` hold `{"version": 1, "items": []}` envelopes under
+separate keys. Malformed JSON, a non-object root, an unknown version and a single
+bad record all recover without losing valid siblings, and a failed write (quota,
+private mode) is reported as a failure rather than announced as a save.
+
+**Signed in, saved work syncs.** Six new private routes under
+`/api/me/saved-views` and `/api/me/saved-comparisons` list, upsert idempotently,
+rename, remove idempotently and merge a device collection. Reads and no-op
+mutations create no account row. A failed merge keeps the device collection
+visible, editable and retryable, and each collection is confirmed independently.
+
+No new configuration: 8.4B inherits the 8.4A auth settings exactly, and with no
+identity provider the new routes answer 503 like the favourites routes do.
+
+Full contract, canonicalization rules, database model, API surface, merge
+semantics, stale-data recovery, threat considerations and limitations:
+[`docs/milestone_8_4b_saved_work.md`](docs/milestone_8_4b_saved_work.md).
+
 ## Commands (`make help` for all)
 
 | Command | What it does |
@@ -636,6 +692,16 @@ GET  /api/me/favorites                 (account) canonical ordered My Favorites
 PUT  /api/me/favorites/{player_id}     (account) idempotent add
 DEL  /api/me/favorites/{player_id}     (account) idempotent remove
 POST /api/me/favorites/merge           (account) union a guest list into the account
+GET  /api/me/saved-views               (account) canonical ordered saved Discovery views
+POST /api/me/saved-views               (account) idempotent create/upsert
+PATCH /api/me/saved-views/{client_id}  (account) rename
+DEL  /api/me/saved-views/{client_id}   (account) idempotent remove
+POST /api/me/saved-views/merge         (account) union a device collection into the account
+GET  /api/me/saved-comparisons         (account) canonical ordered saved comparison setups
+POST /api/me/saved-comparisons         (account) idempotent create/upsert
+PATCH /api/me/saved-comparisons/{client_id}  (account) rename
+DEL  /api/me/saved-comparisons/{client_id}   (account) idempotent remove
+POST /api/me/saved-comparisons/merge   (account) union a device collection into the account
 GET  /healthz                          process liveness
 GET  /readyz                           database + migration readiness
 POST /api/admin/ingest                 (local admin) trigger ingestion

@@ -238,7 +238,7 @@ test("compare queue drives a completed comparison", async ({ page }) => {
 
   const tray = page.locator('[data-testid="compare-tray"]');
   await expect(tray).toBeVisible();
-  await tray.getByRole("link", { name: /Open comparison/ }).click();
+  await tray.getByRole("link", { name: /Open Comparison/ }).click();
   await page.waitForLoadState("networkidle");
   await expect(page.locator('[data-testid="compare-a"]')).toBeVisible();
 });
@@ -251,7 +251,7 @@ test("the compare tray stands down on the comparison page in every engine", asyn
 
   const tray = page.locator('[data-testid="compare-tray"]');
   await expect(tray).toBeVisible();
-  await tray.getByRole("link", { name: /Open comparison/ }).click();
+  await tray.getByRole("link", { name: /Open Comparison/ }).click();
   await page.waitForLoadState("networkidle");
 
   // Suppressed by route, so it is gone here...
@@ -385,4 +385,82 @@ test("no horizontal overflow at 320", async ({ page }) => {
     );
     expect(overflow, `${path} @320`).toBeLessThanOrEqual(0);
   }
+});
+
+
+/**
+ * Milestone 8.4B — saved work, proportionally.
+ *
+ * Two tests rather than the whole 8.4B suite times three: the Chromium suite
+ * already proves the behaviour in depth, and what a second engine has to answer
+ * is narrower. Both of these exercise the parts most likely to differ across
+ * engines - the History API driving three URL-backed selectors, and versioned
+ * `localStorage` round-tripping a record with nested objects.
+ */
+
+test("a Discovery view saves and reopens in every engine", async ({ page }) => {
+  await page.goto("/?age_max=22");
+  await page.waitForSelector('[data-testid="results-ledger"]');
+
+  await page.locator('[data-testid="save-view-trigger"]').click();
+  await page.locator('[data-testid="save-view-panel-input"]').fill("Engine cohort");
+  await page.locator('[data-testid="save-view-panel-submit"]').click();
+  await expect(page.locator('[data-testid="save-view-panel"]')).toBeHidden();
+
+  // The versioned envelope round-trips through this engine's storage.
+  const stored = await page.evaluate(() =>
+    JSON.parse(window.localStorage.getItem("scoutboy.savedViews.v1") ?? "null"),
+  );
+  expect(stored.version).toBe(1);
+  expect(stored.items[0].label).toBe("Engine cohort");
+
+  await page.goto("/saved?section=views");
+  await expect(page.locator('[data-testid="saved-view-label"]')).toHaveText("Engine cohort");
+  await expect(page.locator('[data-testid="saved-view-open"]')).toHaveAttribute(
+    "href",
+    "/?age_max=22",
+  );
+
+  // Section state is real navigation in every engine.
+  await page.locator('[data-testid="saved-section-comparisons"]').click();
+  await page.waitForURL((u) => u.searchParams.get("section") === "comparisons");
+  await page.goBack();
+  await expect(page.locator('[data-testid="saved-section-views"]')).toHaveAttribute(
+    "data-active",
+    "true",
+  );
+});
+
+test("the compare URL carries all three selectors in every engine", async ({ page }) => {
+  await page.goto("/compare");
+  await page.waitForSelector('[data-testid="compare-a"]');
+
+  const options = page.locator('[data-testid="compare-a"] option');
+  const a = await options.nth(1).getAttribute("value");
+  const b = await options.nth(2).getAttribute("value");
+
+  await page.locator('[data-testid="compare-a"]').selectOption(a!);
+  await page.locator('[data-testid="compare-b"]').selectOption(b!);
+  await page.locator('[data-testid="compare-role-select"]').selectOption("advanced_8");
+  await page.waitForURL((u) => u.searchParams.get("role") === "advanced_8");
+
+  await page.reload();
+  await expect(page.locator('[data-testid="compare-a"]')).toHaveValue(a!);
+  await expect(page.locator('[data-testid="compare-b"]')).toHaveValue(b!);
+  await expect(page.locator('[data-testid="compare-role-select"]')).toHaveValue("advanced_8");
+
+  // Automatic Role omits the parameter entirely rather than writing a sentinel.
+  await page.locator('[data-testid="compare-role-select"]').selectOption("");
+  await page.waitForURL((u) => !u.searchParams.has("role"));
+
+  await page.locator('[data-testid="save-comparison-trigger"]').click();
+  await page.locator('[data-testid="save-comparison-panel-input"]').fill("Engine duel");
+  await page.locator('[data-testid="save-comparison-panel-submit"]').click();
+  await expect(page.locator('[data-testid="save-comparison-panel"]')).toBeHidden();
+
+  await page.goto("/saved?section=comparisons");
+  await expect(page.locator('[data-testid="saved-comparison-open"]')).toHaveAttribute(
+    "href",
+    `/compare?a=${a}&b=${b}`,
+  );
 });

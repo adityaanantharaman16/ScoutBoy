@@ -8,13 +8,20 @@ import { useAuthSession } from "@/lib/auth/session";
 import { MOTION_EXIT_MS, usePresence } from "@/lib/motion/presence";
 import { favoritesScopeLabel, useScoutingState } from "@/lib/state/scouting-state";
 
-// Test ids are declared, not derived from the label: the presentation copy is
-// "My Favorites" while the route, storage keys and stable id stay `shortlist`.
+// Test ids are declared, not derived from the label.
+//
+// Milestone 8.4B replaced the "My Favorites" slot with ONE "Saved" entry rather
+// than adding a second top-level item: favourites, saved Discovery views and
+// saved comparison setups are three kinds of saved work, and giving each its own
+// navigation entry would spend three of five slots on collections. `/shortlist`
+// is unchanged and still serves every existing bookmark; the counter to the right
+// still reports My Favorites specifically, because that is the number a scout
+// watches while they work.
 const LINKS = [
   { href: "/", label: "Discover", testId: "nav-discover" },
   { href: "/roles/touchline_winger", label: "Leaderboards", testId: "nav-leaderboards" },
   { href: "/compare", label: "Compare", testId: "nav-compare" },
-  { href: "/shortlist", label: "My Favorites", testId: "nav-shortlist" },
+  { href: "/saved", label: "Saved", testId: "nav-saved" },
   { href: "/methodology", label: "Methodology", testId: "nav-methodology" },
 ];
 
@@ -74,7 +81,7 @@ function AccountEntry() {
             void signOut();
           }}
         >
-          Sign out
+          Sign Out
         </button>
       </div>
     );
@@ -87,7 +94,7 @@ function AccountEntry() {
       data-testid="account-sign-in"
       onClick={openSignIn}
     >
-      Sign in
+      Sign In
     </button>
   );
 }
@@ -148,7 +155,12 @@ export function NavBar() {
             const active =
               l.href === "/"
                 ? pathname === "/" || pathname === "/players"
-                : pathname.startsWith(`/${l.href.split("/")[1]}`);
+                : // `/shortlist` is the legacy route for the same surface, so it
+                  // marks Saved as the current page rather than leaving the whole
+                  // navigation with nothing highlighted.
+                  l.href === "/saved"
+                  ? pathname.startsWith("/saved") || pathname.startsWith("/shortlist")
+                  : pathname.startsWith(`/${l.href.split("/")[1]}`);
             return (
               <Link
                 key={l.href}

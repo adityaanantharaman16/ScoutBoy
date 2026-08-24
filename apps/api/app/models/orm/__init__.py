@@ -35,6 +35,7 @@ from .runs import (
     SimilarityVector,
     SourceSnapshot,
 )
+from .saved_work import SavedComparison, SavedDiscoveryView
 
 __all__ = [
     "Base",
@@ -70,4 +71,6 @@ __all__ = [
     "SourceSnapshot",
     "AppUser",
     "UserFavorite",
+    "SavedDiscoveryView",
+    "SavedComparison",
 ]

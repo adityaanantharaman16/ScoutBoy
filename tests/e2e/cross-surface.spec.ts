@@ -239,8 +239,10 @@ test.describe("Cross-surface layout & honesty", () => {
     expect(Math.abs(before.width - after.width)).toBeLessThanOrEqual(1);
     expect(Math.abs(before.height - after.height)).toBeLessThanOrEqual(1);
 
-    await page.getByTestId("nav-shortlist").click();
-    await expect(page).toHaveURL(/\/shortlist$/);
+    // 8.4B: the navigation entry is now "Saved", whose default section is
+    // Favorites. The favourited player is carried through unchanged.
+    await page.getByTestId("nav-saved").click();
+    await expect(page).toHaveURL(/\/saved$/);
     await expect(page.getByTestId("shortlist-record")).toHaveCount(1);
 
     await page.goto("/");

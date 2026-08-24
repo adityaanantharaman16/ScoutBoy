@@ -129,16 +129,46 @@ export function Loading({ label = "Loading…" }: { label?: string }) {
   );
 }
 
-export function EmptyState({ label, action }: { label: string; action?: React.ReactNode }) {
+/**
+ * Why these two states carry NO entrance animation.
+ *
+ * `pane-enter` fades a pane in from `opacity: 0`, and a browser composites that
+ * opacity into the text colour: mid-fade, this pane's ink really is a blend of
+ * its resting colour and the paper behind it. That is fine for a pane whose text
+ * has contrast to spare, and it is not fine here. `--ink-soft` on `--panel` rests
+ * at 5.39:1 against a 4.5:1 requirement (WCAG 2.2 SC 1.4.3), so the blend drops
+ * below AA at roughly 93% opacity and stays below it for the whole run-up — every
+ * frame of a 180ms fade is a frame this text is not legible enough. An automated
+ * scan that lands in that window reports a real, if brief, failure; a scout
+ * reading a short sentence the instant it appears experiences the same thing.
+ *
+ * Starting the fade higher is not a fix. The headroom above AA is 0.89:1, so any
+ * floor that stays compliant is visually indistinguishable from no fade at all.
+ *
+ * So an empty result and a failed one appear in one commit, at their resting
+ * appearance, exactly as they do under `prefers-reduced-motion: reduce`. Nothing
+ * else changes: same colours, type, spacing, borders and square geometry, and
+ * still nothing theatrical — no movement, no scale, no shimmer, no pulse. The
+ * live-region text was always in the DOM at mount; now the pixels agree with it.
+ *
+ * The populated result pane keeps `pane-enter`. Its content is `--ink` at ~15:1,
+ * it replaces a skeleton rather than arriving out of nothing, and settling the
+ * count and the rows as one unit is what stops them ever being seen disagreeing.
+ */
+export function EmptyState({
+  label,
+  action,
+  testId = "empty-state",
+}: {
+  label: string;
+  action?: React.ReactNode;
+  testId?: string;
+}) {
   return (
     <div
       role="status"
-      // Same restrained pane settle as a populated result — an empty result IS a
-      // result. Deliberately nothing theatrical: opacity only, no movement, no
-      // separate treatment that would dramatise the absence of players. The
-      // `role="status"` text is in the DOM at mount, so the announcement is never
-      // delayed by the visual settle.
-      className="pane-enter flex flex-col items-center gap-3 border border-line bg-paper-panel px-4 py-10 text-center text-sm text-ink-soft"
+      data-testid={testId}
+      className="flex flex-col items-center gap-3 border border-line bg-paper-panel px-4 py-10 text-center text-sm text-ink-soft"
     >
       <span>{label}</span>
       {action}
@@ -146,14 +176,18 @@ export function EmptyState({ label, action }: { label: string; action?: React.Re
   );
 }
 
-export function ErrorState({ message }: { message: string }) {
+export function ErrorState({
+  message,
+  testId = "error-state",
+}: {
+  message: string;
+  testId?: string;
+}) {
   return (
     <div
       role="alert"
-      // The same pane settle, and nothing more: an error is not dramatised. The
-      // `role="alert"` content is present at mount, so assistive tech announces it
-      // immediately regardless of the opacity animation.
-      className="pane-enter border border-accent-red/50 bg-[#f4e8e3] px-4 py-6 text-center text-sm font-semibold text-accent-red"
+      data-testid={testId}
+      className="border border-accent-red/50 bg-[#f4e8e3] px-4 py-6 text-center text-sm font-semibold text-accent-red"
     >
       <span className="mr-1" aria-hidden="true">
         ⚠

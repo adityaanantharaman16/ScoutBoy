@@ -1038,11 +1038,25 @@ Kimi-reported concern was independently verified before acting; the raw transcri
 | Compare tray presence | clarify, confirm | `CompareTray` | `opacity`, `translateY` 8px | enter / exit | ease-out / ease-in | the viewport bottom edge it is anchored to |
 | Newly queued player token | confirm | tray token `<span>` | `opacity` | state | ease-out | in place |
 | Mobile menu presence | clarify, continuity | `#primary-nav-links` (below `lg`) | `opacity`, `translateY` 4px | enter / exit | ease-out / ease-in | the Menu button directly above it |
-| Results / empty / error replacing a skeleton or a prior result | continuity, progress | `results-ledger`, `EmptyState`, `ErrorState` | `opacity` | enter | ease-out | the pane, atomically |
+| Results replacing a skeleton or a prior result | continuity, progress | `results-ledger` | `opacity` | enter | ease-out | the pane, atomically |
+| Empty / error replacing a skeleton or a prior result | continuity, progress | `EmptyState`, `ErrorState` | none — see below | — | — | in place, in one commit |
 
 Exits are shorter than their matching entrances in every case. Removal of a queued token is
 instant, and the results pane has no exit at all — outgoing content unmounts and incoming content
 performs the single entrance, which is the least prominent exit available.
+
+**Amended in the 8.4B corrective pass: `EmptyState` and `ErrorState` no longer take `pane-enter`.**
+An opacity entrance is composited into the text colour, so mid-fade the ink is a blend with the
+paper behind it — and these two states have no contrast headroom for that. `--ink-soft` on
+`--panel` rests at 5.39:1 against SC 1.4.3's 4.5:1 and breaches it from roughly 93% opacity
+downward; the error state's red on its caution wash breaches at about 83%. Every frame of the fade
+was therefore a frame that text did not conform, which the E2E axe scan caught on the empty
+comparison message. Raising the keyframe's floor is not an alternative: with 0.89:1 of headroom,
+every compliant floor is visually indistinguishable from no fade. Both states now appear in one
+commit — identical to their `prefers-reduced-motion: reduce` behaviour — with resting colours,
+type, spacing, borders and square geometry unchanged. The populated results pane keeps the
+treatment: its content is `--ink` at ~15:1, and settling the count and the rows as one unit is
+what stops them ever being seen to disagree. See `docs/milestone_8_4b_saved_work.md` §15.
 
 ### Token values
 

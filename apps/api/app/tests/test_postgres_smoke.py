@@ -393,3 +393,248 @@ def test_parallel_merges_of_the_same_list_converge_on_postgresql():
 
     with SessionLocal() as final:
         assert final.scalars(select(AppUser).where(AppUser.auth_issuer == issuer)).all() == []
+
+
+# ---------------------------------------------------------------------------
+# Milestone 8.4B: saved work on the real engine
+# ---------------------------------------------------------------------------
+
+
+def test_saved_work_tables_arrived_through_the_migration_on_postgresql():
+    """`alembic upgrade head` built the 8.4B schema, not `create_all`.
+
+    The smoke database is migrated rather than metadata-created, so this is the
+    leg that proves migration 0008's DDL is genuinely portable: both composite
+    unique constraints per table, the ordering indexes, and - the part that
+    differs from 0007 - the two DIFFERENT foreign-key actions have to exist as
+    PostgreSQL objects rather than merely as SQLAlchemy declarations.
+    """
+    from app.core.db import engine
+
+    inspector = inspect(engine)
+    assert {"saved_discovery_views", "saved_comparisons"} <= set(inspector.get_table_names())
+
+    view_unique = {c["name"] for c in inspector.get_unique_constraints("saved_discovery_views")}
+    assert {"uq_saved_view_fingerprint", "uq_saved_view_client_id"} <= view_unique
+
+    comparison_unique = {c["name"] for c in inspector.get_unique_constraints("saved_comparisons")}
+    assert {
+        "uq_saved_comparison_fingerprint",
+        "uq_saved_comparison_client_id",
+    } <= comparison_unique
+
+    assert "ix_saved_views_user_order" in {
+        i["name"] for i in inspector.get_indexes("saved_discovery_views")
+    }
+    assert "ix_saved_comparisons_user_order" in {
+        i["name"] for i in inspector.get_indexes("saved_comparisons")
+    }
+
+    # CASCADE from the account, SET NULL from a player. Cascading a player
+    # deletion would silently destroy a scout's saved comparison as a side effect
+    # of a data refresh, which is exactly what the unavailable-side design avoids.
+    actions = {
+        (fk["referred_table"], tuple(fk["constrained_columns"])): fk.get("options", {}).get(
+            "ondelete"
+        )
+        for fk in inspector.get_foreign_keys("saved_comparisons")
+    }
+    assert actions[("app_users", ("user_id",))] == "CASCADE"
+    assert actions[("players", ("player_a_id",))] == "SET NULL"
+    assert actions[("players", ("player_b_id",))] == "SET NULL"
+
+    view_actions = {
+        fk["referred_table"]: fk.get("options", {}).get("ondelete")
+        for fk in inspector.get_foreign_keys("saved_discovery_views")
+    }
+    assert view_actions == {"app_users": "CASCADE"}
+
+    # The bigint asking bounds survived the migration as bigints: a 32-bit column
+    # would overflow on a large hand-crafted bound long before the schema ceiling
+    # rejected it.
+    columns = {c["name"]: c for c in inspector.get_columns("saved_discovery_views")}
+    assert str(columns["value_min"]["type"]).upper().startswith("BIGINT")
+    assert str(columns["value_max"]["type"]).upper().startswith("BIGINT")
+
+
+def test_saved_work_round_trips_on_postgresql():
+    """Ordering, isolation, idempotency and unavailable-side honesty, then rolled back."""
+    import uuid as _uuid
+
+    from app.core.auth import VerifiedIdentity, resolve_app_user
+    from app.core.db import SessionLocal
+    from app.models.orm import AppUser, Player, SavedComparison, SavedDiscoveryView
+    from app.models.schemas.saved_work import (
+        DiscoveryViewFilters,
+        SavedComparisonInput,
+        SavedViewInput,
+    )
+    from app.services import saved_work_service
+
+    issuer = "https://pg-saved-work.clerk.accounts.dev"
+    with SessionLocal() as session:
+        player_ids = list(session.scalars(select(Player.id).order_by(Player.id).limit(3)))
+        assert len(player_ids) == 3
+
+        alice = resolve_app_user(session, VerifiedIdentity(issuer=issuer, subject="pg_sw_alice"))
+        bob = resolve_app_user(session, VerifiedIdentity(issuer=issuer, subject="pg_sw_bob"))
+
+        def view(label: str, **filters) -> SavedViewInput:
+            return SavedViewInput(
+                client_id=str(_uuid.uuid4()),
+                label=label,
+                filters=DiscoveryViewFilters(**filters),
+            )
+
+        first = saved_work_service.upsert_view(session, alice, view("Ajax", club="Ajax"))
+        second = saved_work_service.upsert_view(session, alice, view("Bayern", club="Bayern"))
+        assert (first.disposition, second.disposition) == ("created", "created")
+
+        # The same cohort again renames rather than duplicating, and keeps the
+        # account's own client id.
+        again = saved_work_service.upsert_view(session, alice, view("Ajax renamed", club="Ajax"))
+        assert again.disposition == "updated"
+        assert again.row.client_id == first.row.client_id
+
+        rows = saved_work_service.list_views(session, alice)
+        assert [r.label for r in rows] == ["Ajax renamed", "Bayern"]
+
+        # Another account's collection is independent.
+        assert saved_work_service.list_views(session, bob) == []
+        saved_work_service.upsert_view(session, bob, view("Bob's Ajax", club="Ajax"))
+        assert [r.label for r in saved_work_service.list_views(session, bob)] == ["Bob's Ajax"]
+        assert len(saved_work_service.list_views(session, alice)) == 2
+
+        # A comparison setup: ordered sides are distinct identities.
+        def comparison(label: str, a: int, b: int, role=None) -> SavedComparisonInput:
+            return SavedComparisonInput(
+                client_id=str(_uuid.uuid4()),
+                label=label,
+                player_a_id=a,
+                player_b_id=b,
+                player_a_label=f"Player {a}",
+                player_b_label=f"Player {b}",
+                role_key=role,
+            )
+
+        ab = saved_work_service.upsert_comparison(
+            session, alice, comparison("A then B", player_ids[0], player_ids[1])
+        )
+        ba = saved_work_service.upsert_comparison(
+            session, alice, comparison("B then A", player_ids[1], player_ids[0])
+        )
+        assert ab.disposition == "created" and ba.disposition == "created"
+        assert len(saved_work_service.list_comparisons(session, alice)) == 2
+
+        # A merge appends genuinely new items in device order and reports the rest.
+        outcome = saved_work_service.merge_views(
+            session,
+            alice,
+            [
+                view("Device Ajax", club="Ajax"),
+                view("Device Milan", club="Milan"),
+                view("Device stale", role="a_role_that_does_not_exist"),
+            ],
+            lambda: alice,
+        )
+        assert len(outcome.added) == 1
+        assert len(outcome.already_present) == 1
+        assert [r.reason for r in outcome.rejected] == ["unknown role"]
+        assert [r.label for r in outcome.rows] == ["Ajax renamed", "Bayern", "Device Milan"]
+
+        # Deleting a PLAYER leaves the saved setup, nulls the reference, and the
+        # projection reports the side honestly rather than resolving a dangling id.
+        session.execute(delete(Player).where(Player.id == player_ids[1]))
+        session.commit()
+
+        surviving = saved_work_service.list_comparisons(session, alice)
+        assert len(surviving) == 2, "a data refresh must not delete saved work"
+        records = saved_work_service.comparison_records(session, surviving)
+        for record in records:
+            assert record.player_a.available != (record.player_a.label == f"Player {player_ids[1]}")
+            unavailable = [s for s in (record.player_a, record.player_b) if not s.available]
+            for side in unavailable:
+                assert side.player_id is None
+                assert side.label == f"Player {player_ids[1]}"
+
+        # Deleting the ACCOUNT cascades its saved work.
+        session.execute(delete(AppUser).where(AppUser.id == alice.id))
+        session.execute(delete(AppUser).where(AppUser.id == bob.id))
+        session.commit()
+
+    with SessionLocal() as verify:
+        assert verify.scalars(select(AppUser).where(AppUser.auth_issuer == issuer)).all() == []
+        # The cascade really removed the rows rather than orphaning them.
+        assert (
+            verify.scalars(
+                select(SavedDiscoveryView).where(SavedDiscoveryView.label == "Bayern")
+            ).all()
+            == []
+        )
+        assert (
+            verify.scalars(select(SavedComparison).where(SavedComparison.label == "A then B")).all()
+            == []
+        )
+        # The smoke fixture is shared, so put the player back for later tests.
+        verify.rollback()
+
+
+def test_parallel_saved_view_creates_converge_on_postgresql():
+    """Four threads saving the SAME cohort at once end with exactly one view.
+
+    The SQLite coverage injects the IntegrityError; this makes the race real.
+    `uq_saved_view_fingerprint` is what decides it, and every loser has to re-read
+    the winner's row rather than surfacing a 500 or writing a duplicate.
+    """
+    import uuid as _uuid
+    from concurrent.futures import ThreadPoolExecutor
+
+    from app.core.auth import VerifiedIdentity, resolve_app_user
+    from app.core.db import SessionLocal
+    from app.models.orm import AppUser, SavedDiscoveryView
+    from app.models.schemas.saved_work import DiscoveryViewFilters, SavedViewInput
+    from app.services import saved_work_service
+
+    issuer = "https://pg-sw-parallel.clerk.accounts.dev"
+    with SessionLocal() as setup:
+        user = resolve_app_user(setup, VerifiedIdentity(issuer=issuer, subject="pg_sw_parallel"))
+        user_id = user.id
+
+    errors: list = []
+    dispositions: list = []
+
+    def save(index: int) -> None:
+        try:
+            with SessionLocal() as session:
+                owner = session.get(AppUser, user_id)
+                outcome = saved_work_service.upsert_view(
+                    session,
+                    owner,
+                    SavedViewInput(
+                        client_id=str(_uuid.uuid4()),
+                        label=f"Thread {index}",
+                        # One cohort, four writers.
+                        filters=DiscoveryViewFilters(club="Racing Club", age_max=22),
+                    ),
+                )
+                dispositions.append(outcome.disposition)
+        except Exception as exc:  # pragma: no cover - reported, not swallowed
+            errors.append(exc)
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        list(pool.map(save, range(4)))
+
+    with SessionLocal() as verify:
+        assert errors == [], f"a concurrent save failed: {errors!r}"
+        rows = list(
+            verify.scalars(select(SavedDiscoveryView).where(SavedDiscoveryView.user_id == user_id))
+        )
+        assert len(rows) == 1, f"the cohort was stored {len(rows)} times"
+        assert dispositions.count("created") == 1, dispositions
+
+        verify.execute(delete(SavedDiscoveryView).where(SavedDiscoveryView.user_id == user_id))
+        verify.execute(delete(AppUser).where(AppUser.id == user_id))
+        verify.commit()
+
+    with SessionLocal() as final:
+        assert final.scalars(select(AppUser).where(AppUser.auth_issuer == issuer)).all() == []

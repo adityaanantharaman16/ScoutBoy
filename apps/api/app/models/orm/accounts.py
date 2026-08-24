@@ -13,11 +13,15 @@ guest, whose favourites remain in `scoutboy.shortlist.v1` browser storage.
 from __future__ import annotations
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Index, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, TimestampMixin, utcnow
+
+if TYPE_CHECKING:  # pragma: no cover - import cycle broken at runtime by the registry
+    from .saved_work import SavedComparison, SavedDiscoveryView
 
 
 class AppUser(Base, TimestampMixin):
@@ -54,6 +58,17 @@ class AppUser(Base, TimestampMixin):
     )
 
     favorites: Mapped[list[UserFavorite]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    # Milestone 8.4B. `saved_work` imports `AppUser` from here, so the reverse
+    # reference is a forward one: the annotation is a string at runtime and
+    # SQLAlchemy resolves it through the mapper registry once the package has
+    # imported every model module. The TYPE_CHECKING import above is what keeps it
+    # a real name for the type checker and the linter.
+    saved_views: Mapped[list[SavedDiscoveryView]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    saved_comparisons: Mapped[list[SavedComparison]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
 
