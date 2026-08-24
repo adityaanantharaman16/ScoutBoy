@@ -106,8 +106,8 @@ import {
 } from "@/lib/state/saved-work";
 import { ScoutingStateProvider } from "@/lib/state/scouting-state";
 import {
-  SAVED_COMPARISONS_KEY,
-  SAVED_VIEWS_KEY,
+  SAVED_COMPARISONS_STORAGE_ID,
+  SAVED_VIEWS_STORAGE_ID,
   makeSavedComparison,
   makeSavedView,
   readSavedComparisons,
@@ -554,7 +554,7 @@ describe("Saving a comparison setup", () => {
     fireEvent.click(screen.getByTestId("save-comparison-panel-submit"));
 
     await waitFor(() => expect(readSavedComparisons().items).toHaveLength(1));
-    const stored = window.localStorage.getItem(SAVED_COMPARISONS_KEY)!.toLowerCase();
+    const stored = window.localStorage.getItem(SAVED_COMPARISONS_STORAGE_ID)!.toLowerCase();
     for (const forbidden of ["score", "conclusion", "confidence", "evidence"]) {
       expect(stored).not.toContain(forbidden);
     }
@@ -803,7 +803,7 @@ describe("A saved view whose filters went stale", () => {
   it("reopens everything still valid and names only what was lost", async () => {
     // Written straight to storage as an older build would have left it.
     window.localStorage.setItem(
-      SAVED_VIEWS_KEY,
+      SAVED_VIEWS_STORAGE_ID,
       JSON.stringify({
         version: 1,
         items: [
@@ -1217,13 +1217,13 @@ describe("Saved work and optional accounts", () => {
     expect(await screen.findByTestId("saved-view-label")).toHaveTextContent("Account only");
 
     // Nothing about the account list reached browser storage.
-    expect(window.localStorage.getItem(SAVED_VIEWS_KEY)).toBeNull();
+    expect(window.localStorage.getItem(SAVED_VIEWS_STORAGE_ID)).toBeNull();
 
     controller.set(makeSession({ status: "anonymous", accountKey: null }));
     await waitFor(() =>
       expect(screen.queryByText("Account only")).not.toBeInTheDocument(),
     );
-    expect(window.localStorage.getItem(SAVED_VIEWS_KEY)).toBeNull();
+    expect(window.localStorage.getItem(SAVED_VIEWS_STORAGE_ID)).toBeNull();
   });
 });
 

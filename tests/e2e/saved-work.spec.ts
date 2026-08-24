@@ -12,8 +12,8 @@ import { expect, test, type Page } from "@playwright/test";
  * without an account.
  */
 
-const VIEWS_KEY = "scoutboy.savedViews.v1";
-const COMPARISONS_KEY = "scoutboy.savedComparisons.v1";
+const VIEWS_STORAGE_ID = "scoutboy.savedViews.v1";
+const COMPARISONS_STORAGE_ID = "scoutboy.savedComparisons.v1";
 
 async function readCollection(page: Page, key: string) {
   return page.evaluate((k) => {
@@ -37,7 +37,7 @@ test.describe("Saved Discovery views", () => {
 
     await saveCurrentView(page, "Under 22");
 
-    const stored = await readCollection(page, VIEWS_KEY);
+    const stored = await readCollection(page, VIEWS_STORAGE_ID);
     expect(stored.version).toBe(1);
     expect(stored.items).toHaveLength(1);
     expect(stored.items[0].label).toBe("Under 22");
@@ -88,7 +88,7 @@ test.describe("Saved Discovery views", () => {
     await expect(page.getByTestId("save-view-trigger")).toHaveAttribute("data-saved", "true");
     await saveCurrentView(page, "Second name");
 
-    const stored = await readCollection(page, VIEWS_KEY);
+    const stored = await readCollection(page, VIEWS_STORAGE_ID);
     expect(stored.items).toHaveLength(1);
     expect(stored.items[0].label).toBe("Second name");
   });
@@ -127,7 +127,7 @@ test.describe("Saved Discovery views", () => {
       await page.goto("/saved?section=views");
       await page.evaluate(
         ([k, v]) => window.localStorage.setItem(k, v),
-        [VIEWS_KEY, corrupt] as const,
+        [VIEWS_STORAGE_ID, corrupt] as const,
       );
       await page.reload();
       // The surface renders its empty state rather than throwing.
@@ -157,7 +157,7 @@ test.describe("Saved Discovery views", () => {
             ],
           }),
         ),
-      [VIEWS_KEY] as const,
+      [VIEWS_STORAGE_ID] as const,
     );
     await page.reload();
     await expect(page.getByTestId("saved-view-label")).toHaveText("Good one");
@@ -183,7 +183,7 @@ test.describe("Saved Discovery views", () => {
             ],
           }),
         ),
-      [VIEWS_KEY] as const,
+      [VIEWS_STORAGE_ID] as const,
     );
     await page.reload();
 
@@ -291,7 +291,7 @@ test.describe("Saved comparison setups", () => {
     await page.getByTestId("compare-role-select").selectOption("advanced_8");
     await saveComparison(page, "Midfield duel");
 
-    const stored = await readCollection(page, COMPARISONS_KEY);
+    const stored = await readCollection(page, COMPARISONS_STORAGE_ID);
     expect(stored.version).toBe(1);
     expect(stored.items[0].playerA.playerId).toBe(Number(a));
     expect(stored.items[0].playerB.playerId).toBe(Number(b));
@@ -318,7 +318,7 @@ test.describe("Saved comparison setups", () => {
     await page.getByTestId("compare-b").selectOption(b!);
     await saveComparison(page, "Automatic");
 
-    const stored = await readCollection(page, COMPARISONS_KEY);
+    const stored = await readCollection(page, COMPARISONS_STORAGE_ID);
     expect(stored.items[0].roleKey).toBeNull();
     await page.goto("/saved?section=comparisons");
     await expect(page.getByTestId("saved-comparison-open")).toHaveAttribute(
@@ -342,7 +342,7 @@ test.describe("Saved comparison setups", () => {
     await page.getByTestId("compare-b").selectOption(a!);
     await saveComparison(page, "B then A");
 
-    const stored = await readCollection(page, COMPARISONS_KEY);
+    const stored = await readCollection(page, COMPARISONS_STORAGE_ID);
     expect(stored.items).toHaveLength(2);
   });
 });
@@ -447,7 +447,7 @@ test.describe("Saved Work accessibility and geometry", () => {
         // A favourite too, so the Favorites section is populated as well.
         window.localStorage.setItem("scoutboy.shortlist.v1", JSON.stringify([7]));
       },
-      [VIEWS_KEY, COMPARISONS_KEY] as const,
+      [VIEWS_STORAGE_ID, COMPARISONS_STORAGE_ID] as const,
     );
   });
 

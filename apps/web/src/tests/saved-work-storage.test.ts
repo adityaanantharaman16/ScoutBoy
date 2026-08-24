@@ -31,8 +31,8 @@ import {
   writeCollection,
 } from "@/lib/storage/durable-collection";
 import {
-  SAVED_COMPARISONS_KEY,
-  SAVED_VIEWS_KEY,
+  SAVED_COMPARISONS_STORAGE_ID,
+  SAVED_VIEWS_STORAGE_ID,
   makeSavedComparison,
   makeSavedView,
   readSavedComparisons,
@@ -481,10 +481,10 @@ describe("Device saved-work collections", () => {
       makeSavedComparison("A duel", { playerId: 1, name: "A" }, { playerId: 2, name: "B" }, null),
     ]);
 
-    window.localStorage.setItem(SAVED_COMPARISONS_KEY, "{corrupt");
+    window.localStorage.setItem(SAVED_COMPARISONS_STORAGE_ID, "{corrupt");
     expect(readSavedViews().items).toHaveLength(1);
     expect(readSavedComparisons().items).toHaveLength(0);
-    expect(SAVED_VIEWS_KEY).not.toBe(SAVED_COMPARISONS_KEY);
+    expect(SAVED_VIEWS_STORAGE_ID).not.toBe(SAVED_COMPARISONS_STORAGE_ID);
   });
 
   it("never writes the derived unavailable list back to storage", () => {
@@ -492,13 +492,13 @@ describe("Device saved-work collections", () => {
     // today's answer would keep reporting a criterion as lost after it came back.
     const item = makeSavedView("A view", { club: "Ajax" });
     writeSavedViews([{ ...item, unavailable: ["role"] }]);
-    const stored = JSON.parse(window.localStorage.getItem(SAVED_VIEWS_KEY)!);
+    const stored = JSON.parse(window.localStorage.getItem(SAVED_VIEWS_STORAGE_ID)!);
     expect(stored.items[0]).not.toHaveProperty("unavailable");
   });
 
   it("shares no key with the 8.4A favourites list", () => {
-    expect(SAVED_VIEWS_KEY).not.toBe("scoutboy.shortlist.v1");
-    expect(SAVED_COMPARISONS_KEY).not.toBe("scoutboy.shortlist.v1");
+    expect(SAVED_VIEWS_STORAGE_ID).not.toBe("scoutboy.shortlist.v1");
+    expect(SAVED_COMPARISONS_STORAGE_ID).not.toBe("scoutboy.shortlist.v1");
     window.localStorage.setItem("scoutboy.shortlist.v1", JSON.stringify([1, 2, 3]));
     writeSavedViews([makeSavedView("A view", { club: "Ajax" })]);
     expect(JSON.parse(window.localStorage.getItem("scoutboy.shortlist.v1")!)).toEqual([1, 2, 3]);
@@ -508,7 +508,9 @@ describe("Device saved-work collections", () => {
     writeSavedComparisons([
       makeSavedComparison("Duel", { playerId: 1, name: "A" }, { playerId: 2, name: "B" }, "advanced_8"),
     ]);
-    const stored = JSON.stringify(JSON.parse(window.localStorage.getItem(SAVED_COMPARISONS_KEY)!));
+    const stored = JSON.stringify(
+      JSON.parse(window.localStorage.getItem(SAVED_COMPARISONS_STORAGE_ID)!),
+    );
     for (const forbidden of ["score", "conclusion", "confidence", "evidence", "rolefit"]) {
       expect(stored.toLowerCase()).not.toContain(forbidden);
     }

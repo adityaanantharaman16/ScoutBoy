@@ -37,8 +37,8 @@ import {
   type CollectionRead,
 } from "./durable-collection";
 
-export const SAVED_VIEWS_KEY = "scoutboy.savedViews.v1";
-export const SAVED_COMPARISONS_KEY = "scoutboy.savedComparisons.v1";
+export const SAVED_VIEWS_STORAGE_ID = "scoutboy.savedViews.v1";
+export const SAVED_COMPARISONS_STORAGE_ID = "scoutboy.savedComparisons.v1";
 
 /** Mirrors `LABEL_MAX` in the API schema, so a device label is always mergeable. */
 export const LABEL_MAX = 80;
@@ -204,7 +204,7 @@ export function validateSavedComparison(
 
 export function readSavedViews(now?: number): CollectionRead<SavedView> {
   return readCollection(
-    SAVED_VIEWS_KEY,
+    SAVED_VIEWS_STORAGE_ID,
     (raw) => validateSavedView(raw, now),
     savedViewIdentity,
     COLLECTION_LIMIT,
@@ -213,7 +213,7 @@ export function readSavedViews(now?: number): CollectionRead<SavedView> {
 
 export function readSavedComparisons(now?: number): CollectionRead<SavedComparison> {
   return readCollection(
-    SAVED_COMPARISONS_KEY,
+    SAVED_COMPARISONS_STORAGE_ID,
     (raw) => validateSavedComparison(raw, now),
     savedComparisonIdentity,
     COLLECTION_LIMIT,
@@ -230,7 +230,7 @@ export function readSavedComparisons(now?: number): CollectionRead<SavedComparis
  */
 export function writeSavedViews(items: SavedView[]): boolean {
   return writeCollection(
-    SAVED_VIEWS_KEY,
+    SAVED_VIEWS_STORAGE_ID,
     items.map(({ clientId, label, view, createdAt, updatedAt }) => ({
       clientId,
       label,
@@ -242,15 +242,15 @@ export function writeSavedViews(items: SavedView[]): boolean {
 }
 
 export function writeSavedComparisons(items: SavedComparison[]): boolean {
-  return writeCollection(SAVED_COMPARISONS_KEY, items);
+  return writeCollection(SAVED_COMPARISONS_STORAGE_ID, items);
 }
 
 export function clearSavedViews(): boolean {
-  return clearCollection(SAVED_VIEWS_KEY);
+  return clearCollection(SAVED_VIEWS_STORAGE_ID);
 }
 
 export function clearSavedComparisons(): boolean {
-  return clearCollection(SAVED_COMPARISONS_KEY);
+  return clearCollection(SAVED_COMPARISONS_STORAGE_ID);
 }
 
 // ---------------------------------------------------------------------------
