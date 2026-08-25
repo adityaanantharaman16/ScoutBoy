@@ -847,14 +847,18 @@ function AccountScoutingProvider({
    * was just made, not the snapshot the session started with.
    */
   const writeDevice = useCallback(
-    (id: number, want: boolean): number[] => {
+    (id: number, want: boolean): number[] | null => {
       const next = want
         ? guestIds.includes(id)
           ? guestIds
           : [...guestIds, id]
         : withoutId(guestIds, id);
+      try {
+        window.localStorage.setItem(SHORTLIST_KEY, JSON.stringify(next));
+      } catch {
+        return null;
+      }
       setGuestIds(next);
-      window.localStorage.setItem(SHORTLIST_KEY, JSON.stringify(next));
       return next;
     },
     [guestIds, setGuestIds],
@@ -864,11 +868,17 @@ function AccountScoutingProvider({
   const toggleGuest = useCallback(
     (player: PlayerRef) => {
       if (guestIds.includes(player.id)) {
-        writeDevice(player.id, false);
+        if (writeDevice(player.id, false) === null) {
+          speak("That change could not be saved on this device. Nothing was changed.");
+          return;
+        }
         speak(`${player.name} removed from shortlist. Saved on this device.`);
         return;
       }
-      writeDevice(player.id, true);
+      if (writeDevice(player.id, true) === null) {
+        speak("That change could not be saved on this device. Nothing was changed.");
+        return;
+      }
       speak(`${player.name} added to shortlist. Saved on this device.`);
       setGuestSaveSignal((n) => n + 1);
     },
@@ -892,6 +902,10 @@ function AccountScoutingProvider({
   const writeUnconfirmed = useCallback(
     (player: PlayerRef, want: boolean, forToken: string) => {
       const next = writeDevice(player.id, want);
+      if (next === null) {
+        speak("That change could not be saved on this device. Nothing was changed.");
+        return;
+      }
       applyIfCurrent(forToken, (prev) => ({ ...prev, ids: next }));
       speak(
         want

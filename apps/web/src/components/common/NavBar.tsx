@@ -25,6 +25,9 @@ const LINKS = [
   { href: "/methodology", label: "Methodology", testId: "nav-methodology" },
 ];
 
+/** The read-only states of the account entry, which are chips rather than controls. */
+const STATE_CHIP = "header-chip border border-line bg-paper text-ink-soft";
+
 /**
  * The account entry, present only when this build offers accounts.
  *
@@ -34,6 +37,14 @@ const LINKS = [
  * uses, so the account surfaces the header owns look like the rest of the
  * product. Clerk's own sign-in / sign-up dialogs are themed through
  * `SCOUTBOY_CLERK_APPEARANCE`.
+ *
+ * A signed-in scout gets ONE element here: `Sign Out`. There was previously a
+ * bordered chip reading "Account" beside it, and it said nothing — it named no
+ * account, carried no state the counter next to it did not already carry, and
+ * did nothing when pressed, while taking a slot in the busiest row of the page.
+ * It is gone rather than replaced: no avatar, no username, no menu, no icon. The
+ * counter immediately to its left already reports "saved to your account", which
+ * is the only account fact this header has to tell.
  */
 function AccountEntry() {
   const { effectiveStatus, enabled, openSignIn, signOut } = useAuthSession();
@@ -44,10 +55,7 @@ function AccountEntry() {
   // while the counter had already fallen back to device-local wording.
   if (effectiveStatus === "resolving") {
     return (
-      <span
-        className="whitespace-nowrap border border-line bg-paper px-3 py-1 text-xs font-semibold text-ink-soft"
-        data-testid="account-entry-resolving"
-      >
+      <span className={STATE_CHIP} data-testid="account-entry-resolving">
         Checking account
       </span>
     );
@@ -58,24 +66,21 @@ function AccountEntry() {
   // geometry, honest copy.
   if (effectiveStatus === "unavailable") {
     return (
-      <span
-        className="whitespace-nowrap border border-line bg-paper px-3 py-1 text-xs font-semibold text-ink-soft"
-        data-testid="account-entry-unavailable"
-      >
+      <span className={STATE_CHIP} data-testid="account-entry-unavailable">
         Accounts unavailable
       </span>
     );
   }
 
   if (effectiveStatus === "authenticated") {
+    // The wrapper is the entry SLOT, not a second control: it carries the state
+    // marker every account test and the anonymous-deployment E2E assertion reads,
+    // and contributes no box of its own.
     return (
-      <div className="flex items-center gap-2" data-testid="account-entry-authenticated">
-        <span className="whitespace-nowrap border border-line bg-paper px-3 py-1 text-xs font-semibold text-ink-muted">
-          Account
-        </span>
+      <div className="flex items-center" data-testid="account-entry-authenticated">
         <button
           type="button"
-          className="btn px-2.5 py-1.5 text-xs"
+          className="btn header-chip"
           data-testid="account-sign-out"
           onClick={() => {
             void signOut();
@@ -90,7 +95,7 @@ function AccountEntry() {
   return (
     <button
       type="button"
-      className="btn px-2.5 py-1.5 text-xs"
+      className="btn header-chip"
       data-testid="account-sign-in"
       onClick={openSignIn}
     >
@@ -178,31 +183,55 @@ export function NavBar() {
           })}
         </div>
 
-        {/* My Favorites counter — always visible, never wraps internally. The
-            scope phrase is derived from where the list actually lives, so it
-            says "saved on this device" for a guest and "saved to your account"
-            for an account holder, and never claims either one while the session
-            is still resolving or a sync has failed.
+        {/* The right-hand group: My Favorites, then the account control.
 
-            While resolving, the NUMBER is withheld rather than shown as 0: a
-            returning account holder must not read "My Favorites 0" for a frame
-            before their real list arrives. */}
+            One container rather than two independently pushed elements. They are
+            read together — "how many, where they live, and how to leave" — so
+            they are laid out together, share `.header-chip`'s box, and sit one
+            8px gap apart. Previously the counter carried its own `ml-auto` and
+            the entry simply followed it, which left their relationship to
+            whatever the flex line happened to do.
+
+            Below `sm` the pair owns one full line and `justify-end` pushes its
+            contents to the right edge. From `sm` to `lg`, the menu toggle's
+            `ml-auto` takes the free space and this group rides beside it; at
+            `lg+` the toggle is `display: none`, so `lg:ml-auto` here does the
+            pushing instead. This avoids two competing automatic margins on the
+            same flex line.
+
+            `flex-wrap` with `justify-end` is what keeps 320px honest: the pair
+            stacks, right-aligned, instead of forcing the page wider. */}
         <div
-          className="ml-auto whitespace-nowrap border border-line bg-paper px-3 py-1 text-xs font-semibold text-ink-muted"
-          data-testid="favorites-counter"
-          data-favorites-mode={favorites.mode}
+          className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto lg:ml-auto"
+          data-testid="header-account-group"
         >
-          {favorites.count === null ? (
-            <>My Favorites · {favoritesScopeLabel(favorites.mode)}</>
-          ) : (
-            <>
-              My Favorites <span className="font-mono text-pitch-dark">{shortlistIds.length}</span>{" "}
-              · {favoritesScopeLabel(favorites.mode)}
-            </>
-          )}
-        </div>
+          {/* My Favorites counter — always visible, never wraps internally. The
+              scope phrase is derived from where the list actually lives, so it
+              says "saved on this device" for a guest and "saved to your account"
+              for an account holder, and never claims either one while the session
+              is still resolving or a sync has failed.
 
-        <AccountEntry />
+              While resolving, the NUMBER is withheld rather than shown as 0: a
+              returning account holder must not read "My Favorites 0" for a frame
+              before their real list arrives. */}
+          <div
+            className="header-chip border border-line bg-paper text-ink-muted"
+            data-testid="favorites-counter"
+            data-favorites-mode={favorites.mode}
+          >
+            {favorites.count === null ? (
+              <>My Favorites · {favoritesScopeLabel(favorites.mode)}</>
+            ) : (
+              <>
+                My Favorites{" "}
+                <span className="font-mono text-pitch-dark">{shortlistIds.length}</span> ·{" "}
+                {favoritesScopeLabel(favorites.mode)}
+              </>
+            )}
+          </div>
+
+          <AccountEntry />
+        </div>
       </nav>
     </header>
   );

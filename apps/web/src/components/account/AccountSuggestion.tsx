@@ -5,7 +5,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { MOTION_EXIT_MS, usePresence } from "@/lib/motion/presence";
 import { useAuthSession } from "@/lib/auth/session";
 import { isSuppressed, recordDismissal } from "@/lib/auth/suggestion-state";
-import { useSavedWork } from "@/lib/state/saved-work";
 import { useScoutingState } from "@/lib/state/scouting-state";
 
 /**
@@ -33,7 +32,7 @@ function markShownThisSession(): void {
 }
 
 /**
- * A restrained, non-modal offer shown to a guest who has just saved a player.
+ * A restrained, non-modal offer shown to a guest who has just favourited a player.
  *
  * What it is NOT: a modal, a paywall, a gate, or a reason the favourite did not
  * happen. The save completes first and completely; this appears afterwards and
@@ -46,39 +45,41 @@ function markShownThisSession(): void {
  * no new geometry — and because it is anchored rather than in flow, the favourite
  * control the user just pressed does not move a pixel when it appears.
  *
- * When it appears, precisely:
- *   - a GUEST completed their first durable save of this session — favouriting a
- *     player, saving a Discovery view, or saving a comparison setup — and
+ * ONE trigger: a GUEST added a player to My Favorites that they had not saved
+ * before, and the device write is already confirmed. Then, and only then, if:
+ *
  *   - this build offers accounts, and
  *   - nobody is signed in, and
  *   - it has not already been shown this browser session, and
  *   - no explicit "Not now" is inside its cooling-off window.
  *
- * Which means: never on load, never after a removal, never after a FAILED write,
- * never merely because saved work exists, never for an account holder, and never
- * in an auth-free build.
+ * Which means: **never merely because the application was opened.** Not on first
+ * mount, not on a reload, not while the identity provider is still resolving, not
+ * when it restores an existing session, not because favourites were already in
+ * browser storage, not because saved Discovery views or saved comparison setups
+ * exist, and not because a provider hydrated or synchronized. Also never after a
+ * removal, never after re-selecting a player already saved, never after a FAILED
+ * write, never for an account holder, and never in an auth-free build.
  *
- * ONE suggestion, three triggers. Milestone 8.4B added two more kinds of durable
- * artifact, and giving each its own callout would mean a scout who favourites a
- * player, saves a view and saves a comparison in one session gets asked to create
- * an account three times. The two signals are summed and the once-per-session
- * latch is shared, so the offer is still made once — and it is now made after
- * whichever durable action happened to come first.
+ * 8.4B briefly widened this to "any first durable save", summing a second signal
+ * from saved views and saved comparisons. That was wrong in practice: filtering
+ * Discovery and saving the view is a routine opening move, so a scout who had
+ * favourited nothing and asked for nothing got an unsolicited account callout
+ * moments after launch. Saving a view is a filing action, not a moment of
+ * attachment to a player — the favourite is. One trigger, and it is that one.
  *
- * It no longer excludes Compare. In 8.4A the comparison queue was not
- * account-synchronized, so offering an account from that surface would have
- * promised something untrue; a saved comparison SETUP genuinely does sync, so the
- * offer is honest there now. The transient queue still does not sync, and the
- * tray still says so.
+ * Saved views and saved comparison setups still synchronize to an account exactly
+ * as before; they simply no longer ask for one.
  */
 export function AccountSuggestion() {
   const { effectiveStatus, enabled, openSignIn, openSignUp } = useAuthSession();
   const { favorites } = useScoutingState();
-  const { guestSaveSignal: savedWorkSignal } = useSavedWork();
-  // Summed rather than watched separately: any increment moves the total, and the
-  // shared once-per-session latch below means the FIRST durable save of a session
-  // is the only one that can open it.
-  const saveSignal = favorites.guestSaveSignal + savedWorkSignal;
+  /**
+   * Raised by the favourites store, once, inside the branch that has already
+   * confirmed the device write — so a removal, a no-op re-select, a failed write
+   * and hydration all leave it exactly where it was.
+   */
+  const newFavoriteSignal = favorites.guestSaveSignal;
   const [open, setOpen] = useState(false);
   // `effectiveStatus`, so this agrees with the counter and the header rather
   // than running its own idea of whether the session is known. A provider that
@@ -100,17 +101,29 @@ export function AccountSuggestion() {
    * `document.body`.
    */
   const returnFocusTo = useRef<HTMLElement | null>(null);
-  const lastSignal = useRef<number | null>(null);
+  /**
+   * The signal value this component has already accounted for.
+   *
+   * `null` until the first time the effect runs, and that first run is ALWAYS a
+   * baseline. This is the launch guard: whatever the store hands over while the
+   * page is starting up — a hydrated list of forty favourites, a restored
+   * session, a provider settling — is absorbed here, never fired on. The offer
+   * can only be opened by a value that arrives after this component has already
+   * seen a different one, which is another way of saying: by something the user
+   * just did.
+   */
+  const observed = useRef<number | null>(null);
 
   useEffect(() => {
-    // The first observed value is the baseline, never a trigger: mounting with a
-    // signal already at 3 must not open anything.
-    if (lastSignal.current === null) {
-      lastSignal.current = saveSignal;
+    if (observed.current === null) {
+      observed.current = newFavoriteSignal;
       return;
     }
-    if (saveSignal === lastSignal.current) return;
-    lastSignal.current = saveSignal;
+    // Strictly greater. Only an ADDITION raises this counter, so a value that
+    // stayed put or somehow went backwards is not one and cannot open anything.
+    const added = newFavoriteSignal > observed.current;
+    observed.current = newFavoriteSignal;
+    if (!added) return;
 
     if (!eligible) return;
     if (shownThisSession()) return;
@@ -120,11 +133,11 @@ export function AccountSuggestion() {
     returnFocusTo.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
     /* eslint-disable-next-line react-hooks/set-state-in-effect --
-     * This is a reaction to a completed save, not derived render state: every
-     * signal that reaches here has already been written to browser storage, and a
-     * FAILED write never increments one. */
+     * This is a reaction to a completed favourite, not derived render state: the
+     * player is already in browser storage by the time the signal moves, and a
+     * FAILED write never moves it. */
     setOpen(true);
-  }, [saveSignal, eligible]);
+  }, [newFavoriteSignal, eligible]);
 
   /**
    * Returns focus only if it is currently INSIDE the offer. Dismissing with

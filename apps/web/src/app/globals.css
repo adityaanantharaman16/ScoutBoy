@@ -299,6 +299,38 @@ select.input[size]:not([size="1"]) {
   color: var(--pitch-dark);
 }
 
+/* The header's right-hand pair: the My Favorites counter and the one account
+   control beside it.
+ *
+ * They read as a single unit, so they share ONE box — the same padding, the same
+ * type, the same 26px height, and therefore edges that line up. Declared here,
+ * once, rather than as two Tailwind class lists that have to be kept in step by
+ * hand.
+ *
+ * They had already drifted, and silently: `.btn` carries its own
+ * `@apply px-3 py-2 text-sm`, which wins on source order over utilities written
+ * beside it in `className`. `btn px-2.5 py-1.5 text-xs` was therefore INERT —
+ * the button rendered at 38px next to a 26px counter, with neither edge aligned.
+ * The compound `.btn.header-chip` selector settles that on specificity rather
+ * than on source order, so it cannot be undone by where this rule happens to sit.
+ *
+ * Colour is deliberately NOT set here. The counter keeps the decorative `--line`;
+ * the button keeps `.btn`'s `--line-strong`, which is what satisfies WCAG 2.2
+ * SC 1.4.11 for a boundary that identifies a real control. Nor is anything here
+ * interactive: `.btn`'s hover, active and focus treatments are untouched, and
+ * `border-radius: 0` still comes from `.btn`.
+ *
+ * 26px clears the 24px minimum target size (SC 2.5.8) that the rest of the
+ * product is held to. */
+.header-chip,
+.btn.header-chip {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .table-shell {
   background: var(--panel);
   border: 1px solid var(--line);

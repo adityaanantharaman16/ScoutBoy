@@ -425,6 +425,11 @@ exist, never for an account holder, never in an auth-free build, and never from
 Compare - the comparison queue is not account-synchronized in this phase, so
 offering an account there would promise something untrue.
 
+> **Still true after 8.4B.** That milestone briefly widened the trigger to any
+> first durable guest save, so a saved Discovery view or comparison setup could
+> raise it too. It was reverted before 8.5: the offer follows a newly added
+> favourite and nothing else. See `docs/milestone_8_4b_saved_work.md` §9.
+
 Behaviour:
 
 - **Never steals focus.** Focus stays on the favourite control. Dismissing from
@@ -592,8 +597,10 @@ make dev
 
 Against a real tenant, verify by hand:
 
-1. Sign up with a new email. Confirm the account entry switches to "Account" and
-   the counter to "saved to your account".
+1. Sign up with a new email. Confirm the counter switches to "saved to your
+   account" and the entry beside it becomes `Sign Out`. (The bordered "Account"
+   chip this step originally named was removed before 8.5: it named no account
+   and did nothing. The counter carries the only account fact the header has.)
 2. As a guest first, favourite two players, then sign in. Confirm the merge
    request fires once, both players appear on the account, and
    `scoutboy.shortlist.v1` is emptied only afterwards.

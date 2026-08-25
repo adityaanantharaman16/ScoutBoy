@@ -36,8 +36,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         {/* Siblings, not one nested inside the other: My Favorites, saved views
             and saved comparisons are three INDEPENDENT durable collections, and a
             failed saved-views merge must not be able to disturb the favourites
-            state machine. The account suggestion reads a save signal from both and
-            offers itself once. */}
+            state machine. The account suggestion watches My Favorites alone. */}
         <ScoutingStateProvider>
           <SavedWorkProvider>
             {children}

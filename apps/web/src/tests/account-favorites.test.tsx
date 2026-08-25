@@ -1,4 +1,6 @@
+import { QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useState, useSyncExternalStore } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AccountSuggestion } from "@/components/account/AccountSuggestion";
@@ -15,8 +17,17 @@ import {
   isSuppressed,
   readDismissedAt,
 } from "@/lib/auth/suggestion-state";
-import { RESOLVE_TIMEOUT_MS } from "@/lib/auth/session";
+import { AuthSessionValueProvider, RESOLVE_TIMEOUT_MS } from "@/lib/auth/session";
+import { SavedWorkProvider, useSavedWork } from "@/lib/state/saved-work";
 import { ScoutingStateProvider, useScoutingState } from "@/lib/state/scouting-state";
+import {
+  makeSavedComparison,
+  makeSavedView,
+  readSavedComparisons,
+  readSavedViews,
+  writeSavedComparisons,
+  writeSavedViews,
+} from "@/lib/storage/saved-work";
 import { setReducedMotion } from "./setup";
 import {
   AccountHarness,
@@ -29,6 +40,7 @@ import {
   makeQueryClient,
   makeSession,
   type FetchCall,
+  type SessionController,
 } from "./support/account-harness";
 
 vi.mock("next/navigation", () => ({ usePathname: () => "/" }));
@@ -288,9 +300,9 @@ describe("Account suggestion", () => {
 
     const message = screen.getByTestId("account-suggestion-message");
     expect(message).toHaveAttribute("role", "status");
-    // 8.4B generalized the offer: it now covers saved views and saved comparison
-    // setups as well as favourites, so the copy names saved work rather than
-    // favourites alone. One offer, three triggers.
+    // The offer follows a newly added FAVOURITE and nothing else. The copy names
+    // saved work because that is what an account keeps across devices - the
+    // favourite included - not because saving anything else can raise this.
     expect(message).toHaveTextContent(
       "Saved on this device. Create an account to keep saved work across devices.",
     );
@@ -2301,5 +2313,493 @@ describe("Rollback ordering uses neighbours, not indices", () => {
 
     // B back before C; the unrelated addition untouched at the tail.
     await waitFor(() => expect(screen.getByTestId("ids")).toHaveTextContent("[6,11,4,77]"));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The signed-in header
+//
+// Two elements at the far right, in this order: the My Favorites counter, then
+// `Sign Out`. There used to be a third — a bordered chip reading "Account" —
+// which named no account, carried no state the counter beside it did not already
+// carry, and did nothing when pressed.
+// ---------------------------------------------------------------------------
+
+/** Every element in the header whose entire visible text is exactly `label`. */
+function chipsReading(label: string): HTMLElement[] {
+  const header = document.querySelector("header")!;
+  return Array.from(header.querySelectorAll<HTMLElement>("*")).filter(
+    (node) => (node.textContent ?? "").trim() === label,
+  );
+}
+
+async function renderSignedInHeader() {
+  installFetchRecorder(() => ({ json: favoritesJson([6, 11]) }));
+  render(
+    <AccountHarness session={makeSession({ status: "authenticated" })}>
+      <NavBar />
+      <Probe />
+    </AccountHarness>,
+  );
+  await waitFor(() =>
+    expect(screen.getByTestId("favorites-counter")).toHaveTextContent("saved to your account"),
+  );
+}
+
+describe("The signed-in header", () => {
+  it("carries exactly one Sign Out control and no standalone Account box", async () => {
+    await renderSignedInHeader();
+
+    expect(screen.getAllByTestId("account-sign-out")).toHaveLength(1);
+    expect(screen.getByTestId("account-sign-out")).toHaveTextContent("Sign Out");
+
+    // Targeted at the REMOVED label specifically. "saved to your account" is
+    // legitimate copy in the counter beside it, so a blanket "the header does not
+    // contain the word account" assertion would be wrong as well as untrue.
+    expect(chipsReading("Account")).toHaveLength(0);
+    expect(screen.getByTestId("favorites-counter")).toHaveTextContent("saved to your account");
+  });
+
+  it("puts My Favorites immediately before Sign Out, inside one right-aligned group", async () => {
+    await renderSignedInHeader();
+
+    const group = screen.getByTestId("header-account-group");
+    const counter = screen.getByTestId("favorites-counter");
+    const signOut = screen.getByTestId("account-sign-out");
+
+    // One group owns both.
+    expect(group).toContainElement(counter);
+    expect(group).toContainElement(signOut);
+    // Counter first, in DOM order — which is also reading and tab order.
+    expect(counter.compareDocumentPosition(signOut) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Nothing else sits between them: the entry slot is the group's second and
+    // last child, so no future element can drift into the gap unnoticed.
+    expect(group.children).toHaveLength(2);
+    expect(group.children[0]).toBe(counter);
+    expect(group.children[1]).toContainElement(signOut);
+
+    // The group is what gets pushed right, and it is the ONLY thing in the nav
+    // that does so at desktop width. Two competing `ml-auto` declarations would
+    // split the free space and leave the relationship to chance.
+    expect(group.className).toContain("lg:ml-auto");
+    expect(counter.className).not.toContain("ml-auto");
+    expect(signOut.className).not.toContain("ml-auto");
+    const nav = document.querySelector("nav")!;
+    const desktopAutoMargins = Array.from(nav.querySelectorAll<HTMLElement>("*")).filter(
+      (node) => /(^|\s)lg:ml-auto(\s|$)/.test(node.className),
+    );
+    expect(desktopAutoMargins).toEqual([group]);
+  });
+
+  it("cannot let the two boxes drift apart in height or vertical padding", async () => {
+    await renderSignedInHeader();
+    const counter = screen.getByTestId("favorites-counter");
+    const signOut = screen.getByTestId("account-sign-out");
+
+    // ONE shared geometry class, declared once in globals.css, rather than two
+    // hand-kept class lists. jsdom applies no stylesheet, so the pixel result is
+    // verified in the browser; what this pins is that both boxes go on getting
+    // their box from the same place.
+    expect(counter.className.split(/\s+/)).toContain("header-chip");
+    expect(signOut.className.split(/\s+/)).toContain("header-chip");
+
+    // And that neither one carries a padding, height or type utility of its own
+    // to fight it with. This is the specific way they diverged before: `.btn`'s
+    // own `@apply px-3 py-2 text-sm` silently beat the `px-2.5 py-1.5 text-xs`
+    // written beside it, so the button rendered 38px tall next to a 26px counter.
+    for (const node of [counter, signOut]) {
+      for (const utility of node.className.split(/\s+/)) {
+        expect(utility, `${node.dataset.testid} carries "${utility}"`).not.toMatch(
+          /^(py|pt|pb|p|h|min-h|text-(xs|sm|base|lg))(-|$)/,
+        );
+      }
+    }
+  });
+
+  it("keeps Sign Out a real button with its normal interactive treatment", async () => {
+    const onSignOut = vi.fn();
+    installFetchRecorder(() => ({ json: favoritesJson([]) }));
+    render(
+      <AccountHarness session={makeSession({ status: "authenticated", onSignOut })}>
+        <NavBar />
+      </AccountHarness>,
+    );
+    const signOut = await screen.findByTestId("account-sign-out");
+    expect(signOut.tagName).toBe("BUTTON");
+    expect(signOut).toHaveAttribute("type", "button");
+    // `.btn` is what carries hover, :active and the square 0-radius border.
+    expect(signOut.className.split(/\s+/)).toContain("btn");
+    // Nothing signs anybody out until the control is actually pressed.
+    expect(onSignOut).not.toHaveBeenCalled();
+    fireEvent.click(signOut);
+    expect(onSignOut).toHaveBeenCalledTimes(1);
+  });
+
+  it("gives an anonymous visitor Sign In, in the same group and the same box", () => {
+    render(
+      <AccountHarness session={makeSession({ status: "anonymous" })}>
+        <NavBar />
+      </AccountHarness>,
+    );
+    const group = screen.getByTestId("header-account-group");
+    const signIn = screen.getByTestId("account-sign-in");
+    expect(group).toContainElement(signIn);
+    expect(signIn.className.split(/\s+/)).toContain("header-chip");
+    expect(screen.queryByTestId("account-sign-out")).toBeNull();
+    expect(chipsReading("Account")).toHaveLength(0);
+  });
+
+  it("stays honest, and in the same box, while the session is resolving", () => {
+    render(
+      <AccountHarness session={makeSession({ status: "resolving" })}>
+        <NavBar />
+      </AccountHarness>,
+    );
+    const chip = screen.getByTestId("account-entry-resolving");
+    expect(chip).toHaveTextContent("Checking account");
+    expect(chip.className.split(/\s+/)).toContain("header-chip");
+    expect(screen.getByTestId("header-account-group")).toContainElement(chip);
+    // A control that cannot do anything yet is not offered.
+    expect(screen.queryByTestId("account-sign-in")).toBeNull();
+    expect(screen.queryByTestId("account-sign-out")).toBeNull();
+    expect(chipsReading("Account")).toHaveLength(0);
+  });
+
+  it("stays honest, and in the same box, when the provider never answers", () => {
+    vi.useFakeTimers();
+    try {
+      render(
+        <AccountHarness session={makeSession({ status: "resolving" })}>
+          <NavBar />
+        </AccountHarness>,
+      );
+      act(() => {
+        vi.advanceTimersByTime(RESOLVE_TIMEOUT_MS + 1);
+      });
+      const chip = screen.getByTestId("account-entry-unavailable");
+      expect(chip).toHaveTextContent("Accounts unavailable");
+      expect(chip.className.split(/\s+/)).toContain("header-chip");
+      expect(screen.getByTestId("header-account-group")).toContainElement(chip);
+      expect(screen.queryByTestId("account-sign-in")).toBeNull();
+      expect(screen.queryByTestId("account-sign-out")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("renders no account control at all in an auth-free build", () => {
+    render(
+      <ScoutingStateProvider>
+        <NavBar />
+      </ScoutingStateProvider>,
+    );
+    const group = screen.getByTestId("header-account-group");
+    // The group still exists and still right-aligns the counter; it simply has
+    // nothing to put beside it.
+    expect(group).toContainElement(screen.getByTestId("favorites-counter"));
+    expect(screen.queryByTestId("account-sign-in")).toBeNull();
+    expect(screen.queryByTestId("account-sign-out")).toBeNull();
+    expect(screen.queryByTestId("account-entry-authenticated")).toBeNull();
+    expect(screen.queryByTestId("account-entry-resolving")).toBeNull();
+    expect(chipsReading("Account")).toHaveLength(0);
+  });
+
+  it("leaves the navigation order and the mobile menu untouched", () => {
+    render(
+      <AccountHarness session={makeSession({ status: "anonymous" })}>
+        <NavBar />
+      </AccountHarness>,
+    );
+    const nav = document.querySelector("nav")!;
+    const order = Array.from(nav.querySelectorAll<HTMLElement>("[data-testid]"))
+      .map((n) => n.dataset.testid)
+      .filter((id) => id && (id.startsWith("nav-") || id === "header-account-group"));
+    expect(order).toEqual([
+      "nav-menu-toggle",
+      "nav-menu-panel",
+      "nav-discover",
+      "nav-leaderboards",
+      "nav-compare",
+      "nav-saved",
+      "nav-methodology",
+      "header-account-group",
+    ]);
+
+    const toggle = screen.getByTestId("nav-menu-toggle");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByTestId("nav-menu-panel").className).toContain("flex");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Nothing opens the account suggestion at launch
+//
+// The whole point of this block: the offer is a reaction to ONE thing a scout
+// did, and to nothing the application did to itself. Opening the page, reloading
+// it, hydrating browser storage, restoring a session, or synchronizing a
+// provider must all leave it closed.
+// ---------------------------------------------------------------------------
+
+describe("The account suggestion never opens at launch", () => {
+  /** The real tree: favourites AND saved work, exactly as `providers.tsx` mounts them. */
+  function FullHarness({
+    controller,
+    children,
+  }: {
+    controller: SessionController;
+    children: React.ReactNode;
+  }) {
+    const session = useSyncExternalStore(controller.subscribe, controller.get, controller.get);
+    const [client] = useState(() => makeQueryClient());
+    return (
+      <QueryClientProvider client={client}>
+        <AuthSessionValueProvider value={session}>
+          <ScoutingStateProvider>
+            <SavedWorkProvider>{children}</SavedWorkProvider>
+          </ScoutingStateProvider>
+        </AuthSessionValueProvider>
+      </QueryClientProvider>
+    );
+  }
+
+  /** Drives the saved-work store directly: the same path the two controls use. */
+  function SavedWorkProbe() {
+    const { views, comparisons } = useSavedWork();
+    return (
+      <div>
+        <button
+          type="button"
+          data-testid="save-a-view"
+          onClick={() => void views.save("Young Ajax", { club: "Ajax" })}
+        >
+          Save View
+        </button>
+        <button
+          type="button"
+          data-testid="save-a-comparison"
+          onClick={() =>
+            void comparisons.save(
+              "Anton vs Jack",
+              { playerId: ANTON.id, name: ANTON.name },
+              { playerId: JACK.id, name: JACK.name },
+              null,
+            )
+          }
+        >
+          Save Comparison
+        </button>
+        <span data-testid="views-count">{views.items.length}</span>
+        <span data-testid="comparisons-count">{comparisons.items.length}</span>
+      </div>
+    );
+  }
+
+  function renderLaunch(controller: SessionController) {
+    return render(
+      <FullHarness controller={controller}>
+        <FavoriteHeartButton player={ANTON} />
+        <FavoriteHeartButton player={JACK} />
+        <CompareRailButton player={ANTON} />
+        <SavedWorkProbe />
+        <AccountSuggestion />
+        <Probe />
+      </FullHarness>,
+    );
+  }
+
+  const guest = () => createSessionController(makeSession({ status: "anonymous" }));
+
+  it("is absent on first mount, with nothing in storage", () => {
+    renderLaunch(guest());
+    expect(screen.queryByTestId("account-suggestion")).toBeNull();
+  });
+
+  it("stays absent when favourites, views and comparisons are all already stored", () => {
+    window.localStorage.setItem(SHORTLIST_KEY, JSON.stringify([ANTON.id, JACK.id]));
+    expect(writeSavedViews([makeSavedView("Young Ajax", { club: "Ajax" })])).toBe(true);
+    expect(
+      writeSavedComparisons([
+        makeSavedComparison(
+          "Anton vs Jack",
+          { playerId: ANTON.id, name: ANTON.name },
+          { playerId: JACK.id, name: JACK.name },
+          null,
+        ),
+      ]),
+    ).toBe(true);
+    renderLaunch(guest());
+
+    expect(screen.getByTestId("ids")).toHaveTextContent("[6,11]");
+    expect(screen.getByTestId("views-count")).toHaveTextContent("1");
+    expect(screen.getByTestId("comparisons-count")).toHaveTextContent("1");
+    expect(screen.queryByTestId("account-suggestion")).toBeNull();
+  });
+
+  it("stays absent across a reload that finds the same saved work", () => {
+    // First visit: a favourite is added and the offer is made and dismissed.
+    setReducedMotion(true);
+    const first = renderLaunch(guest());
+    fireEvent.click(screen.getByLabelText(/Add Anton Keller to My Favorites/i));
+    expect(screen.getByTestId("account-suggestion")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("account-suggestion-dismiss"));
+    first.unmount();
+
+    // A RELOAD, not a new session: storage survives, and so does the 30-day
+    // "Not now". Neither may reopen anything.
+    window.sessionStorage.clear();
+    renderLaunch(guest());
+    expect(screen.getByTestId("ids")).toHaveTextContent("[6]");
+    expect(screen.queryByTestId("account-suggestion")).toBeNull();
+  });
+
+  it("stays absent across a reload even with a clean slate of preferences", () => {
+    window.localStorage.setItem(SHORTLIST_KEY, JSON.stringify([ANTON.id]));
+    const first = renderLaunch(guest());
+    expect(screen.queryByTestId("account-suggestion")).toBeNull();
+    first.unmount();
+
+    // Nothing remembered at all — the strongest form of "first launch".
+    window.sessionStorage.clear();
+    renderLaunch(guest());
+    expect(screen.queryByTestId("account-suggestion")).toBeNull();
+  });
+
+  it("stays absent while the identity provider is still resolving", () => {
+    const controller = createSessionController(makeSession({ status: "resolving" }));
+    window.localStorage.setItem(SHORTLIST_KEY, JSON.stringify([ANTON.id]));
+    renderLaunch(controller);
+    expect(screen.getByTestId("mode")).toHaveTextContent("resolving");
+    expect(screen.queryByTestId("account-suggestion")).toBeNull();
+  });
+
+  it("stays absent when the provider resolves to an anonymous visitor", () => {
+    const controller = createSessionController(makeSession({ status: "resolving" }));
+    window.localStorage.setItem(SHORTLIST_KEY, JSON.stringify([ANTON.id, JACK.id]));
+    renderLaunch(controller);
+
+    act(() => controller.set(makeSession({ status: "anonymous" })));
+    // Becoming eligible is not an event the offer may react to. Only a favourite is.
+    expect(screen.getByTestId("mode")).toHaveTextContent("guest");
+    expect(screen.queryByTestId("account-suggestion")).toBeNull();
+  });
+
+  it("stays absent when an existing session is restored on load", async () => {
+    installFetchRecorder(() => ({ json: favoritesJson([ANTON.id]) }));
+    const controller = createSessionController(makeSession({ status: "resolving" }));
+    renderLaunch(controller);
+
+    await act(async () => {
+      controller.set(makeSession({ status: "authenticated" }));
+    });
+    await waitFor(() => expect(screen.getByTestId("mode")).toHaveTextContent("account"));
+    expect(screen.queryByTestId("account-suggestion")).toBeNull();
+  });
+
+  it("opens only when an eligible guest adds a NEW favourite", () => {
+    renderLaunch(guest());
+    expect(screen.queryByTestId("account-suggestion")).toBeNull();
+    fireEvent.click(screen.getByLabelText(/Add Anton Keller to My Favorites/i));
+    expect(screen.getByTestId("account-suggestion")).toBeInTheDocument();
+  });
+
+  it("does not open when a player already in My Favorites is pressed again", () => {
+    window.localStorage.setItem(SHORTLIST_KEY, JSON.stringify([ANTON.id]));
+    renderLaunch(guest());
+    // The control is a toggle, so pressing an already-saved player REMOVES them.
+    // Either way nothing new was saved, so nothing is offered.
+    fireEvent.click(screen.getByLabelText(/Remove Anton Keller from My Favorites/i));
+    expect(screen.getByTestId("ids")).toHaveTextContent("[]");
+    expect(screen.queryByTestId("account-suggestion")).toBeNull();
+  });
+
+  it("does not open when a Discovery view is saved", async () => {
+    renderLaunch(guest());
+    fireEvent.click(screen.getByTestId("save-a-view"));
+
+    // The view really was saved to this device — this is not a no-op that happens
+    // to be quiet.
+    await waitFor(() => expect(screen.getByTestId("views-count")).toHaveTextContent("1"));
+    expect(readSavedViews().items).toHaveLength(1);
+    expect(screen.queryByTestId("account-suggestion")).toBeNull();
+  });
+
+  it("does not open when a comparison setup is saved", async () => {
+    renderLaunch(guest());
+    fireEvent.click(screen.getByTestId("save-a-comparison"));
+
+    await waitFor(() => expect(screen.getByTestId("comparisons-count")).toHaveTextContent("1"));
+    expect(readSavedComparisons().items).toHaveLength(1);
+    expect(screen.queryByTestId("account-suggestion")).toBeNull();
+  });
+
+  it("does not open when saved work exists and a view is then renamed or removed", async () => {
+    renderLaunch(guest());
+    fireEvent.click(screen.getByTestId("save-a-view"));
+    await waitFor(() => expect(screen.getByTestId("views-count")).toHaveTextContent("1"));
+    expect(screen.queryByTestId("account-suggestion")).toBeNull();
+
+    // …and a favourite added afterwards still gets the one offer it is entitled to,
+    // proving the saved work neither opened nor consumed it.
+    fireEvent.click(screen.getByLabelText(/Add Anton Keller to My Favorites/i));
+    expect(screen.getByTestId("account-suggestion")).toBeInTheDocument();
+  });
+
+  it("does not open for compare-queue activity", () => {
+    renderLaunch(guest());
+    fireEvent.click(screen.getByLabelText(/Add Anton Keller to compare queue/i));
+    expect(screen.getByTestId("queue")).toHaveTextContent("[6]");
+    expect(screen.queryByTestId("account-suggestion")).toBeNull();
+  });
+
+  it("does not open when the favourite could not be persisted", () => {
+    renderLaunch(guest());
+    const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("QuotaExceededError");
+    });
+    fireEvent.click(screen.getByLabelText(/Add Anton Keller to My Favorites/i));
+    setItem.mockRestore();
+
+    // Nothing was saved or painted optimistically, so nothing is offered.
+    expect(screen.getByTestId("ids")).toHaveTextContent("[]");
+    expect(screen.getByLabelText(/Add Anton Keller to My Favorites/i)).toBeInTheDocument();
+    expect(screen.queryByTestId("account-suggestion")).toBeNull();
+  });
+
+  it("never opens for an authenticated account, whatever they save", async () => {
+    installFetchRecorder(() => ({ json: favoritesJson([]) }));
+    const controller = createSessionController(makeSession({ status: "authenticated" }));
+    renderLaunch(controller);
+    await waitFor(() => expect(screen.getByTestId("mode")).toHaveTextContent("account"));
+
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText(/Add Anton Keller to My Favorites/i));
+    });
+    expect(screen.queryByTestId("account-suggestion")).toBeNull();
+  });
+
+  it("signs nobody out on its own", async () => {
+    const onSignOut = vi.fn();
+    installFetchRecorder(() => ({ json: favoritesJson([ANTON.id]) }));
+    const controller = createSessionController(
+      makeSession({ status: "authenticated", onSignOut }),
+    );
+    render(
+      <FullHarness controller={controller}>
+        <NavBar />
+        <AccountSuggestion />
+        <Probe />
+      </FullHarness>,
+    );
+    await waitFor(() => expect(screen.getByTestId("mode")).toHaveTextContent("account"));
+
+    // Launch, hydration and synchronization are all complete, and nothing has
+    // been pressed.
+    expect(onSignOut).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("account-suggestion")).toBeNull();
+
+    fireEvent.click(screen.getByTestId("account-sign-out"));
+    expect(onSignOut).toHaveBeenCalledTimes(1);
   });
 });

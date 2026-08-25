@@ -697,16 +697,49 @@ are unchanged.
 
 ## 9. The account suggestion
 
-Generalized from "after a new favourite" to "after a guest's first durable save of
-this session", where a durable save is any of:
+**One trigger: a guest added a player to My Favorites that they had not saved
+before.** Nothing else raises it.
 
-- favouriting a player,
-- saving a Discovery view,
-- saving a comparison setup.
+8.4B originally widened this to "the guest's first durable save of this session",
+summing a second signal so that saving a Discovery view or a comparison setup
+could raise it too. That was **reverted before 8.5**. Filtering Discovery and
+saving the view is a routine opening move, so a scout who had favourited nothing
+and asked for nothing got an unsolicited account callout moments after launch -
+reproduced with zero favourites in browser storage. Saving a view is a filing
+action; the favourite is the moment of attachment to a player, and it is the only
+one that earns the ask.
 
-The two save signals are **summed** and the once-per-session latch is shared, so a
-scout who does all three in one session is asked once - and is asked after
-whichever came first. Three separate callouts would have meant three asks.
+The saved-work signal was removed rather than merely disconnected, so there is no
+counter left to re-wire. Saving, renaming, removing and synchronizing saved views
+and saved comparisons is **completely unchanged** - they simply no longer ask for
+an account.
+
+### What can never open it
+
+Nothing that happens because the application was opened:
+
+| Situation | Opens it? |
+| --- | --- |
+| First mount, hard reload | No |
+| Identity provider still resolving | No |
+| An existing session restored on load | No |
+| Favourites already in browser or account storage | No |
+| Saved views or saved comparisons already stored | No |
+| Any provider hydrating or synchronizing | No |
+| Saving a Discovery view or a comparison setup | No |
+| Compare-queue changes | No |
+| Removing a favourite, or re-pressing a saved one | No |
+| A favourite whose device write FAILED | No |
+| Any activity by a signed-in account | No |
+| An auth-free or `unavailable` build | No |
+| **An eligible guest adding a new favourite** | **Yes, once** |
+
+Two mechanisms, both structural. The store raises its counter in exactly one
+place - inside the add branch that has already confirmed the device write - so a
+removal, a no-op, a failed write and hydration cannot move it. And the component's
+FIRST observation of that counter is always a baseline, never a trigger, so
+whatever number launch happens to start at is absorbed rather than fired on. Only
+a strictly greater value seen afterwards opens the offer.
 
 Unchanged: optional, non-modal, dismissible, `sessionStorage`-latched per session,
 30-day "Not now" window at `scoutboy.accountSuggestion.v1`, never steals focus,
@@ -714,18 +747,11 @@ Escape and "Not now" are the same decision, announced once via a polite
 `role="status"`, absent for signed-in users and in auth-free builds, and stacked
 **above** the compare tray in the shared bottom rail so it can never obscure it.
 
-It is shown only after **confirmed local persistence**, which is why a failed write
-cannot raise it: the signal increments inside the branch that already verified the
-write landed.
-
-It no longer excludes `/compare`. In 8.4A the comparison queue was not
-account-synchronized, so offering an account from that surface would have promised
-something untrue; a saved comparison **setup** genuinely does sync, so the offer is
-honest there now. The transient queue still does not sync, and the tray still says
-so.
-
-New copy: *"Saved on this device. Create an account to keep saved work across
-devices."*
+Copy: *"Saved on this device. Create an account to keep saved work across
+devices."* Both sentences stay true of a favourite: the player was saved to this
+device, and an account is what carries saved work - favourites included - between
+them. The copy describes what an account is for; it does not promise what raises
+the offer.
 
 ## 10. Privacy and security
 

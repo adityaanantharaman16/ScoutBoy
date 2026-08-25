@@ -141,14 +141,23 @@ export interface SavedWorkState {
     rename: (clientId: string, label: string) => Promise<WriteResult>;
     remove: (clientId: string) => Promise<WriteResult>;
   };
-  /**
-   * Increments when, and only when, a GUEST successfully persisted a NEW durable
-   * artifact to this device. It is one of the three triggers for the account
-   * suggestion, alongside a new favourite - which is why an update, a removal,
-   * hydration, a reload and a FAILED write can none of them raise it.
-   */
-  guestSaveSignal: number;
 }
+
+/*
+ * There is deliberately NO guest-save signal here.
+ *
+ * 8.4B published one, so that saving a Discovery view or a comparison setup
+ * could open the account suggestion alongside a new favourite. That turned a
+ * routine filing action into an unsolicited ask: filtering Discovery and saving
+ * the view is a normal opening move, so a scout who had favourited nothing got
+ * an account callout moments after launch. The suggestion now follows a newly
+ * added favourite and nothing else (see `AccountSuggestion`), which left this
+ * counter with no consumer - so it is gone rather than left plumbed through,
+ * waiting to be re-wired.
+ *
+ * Saving, renaming, removing and synchronizing saved work is completely
+ * unchanged; only the counter that asked for an account is.
+ */
 
 /**
  * What `useSavedWork()` reports with no provider above it.
@@ -186,7 +195,6 @@ const NO_SAVED_WORK: SavedWorkState = {
     rename: async () => UNAVAILABLE,
     remove: async () => UNAVAILABLE,
   },
-  guestSaveSignal: 0,
 };
 
 const SavedWorkContext = createContext<SavedWorkState>(NO_SAVED_WORK);
@@ -341,7 +349,6 @@ function useDurableCollection<TItem extends LabelledRecord>(
   adapter: CollectionAdapter<TItem>,
   session: EffectiveAuthSession,
   mounted: boolean,
-  onGuestCreate: () => void,
   /**
    * The private query cache, or `null` in a build with no identity provider.
    *
@@ -732,15 +739,11 @@ function useDurableCollection<TItem extends LabelledRecord>(
       }
       if (forToken !== null) {
         applyIfCurrent(forToken, (prev) => ({ ...prev, items: outcome.items }));
-      } else if (outcome.disposition === "created") {
-        // Raised AFTER confirmed local persistence, never before, and only for a
-        // genuinely new artifact.
-        onGuestCreate();
       }
       return { ok: true, disposition: outcome.disposition };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [device, writeDevice, applyIfCurrent, onGuestCreate, quotaFailure],
+    [device, writeDevice, applyIfCurrent, quotaFailure],
   );
 
   const deviceRename = useCallback(
@@ -1142,7 +1145,6 @@ function SavedWorkTree({
   children: React.ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
-  const [guestSaveSignal, setGuestSaveSignal] = useState(0);
 
   useEffect(() => {
     /* eslint-disable-next-line react-hooks/set-state-in-effect --
@@ -1151,22 +1153,8 @@ function SavedWorkTree({
     setMounted(true);
   }, []);
 
-  const onGuestCreate = useCallback(() => setGuestSaveSignal((n) => n + 1), []);
-
-  const views = useDurableCollection(
-    VIEW_ADAPTER,
-    session,
-    mounted,
-    onGuestCreate,
-    queryClient,
-  );
-  const comparisons = useDurableCollection(
-    COMPARISON_ADAPTER,
-    session,
-    mounted,
-    onGuestCreate,
-    queryClient,
-  );
+  const views = useDurableCollection(VIEW_ADAPTER, session, mounted, queryClient);
+  const comparisons = useDurableCollection(COMPARISON_ADAPTER, session, mounted, queryClient);
 
   const saveView = useCallback(
     (label: string, view: DiscoveryView) => views.save(makeSavedView(label, view)),
@@ -1201,9 +1189,8 @@ function SavedWorkTree({
         rename: comparisons.rename,
         remove: comparisons.remove,
       },
-      guestSaveSignal,
     }),
-    [session.enabled, views, comparisons, saveView, saveComparison, guestSaveSignal],
+    [session.enabled, views, comparisons, saveView, saveComparison],
   );
 
   return <SavedWorkContext.Provider value={value}>{children}</SavedWorkContext.Provider>;
