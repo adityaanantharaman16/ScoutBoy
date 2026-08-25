@@ -16,7 +16,7 @@ const SECTIONS = ["favorites", "views", "comparisons"] as const;
 type Section = (typeof SECTIONS)[number];
 
 const SECTION_LABELS: Record<Section, string> = {
-  favorites: "Favorites",
+  favorites: "My Favorites",
   views: "Views",
   comparisons: "Comparisons",
 };
@@ -86,8 +86,8 @@ function SavedPageInner() {
     section === "favorites"
       ? favoritesScopeLead(favorites.mode)
       : section === "views"
-        ? "Discovery setups you saved so you can return to the same cohort. Opening one restores its filters and sort, and always starts on page 1."
-        : "Comparison setups you saved: two players in the order you chose, and the role you selected. Opening one loads current ScoutBoy analysis; no score is stored.";
+        ? "Saved Discovery views: the filter and sort setup you kept so you can return to the same cohort. Opening one restores its criteria and sort, and always starts on page 1."
+        : "Saved comparison setups: two players in the order you chose, and the role you selected. Opening one loads current ScoutBoy analysis; no score, conclusion or snapshot is stored.";
 
   return (
     <div>

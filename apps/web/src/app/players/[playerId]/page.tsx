@@ -35,7 +35,7 @@ export default function PlayerCardPage() {
   return (
     <div className="space-y-8" data-testid="player-card">
       <Link href="/" className="text-sm font-semibold text-pitch-dark hover:underline">
-        Back to discover
+        Back To Discovery
       </Link>
 
       {hasAnalysis ? (

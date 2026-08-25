@@ -73,8 +73,8 @@ export const SORT_OPTIONS = [
   { key: "rolefit_desc", label: "RoleFit (High → Low)" },
   { key: "rolefit_asc", label: "RoleFit (Low → High)" },
   { key: "age_asc", label: "Age (Young → Old)" },
-  { key: "value_desc", label: "Asking Price (High → Low)" },
-  { key: "value_asc", label: "Asking Price (Low → High)" },
+  { key: "value_desc", label: "Expected Asking (High → Low)" },
+  { key: "value_asc", label: "Expected Asking (Low → High)" },
   { key: "name_asc", label: "Name (A → Z)" },
 ];
 

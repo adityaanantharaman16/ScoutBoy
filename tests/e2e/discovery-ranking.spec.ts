@@ -90,7 +90,7 @@ test.describe("Why this order: the default ordering", () => {
       "player_id",
     ]);
     await expect(page.locator('[data-testid="ranking-role-context"]')).toContainText(
-      "Best role for each player",
+      "Best Role for each player",
     );
     await expect(page.locator('[data-testid="ranking-tie-breakers"]')).toContainText(
       "Canonical Name, Player ID",
@@ -149,7 +149,7 @@ test.describe("Why this order: role context", () => {
     await openExplanation(page);
 
     const context = page.locator('[data-testid="ranking-role-context"]');
-    await expect(context).toContainText("Selected role: Touchline Winger");
+    await expect(context).toContainText("Selected Role: Touchline Winger");
     await expect(context).toContainText("stored Touchline Winger rating");
     await expect(context).toContainText("no other role's rating is read");
     await expect(context).not.toContainText("best role");
@@ -168,7 +168,7 @@ test.describe("Why this order: role context", () => {
       await page.goto(`/?sort=${sort}&role=touchline_winger`);
       await openExplanation(page);
       const context = page.locator('[data-testid="ranking-role-context"]');
-      await expect(context, sort).toContainText("Selected role: Touchline Winger");
+      await expect(context, sort).toContainText("Selected Role: Touchline Winger");
       await expect(context, sort).toContainText("did not order this page");
       await expect(context, sort).toContainText(`the ordering comes from the ${label} sort`);
       await expect(context, sort).not.toContainText("ordering keys below");
@@ -181,14 +181,14 @@ test.describe("Why this order: role context", () => {
     await page.goto("/?role=touchline_winger");
     await openExplanation(page);
     await expect(page.locator('[data-testid="ranking-role-context"]')).toContainText(
-      "Selected role",
+      "Selected Role",
     );
 
     await page.selectOption('[data-testid="role-filter"]', "");
     await page.waitForLoadState("networkidle");
     await openExplanation(page);
     await expect(page.locator('[data-testid="ranking-role-context"]')).toContainText(
-      "Best role for each player",
+      "Best Role for each player",
     );
   });
 });
@@ -358,7 +358,7 @@ test.describe("Why this order: URL durability", () => {
       "Ordered by Expected Asking, lowest first.",
     );
     await expect(page.locator('[data-testid="ranking-role-context"]')).toContainText(
-      "Selected role: Inside Forward",
+      "Selected Role: Inside Forward",
     );
 
     await page.reload();

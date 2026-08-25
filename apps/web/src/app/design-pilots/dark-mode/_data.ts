@@ -86,7 +86,7 @@ export const LEDGER_ROWS: LedgerPlayer[] = [
     role: "Shadow Striker",
     score: 90.0, // elite band
     confidence: "high",
-    coverage: "High Data Coverage",
+    coverage: "High Evidence Coverage",
     market: "inflated",
     askLow: 58_520_110,
     askHigh: 87_780_165,
@@ -106,7 +106,7 @@ export const LEDGER_ROWS: LedgerPlayer[] = [
     role: "Inside Forward",
     score: 83.7, // emerald band
     confidence: "high",
-    coverage: "High Data Coverage",
+    coverage: "High Evidence Coverage",
     market: "high-risk",
     askLow: 64_534_726,
     askHigh: 96_802_090,
@@ -125,10 +125,10 @@ export const LEDGER_ROWS: LedgerPlayer[] = [
     minutes: 1300,
     role: "Shadow Striker",
     score: 68.2, // amber band
-    // High coverage but only medium confidence: the two channels are sourced
+    // High Evidence Coverage but only medium RoleFit Confidence: the two channels are sourced
     // independently and this row exists to prove the mismatch stays readable.
     confidence: "medium",
-    coverage: "High Data Coverage",
+    coverage: "High Evidence Coverage",
     market: "inflated",
     askLow: 15_683_251,
     askHigh: 23_524_876,
@@ -148,7 +148,7 @@ export const LEDGER_ROWS: LedgerPlayer[] = [
     role: "Ball-Winning Midfielder", // the longest role name in the registry
     score: 58.1, // amber band
     confidence: "high",
-    coverage: "High Data Coverage",
+    coverage: "High Evidence Coverage",
     market: "fair", // the neutral market state
     askLow: 9_876_264,
     askHigh: 14_814_395,
@@ -161,7 +161,7 @@ export const LEDGER_ROWS: LedgerPlayer[] = [
 // ---------------------------------------------------------------------------
 // Recruitment Desk excerpt — Sekou Diallo, Shadow Striker
 //
-// A genuinely uncertain record: Ligue 2, 1300 minutes, medium confidence, and a
+// A genuinely uncertain record: Ligue 2, 1300 minutes played, medium RoleFit Confidence, and a
 // context multiplier that pulls a raw 81.2 down to 68.1. Its stored audit is
 // reproduced below exactly as `GET /players/23/ratings` returns it.
 // ---------------------------------------------------------------------------
@@ -191,12 +191,12 @@ export const DESK = {
   score: 68.2,
   confidence: "medium" as Confidence,
   confidenceScore: 0.727,
-  coverage: "High Data Coverage",
+  coverage: "High Evidence Coverage",
   rank: 2,
   explanation:
     "Rates 68.2 in this role. Strongest areas: shot volume (94), arrival carrying (94). " +
     "Context net multiplier ×0.84 (raw 81.2 → adjusted 68.1). Recent-form bonus +0.1. " +
-    "Confidence: medium confidence.",
+    "RoleFit Confidence: medium.",
   groups: [
     {
       key: "box_presence",

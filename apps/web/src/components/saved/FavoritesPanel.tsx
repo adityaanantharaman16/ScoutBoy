@@ -44,7 +44,7 @@ function SavedRecord({
           </div>
           <div className="text-xs text-ink-soft">
             {id.league ?? "-"} · {card.season}
-            {minutes != null ? ` · ${minutes} min` : ""}
+            {minutes != null ? ` · ${minutes} min played` : ""}
           </div>
         </LedgerIdentity>
         <LedgerRoleFitHero
@@ -131,19 +131,19 @@ export function FavoritesPanel() {
 
       {shortlistIds.length === 0 && (
         <EmptyState
-          label="No players saved yet. Save players from discovery, profiles, similar players, or leaderboards to revisit them here."
+          label="No players in My Favorites yet. Add players from Discovery, a player dossier, a comparable-player card, or a role leaderboard to revisit them here."
           action={<LinkButton href="/">Go To Discovery</LinkButton>}
         />
       )}
 
       {loading && shortlistIds.length > 0 && (
-        <LedgerSkeleton rows={Math.min(shortlistIds.length, 4)} label="Resolving shortlisted players…" />
+        <LedgerSkeleton rows={Math.min(shortlistIds.length, 4)} label="Loading My Favorites…" />
       )}
 
       {staleIds.length > 0 && (
         <div className="mb-4">
           <ErrorState
-            message={`${staleIds.length} saved player id${staleIds.length === 1 ? "" : "s"} could not be resolved and may be stale.`}
+            message={`${staleIds.length} saved player id${staleIds.length === 1 ? "" : "s"} could not be resolved. Those players are unavailable and the reference may be stale.`}
           />
           <div className="mt-2 flex flex-wrap gap-2">
             {staleIds.map((id) => (

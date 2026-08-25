@@ -115,7 +115,7 @@ export function SaveViewControl({ view }: { view: DiscoveryView }) {
         // two words on the control do.
         aria-label={
           existing
-            ? `Saved View: rename ${existing.label}, the saved view for these filters`
+            ? `Saved View: rename ${existing.label}, the saved Discovery view for these filters`
             : "Save View: keep this Discovery setup"
         }
         data-testid="save-view-trigger"
@@ -132,12 +132,12 @@ export function SaveViewControl({ view }: { view: DiscoveryView }) {
 
       <NamePanel
         open={open}
-        title={existing ? "Rename this saved view" : "Save this Discovery view"}
+        title={existing ? "Rename this saved Discovery view" : "Save this Discovery view"}
         submitLabel={existing ? "Rename View" : "Save View"}
         initialValue={existing?.label ?? ""}
         description={
           existing
-            ? "These filters are already saved. Renaming updates the existing view rather than adding another."
+            ? "These filters are already saved. Renaming updates the existing Discovery view rather than adding another."
             : `Saves these ${criteria} ${criteria === 1 ? "criterion" : "criteria"} and the current sort. Opening it later always starts on page 1.`
         }
         busy={busy}

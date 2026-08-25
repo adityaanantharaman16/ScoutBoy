@@ -71,8 +71,10 @@ export function LedgerIdentity({
 }
 
 /**
- * The RoleFit hero: compact eyebrow, band-coloured score, and the selected/best
- * role directly beneath it. Hierarchy comes from alignment, size and whitespace
+ * The RoleFit hero: compact eyebrow, band-coloured score, and the Result Role
+ * (the Selected Role when one is active, else the Best Role) directly beneath it.
+ * A player with no stored rating for that context reads Unrated rather than
+ * borrowing the Evidence Coverage wording from the status unit below. Hierarchy comes from alignment, size and whitespace
  * plus one restrained hairline — there is no surrounding box or card. The caption
  * wraps on word boundaries inside the fixed hero track, so a long role name never
  * moves the divider.
@@ -96,7 +98,7 @@ export function LedgerRoleFitHero({
         <ScoreReadout score={score} caption={role ?? "-"} captionWrap="words" size="lg" />
       ) : (
         <DisplayTag variant="evidence" value="profile_only">
-          Profile Only
+          Unrated
         </DisplayTag>
       )}
     </div>
@@ -104,15 +106,15 @@ export function LedgerRoleFitHero({
 }
 
 /**
- * Compound coverage + confidence status.
+ * Compound Evidence Coverage + RoleFit Confidence status.
  *
  * The two facts are grouped into one sharp-edged unit so a row scans quickly,
- * but they are never collapsed into a single inferred status: coverage comes
- * from `evidence_status`, confidence independently from `confidence`, both
- * segments carry equal typographic weight, and the confidence glyph stays
- * monochrome (never the score palette). High coverage therefore never implies
- * high confidence. Profile-only rows show coverage alone — no confidence bars
- * are invented for a player who was never rated.
+ * but they are never collapsed into a single inferred status: Evidence Coverage
+ * comes from `evidence_status`, RoleFit Confidence independently from
+ * `confidence`, both segments carry equal typographic weight, and the confidence
+ * glyph stays monochrome (never the score palette). High Evidence Coverage
+ * therefore never implies high RoleFit Confidence. Unrated rows show coverage
+ * alone — no confidence bars are invented for a player who was never rated.
  */
 export function CoverageConfidenceStatus({
   evidenceStatus,
@@ -139,7 +141,7 @@ export function CoverageConfidenceStatus({
       // The visible segments carry no prefixes, hence the label rather than
       // sr-only text.
       role="group"
-      aria-label={`Evidence coverage: ${coverageSpokenText(evidenceStatus)}. RoleFit confidence: ${spokenConfidence}.`}
+      aria-label={`Evidence Coverage: ${coverageSpokenText(evidenceStatus)}. RoleFit Confidence: ${spokenConfidence}.`}
     >
       <span aria-hidden="true">{coverageStatusText(evidenceStatus)}</span>
       {hasAnalysis && (
@@ -147,7 +149,7 @@ export function CoverageConfidenceStatus({
           <span aria-hidden="true" className="h-3.5 w-px shrink-0 bg-line-strong" />
           <span aria-hidden="true" className="inline-flex items-center gap-1.5">
             <ConfidenceMeter level={confidence} showWord={false} />
-            <span>{confidenceText(confidence)} Confidence</span>
+            <span>{confidenceText(confidence)} RoleFit Confidence</span>
           </span>
         </>
       )}
@@ -181,7 +183,7 @@ export function PlaystyleLine({
         ))
       ) : !hasAnalysis ? (
         <span className="text-xs text-ink-soft" data-testid="profile-only-card">
-          Analysis unavailable
+          Unrated: no playstyles
         </span>
       ) : (
         <span className="text-xs text-ink-soft" data-testid="no-playstyles">

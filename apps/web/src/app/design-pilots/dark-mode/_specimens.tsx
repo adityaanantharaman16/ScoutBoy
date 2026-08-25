@@ -85,20 +85,20 @@ const MARKET_WORD: Record<MarketLabel, string> = {
   unknown: "Unknown",
 };
 
-/** Coverage and confidence: grouped for scanning, never collapsed into one fact. */
+/** Evidence Coverage and RoleFit Confidence: grouped for scanning, never collapsed into one fact. */
 function CoverageConfidence({ coverage, confidence }: { coverage: string; confidence: Confidence }) {
   return (
     <span
       className="pilot-status"
       role="group"
-      aria-label={`Evidence coverage: ${coverage.toLowerCase()}. RoleFit confidence: ${CONFIDENCE_WORD[
+      aria-label={`Evidence Coverage: ${coverage.toLowerCase()}. RoleFit Confidence: ${CONFIDENCE_WORD[
         confidence
       ].toLowerCase()}.`}
     >
       <span aria-hidden="true">{coverage}</span>
       <span aria-hidden="true" className="pilot-status-confidence">
         <ConfidenceGlyph level={confidence} />
-        <span>{CONFIDENCE_WORD[confidence]} Confidence</span>
+        <span>{CONFIDENCE_WORD[confidence]} RoleFit Confidence</span>
       </span>
     </span>
   );
@@ -602,7 +602,7 @@ export function DeskSpecimen() {
               </div>
             </div>
             <div style={{ paddingBottom: "0.25rem" }}>
-              <p className="pilot-label">RoleFit confidence</p>
+              <p className="pilot-label">RoleFit Confidence</p>
               <span
                 style={{
                   alignItems: "center",
@@ -721,7 +721,7 @@ function CompareSide({ side }: { side: typeof COMPARE.a }) {
       </p>
 
       <div style={{ marginTop: "0.875rem" }}>
-        <p className="pilot-label">Best rated role</p>
+        <p className="pilot-label">Best Role</p>
         <div style={{ alignItems: "baseline", display: "flex", gap: "0.625rem", marginTop: "0.25rem" }}>
           <span className={`pilot-score band-${band(side.bestScore)}`} style={{ fontSize: "1.5rem" }}>
             {side.bestScore.toFixed(1)}
@@ -734,7 +734,7 @@ function CompareSide({ side }: { side: typeof COMPARE.a }) {
           style={{ alignItems: "center", display: "inline-flex", gap: "0.375rem", marginTop: "0.5rem" }}
         >
           <span className="pilot-soft" style={{ fontSize: "0.6875rem" }}>
-            RoleFit confidence:
+            RoleFit Confidence:
           </span>
           <ConfidenceGlyph level={side.confidence} />
           <span style={{ fontSize: "0.75rem", fontWeight: 600 }}>
@@ -745,7 +745,7 @@ function CompareSide({ side }: { side: typeof COMPARE.a }) {
 
       <div style={{ marginTop: "0.875rem" }}>
         <p className="pilot-label" style={{ marginBottom: "0.375rem" }}>
-          Expected asking
+          Expected Asking
         </p>
         <MarketStatus label={side.market} low={side.askLow} high={side.askHigh} />
       </div>
@@ -858,7 +858,7 @@ export function HonestyStatesSpecimen() {
 
       <div className="pilot-honesty-item">
         <p className="pilot-label" style={{ marginBottom: "0.375rem" }}>
-          Confidence
+          RoleFit Confidence
         </p>
         <span style={{ alignItems: "center", display: "inline-flex", gap: "0.375rem" }}>
           <ConfidenceGlyph level="unknown" />
@@ -884,7 +884,7 @@ export function HonestyStatesSpecimen() {
 
       <div className="pilot-honesty-item">
         <p className="pilot-label" style={{ marginBottom: "0.375rem" }}>
-          Profile only
+          Unrated
         </p>
         <span className="pilot-status">Profile Only</span>
         <p className="pilot-honesty-caption">

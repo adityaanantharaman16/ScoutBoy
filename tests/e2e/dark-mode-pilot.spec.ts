@@ -85,7 +85,7 @@ test.describe("dark-mode pilot", () => {
     const status = page.getByTestId("pilot-status-coverage").first().getByRole("group");
     await expect(status).toHaveAttribute(
       "aria-label",
-      /Evidence coverage: .+\. RoleFit confidence: .+\./,
+      /Evidence Coverage: .+\. RoleFit Confidence: .+\./,
     );
   });
 

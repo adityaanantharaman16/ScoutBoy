@@ -43,7 +43,7 @@ const SURFACES: Array<{ name: string; path: string; ready: string }> = [
   { name: "discovery", path: "/", ready: '[data-testid="results-ledger"]' },
   { name: "leaderboard", path: "/roles/touchline_winger", ready: 'table[data-testid="leaderboard-table"]' },
   { name: "compare", path: "/compare", ready: '[data-testid="compare-a"]' },
-  { name: "favorites", path: "/shortlist", ready: "text=No players saved yet" },
+  { name: "favorites", path: "/shortlist", ready: "text=No players in My Favorites yet" },
   { name: "methodology", path: "/methodology", ready: '[data-testid="methodology-contents"]' },
 ];
 

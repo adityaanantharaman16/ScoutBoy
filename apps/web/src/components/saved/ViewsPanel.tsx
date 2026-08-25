@@ -115,8 +115,8 @@ function ViewRow({ item }: { item: SavedView }) {
           )}
           {lost.length > 0 && (
             <p className="mt-2 text-xs text-accent-amber" data-testid="saved-view-unavailable">
-              Part of this saved view is no longer available ({lost.join(", ")}). Opening it
-              restores everything else; update or remove it to keep it accurate.
+              Part of this saved Discovery view is no longer supported ({lost.join(", ")}).
+              Opening it restores everything else; update or remove it to keep it accurate.
             </p>
           )}
         </div>
@@ -156,7 +156,7 @@ function ViewRow({ item }: { item: SavedView }) {
 
           <NamePanel
             open={renaming}
-            title="Rename this saved view"
+            title="Rename this saved Discovery view"
             submitLabel="Rename View"
             initialValue={item.label}
             busy={busy}
@@ -194,7 +194,7 @@ export function ViewsPanel() {
 
       {views.items.length === 0 ? (
         <EmptyState
-          label="No saved views yet. Narrow Discovery with the filter rail, then use Save View beside the page heading to keep that cohort."
+          label="No saved Discovery views yet. Narrow Discovery with the filter rail, then use Save View beside the page heading to keep that cohort."
           action={<LinkButton href="/">Go To Discovery</LinkButton>}
         />
       ) : (

@@ -821,7 +821,7 @@ describe("A saved view whose filters went stale", () => {
     renderGuest(<SavedPage />);
 
     const notice = await screen.findByTestId("saved-view-unavailable");
-    expect(notice).toHaveTextContent(/no longer available \(Role\)/);
+    expect(notice).toHaveTextContent(/no longer supported \(Role\)/);
     // Everything else still opens, and the invalid criterion is not forwarded.
     expect(screen.getByTestId("saved-view-open")).toHaveAttribute(
       "href",

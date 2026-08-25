@@ -10,13 +10,23 @@
 | 8.3 | Deterministic ranking explanation | this document |
 | 8.4A | Optional accounts and durable favorites | [`milestone_8_4a_optional_accounts.md`](milestone_8_4a_optional_accounts.md) |
 | 8.4B | Saved work and decision continuity | [`milestone_8_4b_saved_work.md`](milestone_8_4b_saved_work.md) |
-| 8.5 | Cross-surface terminology audit | not started |
+| 8.5 | Cross-surface terminology audit | [`milestone_8_5_terminology_audit.md`](milestone_8_5_terminology_audit.md) |
 | 8.6 | Milestone closeout | not started |
 
 Phases 8.4A and 8.4B introduce an optional account boundary and durable saved
 work, so they carry their own records rather than extending this one. Everything
 they touch in Discovery is additive: the filter rail, its URL contract, the
 ranking explanation and the ledger are unchanged in behaviour.
+
+**Phase 8.5 changes wording only**, across every surface at once, so it carries its
+own record too. It touches this document's material in exactly two places, neither
+of which is a behaviour: the ranking explanation's role-context labels now read
+`Selected Role: X` and `Best Role for each player` (§*Role context* below), and the
+Sort control's price options now say `Expected Asking` rather than `Asking Price`,
+which is the name `discovery_sort` already gave the mode. The ordering contract,
+the key sequence, the SQL, the filters, the URL contract and every stored value
+are untouched. The canonical lexicon those two labels come from is
+[`milestone_8_5_terminology_audit.md`](milestone_8_5_terminology_audit.md).
 
 **8.4B does change one thing this document owns**, and it is a consolidation
 rather than a new rule. The canonical serialization of a Discovery view — which

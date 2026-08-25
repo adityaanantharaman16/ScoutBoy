@@ -276,10 +276,10 @@ export function AdvancedFilters({
                         id="filter-threshold-help"
                         className="text-[11px] leading-snug text-ink-soft sm:col-span-2 lg:col-span-1"
                       >
-                        Whole minutes {MIN_MINUTES_FLOOR}-
+                        Whole Minutes Played {MIN_MINUTES_FLOOR}-
                         {MIN_MINUTES_CEILING.toLocaleString("en-US")}; whole RoleFit{" "}
                         {ROLEFIT_SCALE_MIN}-{ROLEFIT_SCALE_MAX}. Blank for none. RoleFit bounds
-                        apply to the selected role, or to each player&apos;s best role when no
+                        apply to the Selected Role, or to each player&apos;s Best Role when no
                         role is selected. Playstyle means a qualifying strength, never a concern.
                       </p>
                     </>
@@ -313,9 +313,9 @@ export function AdvancedFilters({
                         id="advanced-market-help"
                         className="text-[11px] leading-snug text-ink-soft sm:col-span-2 lg:col-span-1"
                       >
-                        Bounds on the modelled expected-asking range, in EUR millions: 12.5 means
+                        Bounds on the modelled Expected Asking Range, in EUR millions: 12.5 means
                         &euro;12.5M. A player qualifies when that range overlaps these bounds; a
-                        player with no expected asking is excluded rather than read as &euro;0.
+                        player with no Expected Asking is excluded rather than read as &euro;0.
                         Blank for no bound.
                       </p>
                     </>

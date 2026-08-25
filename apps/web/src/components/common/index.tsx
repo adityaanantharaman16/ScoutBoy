@@ -111,7 +111,7 @@ export function DossierSection({
 
 export function StatBar({ score }: { score: number | null | undefined }) {
   if (score == null) {
-    return <span className="text-xs text-ink-soft">unknown</span>;
+    return <span className="text-xs text-ink-soft">Unknown</span>;
   }
   const pct = Math.max(0, Math.min(100, score));
   return (
@@ -378,11 +378,11 @@ export function ScoreReadout({
   );
 }
 
-/** RoleFit confidence in its own monochrome channel, with an explicit label. */
+/** RoleFit Confidence in its own monochrome channel, with an explicit label. */
 export function ConfidenceReadout({
   level,
   score,
-  label = "RoleFit confidence",
+  label = "RoleFit Confidence",
   layout = "inline",
   className = "",
 }: {
@@ -411,7 +411,7 @@ export function ConfidenceReadout({
   );
 }
 
-/** Evidence-coverage label — a channel distinct from RoleFit confidence. */
+/** Evidence Coverage label — a channel distinct from RoleFit Confidence. */
 export function EvidenceTag({
   status,
   showLabel = true,
@@ -426,7 +426,7 @@ export function EvidenceTag({
       className={`inline-flex flex-wrap items-center gap-1.5 text-[11px] text-ink-muted ${className}`}
       data-testid="evidence-tag"
     >
-      {showLabel && <span>Evidence:</span>}
+      {showLabel && <span>Evidence Coverage:</span>}
       <DisplayTag variant="evidence" value={status}>
         {evidenceStatusText(status)}
       </DisplayTag>
@@ -487,7 +487,7 @@ export function MarketReadout({
   if (layout === "stacked") {
     return (
       <div className={className} data-testid="market-readout">
-        <div className="label mb-1">Expected asking</div>
+        <div className="label mb-1">Expected Asking</div>
         <div className="flex flex-wrap items-center gap-2">
           <DisplayTag variant="market" value={label}>
             {marketLabelText(label)}

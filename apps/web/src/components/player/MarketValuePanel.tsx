@@ -41,7 +41,12 @@ function LegendSwatch({ kind }: { kind: "public" | "model" | "ask" }) {
 }
 
 export function MarketValuePanel({ market }: { market: MarketPanel | null | undefined }) {
-  if (!market) return <div className="card text-sm text-ink-soft" data-testid="market-panel">No market data.</div>;
+  if (!market)
+    return (
+      <div className="card text-sm text-ink-soft" data-testid="market-panel">
+        Market information unknown. No market record is stored for this player.
+      </div>
+    );
 
   const publicV = num(market.public_value_eur);
   const modelLow = num(market.model_value_low_eur);
@@ -59,9 +64,11 @@ export function MarketValuePanel({ market }: { market: MarketPanel | null | unde
 
   let interpretation = "";
   if (gap != null) {
-    if (gap > 0) interpretation = `Expected ask opens ${formatEur(gap)} above the model’s high end.`;
-    else if (gap < 0) interpretation = `Expected ask sits ${formatEur(Math.abs(gap))} below the model’s high end.`;
-    else interpretation = "Expected ask meets the model’s high end.";
+    if (gap > 0)
+      interpretation = `Expected Asking opens ${formatEur(gap)} above the Model Value Range high end.`;
+    else if (gap < 0)
+      interpretation = `Expected Asking sits ${formatEur(Math.abs(gap))} below the Model Value Range high end.`;
+    else interpretation = "Expected Asking meets the Model Value Range high end.";
   }
 
   const publicText = publicV != null ? formatEur(publicV) : "Unknown";
@@ -69,7 +76,7 @@ export function MarketValuePanel({ market }: { market: MarketPanel | null | unde
   const askText = marketRangeText(askLow, askHigh);
 
   // One chart row: a full interval, a one-sided open bound ("From"/"Up to"), or an
-  // explicit "unknown" — a missing endpoint is never plotted at zero.
+  // explicit "Unknown" — a missing endpoint is never plotted at zero.
   const renderRow = (low: number | null, high: number | null, y: number, fill: string, stroke: string) => {
     if (!axis) return null;
     const kind = rangeKind(low, high);
@@ -94,7 +101,7 @@ export function MarketValuePanel({ market }: { market: MarketPanel | null | unde
     }
     return (
       <text x={PLOT_L} y={y + 3} style={{ fontSize: 9 }} className="fill-[color:var(--ink-soft)]">
-        unknown
+        Unknown
       </text>
     );
   };
@@ -102,21 +109,21 @@ export function MarketValuePanel({ market }: { market: MarketPanel | null | unde
   return (
     <div className="card flex h-full flex-col" data-testid="market-panel">
       <p className="mb-2 text-xs text-ink-soft" data-testid="market-lead">
-        Public value, model range, and expected ask on a shared euro axis.
+        Public Market Value, Model Value Range, and Expected Asking Range on a shared euro axis.
       </p>
 
       {/* Legend — the accessible source of every value. */}
       <div className="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
         <span className="inline-flex items-center gap-1.5 text-ink-muted">
-          <LegendSwatch kind="public" /> Public market value{" "}
+          <LegendSwatch kind="public" /> Public Market Value{" "}
           <span className="font-mono font-semibold text-ink">{publicText}</span>
         </span>
         <span className="inline-flex items-center gap-1.5 text-ink-muted">
-          <LegendSwatch kind="model" /> Model value range{" "}
+          <LegendSwatch kind="model" /> Model Value Range{" "}
           <span className="font-mono font-semibold text-ink">{modelText}</span>
         </span>
         <span className="inline-flex items-center gap-1.5 text-ink-muted">
-          <LegendSwatch kind="ask" /> Expected asking price{" "}
+          <LegendSwatch kind="ask" /> Expected Asking Range{" "}
           <span className="font-mono font-semibold text-ink">{askText}</span>
         </span>
       </div>
@@ -126,15 +133,15 @@ export function MarketValuePanel({ market }: { market: MarketPanel | null | unde
         <svg
           viewBox={`0 0 ${VB_W} ${VB_H}`}
           role="img"
-          aria-label={`Market valuation on a shared euro axis. Public market value ${publicText}. Model value range ${modelText}. Expected asking price ${askText}.`}
+          aria-label={`Market valuation on a shared euro axis. Public Market Value ${publicText}. Model Value Range ${modelText}. Expected Asking Range ${askText}.`}
           className="mx-auto block h-auto w-full max-w-[520px]"
           data-testid="market-chart"
         >
           {/* row labels */}
           <g className="fill-[color:var(--ink-soft)]" style={{ fontSize: 9, letterSpacing: "0.06em" }}>
-            <text x={PLOT_L} y={ASK_Y - 17}>EXPECTED ASK</text>
-            <text x={PLOT_L} y={MODEL_Y - 17}>MODEL</text>
-            <text x={PLOT_L} y={PUBLIC_Y - 17}>PUBLIC</text>
+            <text x={PLOT_L} y={ASK_Y - 17}>EXPECTED ASKING</text>
+            <text x={PLOT_L} y={MODEL_Y - 17}>MODEL VALUE</text>
+            <text x={PLOT_L} y={PUBLIC_Y - 17}>PUBLIC VALUE</text>
           </g>
 
           {/* expected ask — full interval, one-sided bound, or unknown */}
@@ -145,7 +152,7 @@ export function MarketValuePanel({ market }: { market: MarketPanel | null | unde
           {publicV != null ? (
             <line x1={x(publicV)} y1={PUBLIC_Y - 13} x2={x(publicV)} y2={PUBLIC_Y + 13} stroke="var(--ink)" strokeWidth={3} />
           ) : (
-            <text x={PLOT_L} y={PUBLIC_Y + 3} style={{ fontSize: 9 }} className="fill-[color:var(--ink-soft)]">unknown</text>
+            <text x={PLOT_L} y={PUBLIC_Y + 3} style={{ fontSize: 9 }} className="fill-[color:var(--ink-soft)]">Unknown</text>
           )}
 
           {/* axis */}
@@ -160,14 +167,14 @@ export function MarketValuePanel({ market }: { market: MarketPanel | null | unde
           ))}
         </svg>
       ) : (
-        <p className="py-3 text-sm text-ink-soft">No plottable market values - all reads are unknown.</p>
+        <p className="py-3 text-sm text-ink-soft">No plottable market values - every figure is unknown.</p>
       )}
 
       {/* label + confidence + interpretation */}
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-3 text-sm">
         <DisplayTag variant="market" value={market.label}>{marketLabelText(market.label)}</DisplayTag>
         <span className="inline-flex items-center gap-1.5 text-ink-muted">
-          Valuation confidence <ConfidenceMeter level={market.confidence} />
+          Valuation Confidence <ConfidenceMeter level={market.confidence} />
         </span>
         {interpretation && <span className="text-ink-muted">{interpretation}</span>}
       </div>
@@ -189,7 +196,8 @@ export function MarketValuePanel({ market }: { market: MarketPanel | null | unde
       )}
 
       <p className="mt-auto pt-3 text-[11px] text-ink-soft">
-        Ranges, not exact values. Public value, model value, and asking price are distinct reads.
+        Ranges, not exact values. Public Market Value, Model Value Range and Expected Asking Range
+        are three distinct reads.
       </p>
     </div>
   );

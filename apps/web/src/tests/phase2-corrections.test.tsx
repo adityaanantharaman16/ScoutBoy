@@ -123,20 +123,20 @@ function market(overrides: Partial<MarketPanel> = {}): MarketPanel {
 describe("MarketValuePanel", () => {
   it("keeps the three reads as distinct labelled values and a chart", () => {
     render(<MarketValuePanel market={market()} />);
-    expect(screen.getByText("Public market value")).toBeInTheDocument();
-    expect(screen.getByText("Model value range")).toBeInTheDocument();
-    expect(screen.getByText("Expected asking price")).toBeInTheDocument();
+    expect(screen.getByText("Public Market Value")).toBeInTheDocument();
+    expect(screen.getByText("Model Value Range")).toBeInTheDocument();
+    expect(screen.getByText("Expected Asking Range")).toBeInTheDocument();
     expect(screen.getByText("Inflated")).toBeInTheDocument();
     expect(screen.getByTestId("market-chart")).toBeInTheDocument();
     // interpretation from the transparent gap comparison
-    expect(screen.getByText(/above the model’s high end/i)).toBeInTheDocument();
+    expect(screen.getByText(/above the Model Value Range high end/i)).toBeInTheDocument();
   });
 
   it("describes the reads as distinct — never statistically independent", () => {
     render(<MarketValuePanel market={market()} />);
     const lead = screen.getByTestId("market-lead");
     expect(lead).toHaveTextContent(
-      "Public value, model range, and expected ask on a shared euro axis.",
+      "Public Market Value, Model Value Range, and Expected Asking Range on a shared euro axis.",
     );
     expect(lead.textContent ?? "").not.toMatch(/independent/i);
   });
@@ -166,7 +166,11 @@ describe("MarketValuePanel", () => {
 
   it("renders an honest fallback when market data is missing", () => {
     render(<MarketValuePanel market={null} />);
-    expect(screen.getByText(/No market data/i)).toBeInTheDocument();
+    // No stored record means the figures were never observed: Unknown, never
+    // zero and never a claim that something failed to load.
+    expect(screen.getByTestId("market-panel")).toHaveTextContent(
+      /Market information unknown/i,
+    );
   });
 });
 
@@ -291,10 +295,10 @@ describe("RoleRatingsPanel leaderboard link", () => {
         <RoleRatingsPanel ratings={ratings} />
       </ScoutingStateProvider>,
     );
-    const link = screen.getByRole("link", { name: /View the Shadow Striker leaderboard/i });
+    const link = screen.getByRole("link", { name: "View Leaderboard: Shadow Striker" });
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute("href", "/roles/shadow_striker");
-    expect(within(link).getByText(/View leaderboard/i)).toBeInTheDocument();
+    expect(within(link).getByText(/View Leaderboard/i)).toBeInTheDocument();
     expect(screen.queryByText(/^board$/)).not.toBeInTheDocument();
   });
 });

@@ -308,7 +308,9 @@ describe("Account suggestion", () => {
     );
     // The existing favourites live region keeps its own unchanged sentence, so
     // the two do not read the same wording twice.
-    expect(screen.getByText(/added to shortlist\. Saved on this device\./i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/added to My Favorites\. Saved on this device\./i),
+    ).toBeInTheDocument();
   });
 
   it("offers Create account, Sign in and Not now, and invokes the right flow", () => {

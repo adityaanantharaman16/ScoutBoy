@@ -49,6 +49,7 @@ export function ResultCard({ p }: { p: PlayerSearchCard }) {
           </div>
           <div className="text-xs text-ink-soft">
             {p.league ?? "-"} · {p.season} · {p.represented_minutes ?? p.minutes ?? "-"} min
+            played
           </div>
         </LedgerIdentity>
         <LedgerRoleFitHero

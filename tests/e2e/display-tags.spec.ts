@@ -219,23 +219,26 @@ test.describe("Semantic display tags", () => {
     expect(right.text).toMatch(/€[\d.]+[MK] – €[\d.]+[MK]|From €|Up to €|Unknown$/);
   });
 
-  test("Best and Best-Rated Role stay positive green role statuses", async ({ page }) => {
+  test("Best Role stays a positive green role status on both surfaces", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/players/6");
     await page.getByTestId("player-card").waitFor();
 
-    const bestRated = page.getByText("Best-Rated Role", { exact: true });
-    await expect(bestRated).toHaveAttribute("data-tag-variant", "role-status");
-    const desk = await bestRated.evaluate((el) => {
-      const s = getComputedStyle(el);
-      return { radius: s.borderTopLeftRadius, color: s.color };
-    });
-    expect(desk.radius, "Best-Rated Role uses the new geometry").toBe("0px");
-    expect(desk.color, "Best-Rated Role stays positive green").toBe("rgb(19, 64, 43)");
-
-    const best = page.getByText("Best", { exact: true }).first();
-    await expect(best).toHaveAttribute("data-tag-variant", "role-status");
-    expect(await best.evaluate((el) => getComputedStyle(el).borderTopLeftRadius)).toBe("0px");
+    // Milestone 8.5: the desk's "Best-Rated Role" and the role list's "Best" were
+    // two names for one concept. Both now read Best Role, so both are asserted.
+    const tags = page.getByText("Best Role", { exact: true });
+    expect(await tags.count(), "the desk summary and the role list both label it").toBe(2);
+    for (let i = 0; i < 2; i += 1) {
+      const tag = tags.nth(i);
+      await expect(tag).toHaveAttribute("data-tag-variant", "role-status");
+      const style = await tag.evaluate((el) => {
+        const s = getComputedStyle(el);
+        return { radius: s.borderTopLeftRadius, color: s.color };
+      });
+      expect(style.radius, "Best Role uses the square geometry").toBe("0px");
+      expect(style.color, "Best Role stays positive green").toBe("rgb(19, 64, 43)");
+    }
+    await expect(page.getByText("Best-Rated Role", { exact: true })).toHaveCount(0);
   });
 
   test("confidence and evidence remain visually separate facts", async ({ page }) => {

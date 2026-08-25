@@ -486,8 +486,8 @@ describe("Filter option copy", () => {
       ["rolefit_desc", "RoleFit (High → Low)"],
       ["rolefit_asc", "RoleFit (Low → High)"],
       ["age_asc", "Age (Young → Old)"],
-      ["value_desc", "Asking Price (High → Low)"],
-      ["value_asc", "Asking Price (Low → High)"],
+      ["value_desc", "Expected Asking (High → Low)"],
+      ["value_asc", "Expected Asking (Low → High)"],
       ["name_asc", "Name (A → Z)"],
     ]);
   });

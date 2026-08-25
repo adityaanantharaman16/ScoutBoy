@@ -86,7 +86,7 @@ test("missing market data shows an honest fallback in the rail", async ({ page }
   );
 
   await page.goto(`/players/${PLAYER}`);
-  await expect(page.getByTestId("evidence-context-rail")).toContainText(/No market data/i);
+  await expect(page.getByTestId("evidence-context-rail")).toContainText(/Market\s*Unknown/i);
 });
 
 test("role selection and evidence controls are keyboard operable", async ({ page }) => {

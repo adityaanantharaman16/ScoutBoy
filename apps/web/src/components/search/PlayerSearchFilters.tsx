@@ -131,8 +131,9 @@ export function PlayerSearchFilters({
    * The complete reset. Handing the serializer exactly the default request is
    * what produces the clean root URL: every default is omitted, and any legacy
    * `scope` / `universe` / `age_band` the incoming link carried is simply not
-   * among the keys written back. Device-local shortlist and compare state lives
-   * outside the URL and is untouched.
+   * among the keys written back. Device-local My Favorites and compare state
+   * (`scoutboy.shortlist.v1`, `scoutboy.compareQueue.v1`) lives outside the URL
+   * and is untouched.
    */
   const clearAll = () => {
     restoreFocusFrom.current = 0;

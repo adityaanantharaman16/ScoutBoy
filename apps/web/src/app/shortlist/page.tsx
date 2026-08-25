@@ -35,8 +35,8 @@ export default function ShortlistPage() {
     <div>
       <ScopeBanner text={SCOPE_BANNER} />
       <PageHeader
-        eyebrow="My Favorites"
-        title="Saved Players"
+        eyebrow="Saved work"
+        title="My Favorites"
         lead={favoritesScopeLead(favorites.mode)}
         meta={
           cards.length > 0
@@ -46,11 +46,12 @@ export default function ShortlistPage() {
       />
 
       <p className="mb-5 text-xs text-ink-soft" data-testid="shortlist-moved-notice">
-        My Favorites now lives in{" "}
+        My Favorites now lives under{" "}
         <Link href="/saved" className="font-semibold text-pitch-dark">
           Saved
         </Link>
-        , alongside your saved Discovery views and saved comparisons.
+        , alongside your saved Discovery views and saved comparison setups. This page still works
+        and shows the same players.
       </p>
 
       <FavoritesPanel />

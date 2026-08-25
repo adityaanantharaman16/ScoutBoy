@@ -382,7 +382,7 @@ describe("Discovery numeric thresholds", () => {
   it("states both contracts accurately in the shared helper copy", () => {
     mountDiscovery();
     const help = document.getElementById("filter-threshold-help")!;
-    expect(help.textContent).toContain("Whole minutes 0-10,000");
+    expect(help.textContent).toContain("Whole Minutes Played 0-10,000");
     expect(help.textContent).toContain("whole RoleFit 0-99");
     expect(help.textContent).toMatch(/blank for none/i);
     // every threshold input points at it, and it no longer claims one 0-99 range

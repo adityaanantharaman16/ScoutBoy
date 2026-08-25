@@ -97,7 +97,7 @@ export default function DarkModePilotPage() {
         <Specimen
           index="02"
           title="Discovery - filter rail and ledger"
-          note="The rail stays deliberately subordinate to the ledger: quiet hairlines, canvas-coloured fields, and a selected control that gains a green inset marker as well as a green tint, so selection never rests on colour alone. Four rows exercise the top and bottom of the score scale, all three market states, and a row whose confidence disagrees with its coverage."
+          note="The rail stays deliberately subordinate to the ledger: quiet hairlines, canvas-coloured fields, and a selected control that gains a green inset marker as well as a green tint, so selection never rests on colour alone. Four rows exercise the top and bottom of the score scale, all three market states, and a row whose RoleFit Confidence disagrees with its Evidence Coverage."
         >
           <DiscoverySpecimen />
         </Specimen>
@@ -105,7 +105,7 @@ export default function DarkModePilotPage() {
         <Specimen
           index="03"
           title="Recruitment Desk excerpt"
-          note="Sekou Diallo’s stored Shadow Striker audit - a genuinely uncertain record: 1,300 minutes in Ligue 2, medium confidence, and a context multiplier that pulls a raw 81.2 down to 68.1. Role Territory is the only elevated surface in the pilot; on a dark canvas it earns that status by being lighter and greener than everything around it rather than by casting a shadow."
+          note="Sekou Diallo’s stored Shadow Striker audit - a genuinely uncertain record: 1,300 minutes played in Ligue 2, medium RoleFit Confidence, and a context multiplier that pulls a raw 81.2 down to 68.1. Role Territory is the only elevated surface in the pilot; on a dark canvas it earns that status by being lighter and greener than everything around it rather than by casting a shadow."
         >
           <DeskSpecimen />
         </Specimen>
@@ -149,8 +149,8 @@ export default function DarkModePilotPage() {
                   of shadow.
                 </li>
                 <li>
-                  The four evidence channels - score, confidence, coverage, market - stay visually
-                  separate on a dark canvas.
+                  The four evidence channels - RoleFit, RoleFit Confidence, Evidence Coverage,
+                  market - stay visually separate on a dark canvas.
                 </li>
                 <li>Score bands stay distinguishable across all six steps.</li>
                 <li>The layout holds at 1280, 640, 390 and 320 with no horizontal overflow.</li>

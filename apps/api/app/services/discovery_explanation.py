@@ -38,7 +38,7 @@ _SELECTED_ROLE_BASIS = (
 )
 _BEST_ROLE_BASIS = (
     "No role is selected, so the RoleFit on each result is that player's own stored "
-    "best role, which may differ from row to row."
+    "Best Role, which may differ from row to row."
 )
 #: Said when the applicable rating is genuinely one of the ordering keys.
 _ORDERS_THE_PAGE = (
@@ -85,14 +85,14 @@ def role_context(
             source=RESULT_ROLE_SELECTED,
             role_key=role_key,
             role_display=display,
-            label=f"Selected role: {display}",
+            label=f"Selected Role: {display}",
             detail=_SELECTED_ROLE_BASIS.format(display=display) + basis_suffix,
         )
     return RankingRoleContext(
         source=RESULT_ROLE_BEST,
         role_key=None,
         role_display=None,
-        label="Best role for each player",
+        label="Best Role for each player",
         detail=_BEST_ROLE_BASIS + basis_suffix,
     )
 

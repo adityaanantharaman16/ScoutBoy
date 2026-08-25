@@ -96,10 +96,10 @@ export function SaveComparisonControl({
     triggerRef.current?.focus();
     setNotice(
       result.disposition === "created"
-        ? `Saved this comparison as ${label}.`
+        ? `Saved this comparison setup as ${label}.`
         : result.disposition === "updated"
-          ? `You had already saved this comparison. It is now called ${label}.`
-          : `This comparison is already saved as ${label}.`,
+          ? `You had already saved this comparison setup. It is now called ${label}.`
+          : `This comparison setup is already saved as ${label}.`,
     );
     window.setTimeout(() => setNotice((current) => (current.includes(label) ? "" : current)), 4000);
   };
@@ -116,7 +116,7 @@ export function SaveComparisonControl({
         aria-label={
           existing
             ? `Saved Comparison: rename ${existing.label}`
-            : "Save Comparison: keep these two players and this role"
+            : "Save Comparison: keep this setup, these two players and this role"
         }
         data-testid="save-comparison-trigger"
         data-saved={existing ? "true" : "false"}

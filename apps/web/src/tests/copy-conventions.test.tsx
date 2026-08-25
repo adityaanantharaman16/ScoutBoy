@@ -86,6 +86,7 @@ const TITLE_FILES: Array<[string, string]> = [
   ["app/players/[playerId]/layout.tsx", "Player Dossier - ScoutBoy"],
   ["app/roles/[roleId]/layout.tsx", "Role Leaderboard - ScoutBoy"],
   ["app/shortlist/layout.tsx", "My Favorites - ScoutBoy"],
+  ["app/saved/layout.tsx", "Saved - ScoutBoy"],
   ["app/design-pilots/dark-mode/page.tsx", "Dark Mode Pilot - ScoutBoy (for visual approval)"],
 ];
 
@@ -141,6 +142,11 @@ const TITLE_CASE_ACTIONS: Array<[string, string[]]> = [
   ["components/account/AccountSuggestion.tsx", ["Create Account", "Sign In", "Not Now"]],
   ["components/common/NavBar.tsx", ["Sign In", "Sign Out"]],
   ["components/common/PlayerActions.tsx", ["Open Comparison"]],
+  // Milestone 8.5 renamed these after the concepts they act on. They are visible
+  // button/link labels, so they take the same Title Case rule.
+  ["app/not-found.tsx", ["Back To Discovery", "Read The Methodology"]],
+  ["app/players/[playerId]/page.tsx", ["Back To Discovery"]],
+  ["components/player/RoleRatingsPanel.tsx", ["View Leaderboard"]],
 ];
 
 /**
@@ -151,6 +157,9 @@ const TITLE_CASE_ACTIONS: Array<[string, string[]]> = [
  * above a control legitimately discusses it in a sentence.
  */
 const RETIRED_ACTION_SPELLINGS = [
+  "Back to discover",
+  "Read the methodology",
+  "View leaderboard",
   "Save view",
   "Saved view",
   "Save comparison",

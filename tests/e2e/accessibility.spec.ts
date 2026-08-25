@@ -701,7 +701,7 @@ test.describe("Contrast and non-colour meaning", () => {
     // The compound status unit names both facts in its accessible description.
     const status = page.locator('[data-testid="card-status"]').first();
     const label = await status.getAttribute("aria-label");
-    expect(label).toMatch(/Evidence coverage: .+\. RoleFit confidence: .+\./);
+    expect(label).toMatch(/Evidence Coverage: .+\. RoleFit Confidence: .+\./);
   });
 });
 

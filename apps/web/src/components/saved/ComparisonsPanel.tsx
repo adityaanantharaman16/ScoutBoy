@@ -57,7 +57,7 @@ function ComparisonRow({ item }: { item: AccountSavedComparison }) {
    * A role that no longer exists is a RECOVERABLE loss, unlike a missing player.
    *
    * The comparison still means something without it — Automatic Role picks the
-   * shared rated role where both players fit best — so the setup stays openable
+   * shared rated role with the strongest joint RoleFit — so the setup stays openable
    * and the fallback is explained rather than performed silently. A missing
    * player has no equivalent: there is nothing honest to substitute.
    */
@@ -100,20 +100,20 @@ function ComparisonRow({ item }: { item: AccountSavedComparison }) {
             {!item.playerB.available && " (no longer available)"}
           </div>
           <div className="text-xs text-ink-soft">
-            {roleLabel} · Opens with current analysis
+            {roleLabel} · Saved setup, opens with current analysis
           </div>
 
           {missing.length > 0 && (
             <p className="mt-2 text-xs text-accent-amber" data-testid="saved-comparison-unavailable">
-              This comparison cannot be opened: {missing.join(" and ")}{" "}
+              This saved comparison setup cannot be opened: {missing.join(" and ")}{" "}
               {missing.length === 1 ? "is" : "are"} no longer available. It is kept here so you can
               rename or remove it.
             </p>
           )}
           {!roleAvailable && (
             <p className="mt-2 text-xs text-accent-amber" data-testid="saved-comparison-role-fallback">
-              The role saved with this comparison is no longer available. Opening it uses Automatic
-              Role instead.
+              The role saved with this comparison setup is no longer supported. Opening it uses
+              Automatic Role instead.
             </p>
           )}
         </div>
@@ -126,8 +126,8 @@ function ComparisonRow({ item }: { item: AccountSavedComparison }) {
                 className="rail-action no-underline"
                 aria-label={
                   roleAvailable
-                    ? `Open the saved comparison ${item.label}`
-                    : `Open the saved comparison ${item.label} with Automatic Role`
+                    ? `Open the saved comparison setup ${item.label}`
+                    : `Open the saved comparison setup ${item.label} with Automatic Role`
                 }
                 data-testid="saved-comparison-open"
               >
@@ -150,7 +150,7 @@ function ComparisonRow({ item }: { item: AccountSavedComparison }) {
               ref={renameRef}
               type="button"
               className="rail-action"
-              aria-label={`Rename the saved comparison ${item.label}`}
+              aria-label={`Rename the saved comparison setup ${item.label}`}
               aria-expanded={renaming}
               aria-haspopup="dialog"
               data-testid="saved-comparison-rename"
@@ -159,7 +159,7 @@ function ComparisonRow({ item }: { item: AccountSavedComparison }) {
               Rename
             </button>
             <ConfirmRemoveButton
-              what={`the saved comparison ${item.label}`}
+              what={`the saved comparison setup ${item.label}`}
               testId="saved-comparison-remove"
               onConfirm={() => {
                 void comparisons.remove(item.clientId);
@@ -169,7 +169,7 @@ function ComparisonRow({ item }: { item: AccountSavedComparison }) {
 
           <NamePanel
             open={renaming}
-            title="Rename this saved comparison"
+            title="Rename this saved comparison setup"
             submitLabel="Rename Comparison"
             initialValue={item.label}
             busy={busy}
@@ -207,7 +207,7 @@ export function ComparisonsPanel() {
 
       {comparisons.items.length === 0 ? (
         <EmptyState
-          label="No saved comparisons yet. Pick two players and a role on Compare, then use Save Comparison beside the selectors to keep that setup."
+          label="No saved comparison setups yet. Pick two players and a role on Compare, then use Save Comparison beside the selectors to keep that setup."
           action={<LinkButton href="/compare">Go To Compare</LinkButton>}
         />
       ) : (

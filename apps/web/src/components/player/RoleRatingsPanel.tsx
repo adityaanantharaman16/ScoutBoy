@@ -12,7 +12,7 @@ export function RoleRatingsPanel({ ratings }: { ratings: RoleRatingSummary[] }) 
           <div>
             <div className="flex flex-wrap items-center gap-2 font-semibold text-ink">
               {r.display_name}
-              {r.is_best && <DisplayTag variant="role-status">Best</DisplayTag>}
+              {r.is_best && <DisplayTag variant="role-status">Best Role</DisplayTag>}
             </div>
             <div className="text-[11px] text-ink-soft">
               {r.rank_in_peer_group ? `rank #${r.rank_in_peer_group} in peer group` : ""}
@@ -29,9 +29,9 @@ export function RoleRatingsPanel({ ratings }: { ratings: RoleRatingSummary[] }) 
             <Link
               href={`/roles/${r.role_key}`}
               className="whitespace-nowrap text-xs font-semibold text-pitch-dark hover:underline"
-              aria-label={`View the ${r.display_name} leaderboard`}
+              aria-label={`View Leaderboard: ${r.display_name}`}
             >
-              View leaderboard →
+              View Leaderboard →
             </Link>
           </div>
         </div>

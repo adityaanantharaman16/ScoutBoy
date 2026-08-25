@@ -47,7 +47,7 @@ function EvidenceContext({
 
   // Short labelled facts — each included only when genuinely supplied.
   const facts: Array<{ label: string; value: React.ReactNode }> = [];
-  if (context.minutes != null) facts.push({ label: "Minutes", value: context.minutes });
+  if (context.minutes != null) facts.push({ label: "Minutes Played", value: context.minutes });
   const played: string[] = [];
   if (context.appearances != null) played.push(`${context.appearances} apps`);
   if (context.starts != null) played.push(`${context.starts} starts`);
@@ -113,9 +113,9 @@ function roleRatingFor(side: CompareSide, roleKey: string | null | undefined): R
 }
 
 /**
- * One side of the balance sheet. Renders the player's stored RoleFit score and
- * role-level confidence for the selected role — or an explicit "not rated in
- * this role" state when a role *is* selected and that rating is absent. When no
+ * One side of the balance sheet. Renders the player's stored RoleFit and
+ * RoleFit Confidence for the Selected Role — or an explicit Unrated state when a
+ * role *is* selected and that rating is absent. When no
  * role was selected at all (no shared rated role) the role slot stays empty
  * rather than blaming either side. Market and playstyles are shown in parallel
  * with the other side. Nothing here is recomputed.
@@ -154,7 +154,7 @@ function BalanceColumn({
           className="inline-flex w-fit border border-line-strong bg-paper-muted px-2 py-1 text-xs font-semibold text-ink-muted"
           data-testid={`compare-unavailable-${align}`}
         >
-          Not rated in this role
+          Unrated in this role
         </div>
       ) : null}
       {/* The right column mirrors the left: its risk tag hugs the outer (right)
@@ -212,7 +212,7 @@ export function PlayerCompareTable({ data }: { data: CompareResponse }) {
             data-testid={hasRole ? "compare-role-note" : "compare-no-shared-role"}
           >
             {hasRole
-              ? `RoleFit score and confidence shown per side · ${data.season}`
+              ? `RoleFit and RoleFit Confidence shown per side · ${data.season}`
               : `Market, evidence context and normalized metrics below are unaffected · ${data.season}`}
           </div>
         </div>
@@ -236,7 +236,7 @@ export function PlayerCompareTable({ data }: { data: CompareResponse }) {
         {data.confidence_warnings.length > 0 && (
           <div className="mt-3 space-y-2" data-testid="confidence-warnings">
             {data.confidence_warnings.map((w, i) => (
-              <Notice key={i} tone="caution" title="Confidence warning">
+              <Notice key={i} tone="caution" title="RoleFit Confidence warning">
                 {w}
               </Notice>
             ))}

@@ -278,11 +278,11 @@ function GuestScoutingProvider({ children }: { children: React.ReactNode }) {
       // suggestion signal can never disagree about which one just happened.
       if (guestIds.includes(player.id)) {
         setGuestIds((ids) => ids.filter((id) => id !== player.id));
-        speak(`${player.name} removed from shortlist. Saved on this device.`);
+        speak(`${player.name} removed from My Favorites. Saved on this device.`);
         return;
       }
       setGuestIds((ids) => (ids.includes(player.id) ? ids : [...ids, player.id]));
-      speak(`${player.name} added to shortlist. Saved on this device.`);
+      speak(`${player.name} added to My Favorites. Saved on this device.`);
       // Raised AFTER the save, never before it, and only for a new one.
       setGuestSaveSignal((n) => n + 1);
     },
@@ -292,7 +292,7 @@ function GuestScoutingProvider({ children }: { children: React.ReactNode }) {
   const removeShortlist = useCallback(
     (id: number) => {
       setGuestIds((ids) => ids.filter((item) => item !== id));
-      speak("Player removed from shortlist. Saved on this device.");
+      speak("Player removed from My Favorites. Saved on this device.");
     },
     [speak, setGuestIds],
   );
@@ -872,14 +872,14 @@ function AccountScoutingProvider({
           speak("That change could not be saved on this device. Nothing was changed.");
           return;
         }
-        speak(`${player.name} removed from shortlist. Saved on this device.`);
+        speak(`${player.name} removed from My Favorites. Saved on this device.`);
         return;
       }
       if (writeDevice(player.id, true) === null) {
         speak("That change could not be saved on this device. Nothing was changed.");
         return;
       }
-      speak(`${player.name} added to shortlist. Saved on this device.`);
+      speak(`${player.name} added to My Favorites. Saved on this device.`);
       setGuestSaveSignal((n) => n + 1);
     },
     [guestIds, speak, writeDevice],
@@ -1014,7 +1014,7 @@ function AccountScoutingProvider({
       const player = { id, name: name ?? "That player" };
       if (!authenticated || token === null) {
         writeDevice(id, false);
-        speak("Player removed from shortlist. Saved on this device.");
+        speak("Player removed from My Favorites. Saved on this device.");
         return;
       }
       if (visible === null || visible.loading) {

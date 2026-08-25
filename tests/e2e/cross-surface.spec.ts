@@ -91,7 +91,7 @@ const OVERFLOW_SURFACES: Array<{ path: string; ready: string }> = [
   { path: "/", ready: '[data-testid="results-ledger"]' },
   { path: "/roles/touchline_winger", ready: '[data-testid="leaderboard-ledger"]' },
   { path: "/compare", ready: "text=Pick two players to compare" },
-  { path: "/shortlist", ready: "text=No players saved yet" },
+  { path: "/shortlist", ready: "text=No players in My Favorites yet" },
   { path: "/methodology", ready: '[data-testid="methodology-contents"]' },
 ];
 
@@ -341,11 +341,11 @@ test.describe("Cross-surface layout & honesty", () => {
     for (const side of ["compare-side-left", "compare-side-right"]) {
       await expect(page.getByTestId(side).getByTestId("score-readout")).toBeVisible();
     }
-    await expect(page.getByText("Not rated in this role")).toHaveCount(0);
+    await expect(page.getByText("Unrated in this role")).toHaveCount(0);
 
     // Automatic-role copy describes the shared-role policy the API implements.
     await expect(
-      page.getByText(/Chooses the shared rated role where both players have the strongest joint fit/),
+      page.getByText(/Chooses the shared rated role where both players have the strongest joint RoleFit/),
     ).toBeVisible();
     await expect(page.getByText(/falling back to Player B/i)).toHaveCount(0);
     await expect(page.getByText(/most comparable/i)).toHaveCount(0);
@@ -382,7 +382,7 @@ test.describe("Cross-surface layout & honesty", () => {
     await page.getByTestId("compare-a").selectOption({ index: 1 });
     await page.getByTestId("compare-b").selectOption({ index: 2 });
     await expect(page.getByTestId("compare-table")).toBeVisible();
-    await expect(page.getByTestId("compare-unavailable-right")).toContainText("Not rated in this role");
+    await expect(page.getByTestId("compare-unavailable-right")).toContainText("Unrated in this role");
     await expect(page.getByTestId("why-higher")).not.toBeEmpty();
     // the rated side still shows its evidence context honestly
     await expect(page.getByTestId("compare-context-left")).toContainText("Minutes");
@@ -416,7 +416,7 @@ test.describe("Cross-surface layout & honesty", () => {
     // nothing is fabricated: no score, no role confidence, no unrated blame
     await expect(page.getByTestId("score-readout")).toHaveCount(0);
     await expect(page.getByTestId("confidence-readout")).toHaveCount(0);
-    await expect(page.getByText("Not rated in this role")).toHaveCount(0);
+    await expect(page.getByText("Unrated in this role")).toHaveCount(0);
 
     // market, evidence context and the metric ledger stay usable
     await expect(page.getByTestId("compare-side-left").getByTestId("market-readout")).toBeVisible();
@@ -471,7 +471,7 @@ test.describe("Cross-surface layout & honesty", () => {
     await page.goto("/shortlist");
     await expect(page.getByTestId("shortlist-record")).toHaveCount(1);
     await page.getByRole("button", { name: /Remove .* from My Favorites/i }).first().click();
-    await expect(page.getByText(/No players saved yet/)).toBeVisible();
+    await expect(page.getByText(/No players in My Favorites yet/)).toBeVisible();
   });
 
   test("My Favorites desktop: full-width ledger rows, stable RoleFit track, equal Remove/Compare rail", async ({ page }) => {
@@ -485,7 +485,7 @@ test.describe("Cross-surface layout & honesty", () => {
     await expect(page.getByTestId("favorites-counter")).toContainText("My Favorites 3");
 
     await page.goto("/shortlist");
-    await expect(page.getByRole("heading", { name: "Saved Players" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "My Favorites" })).toBeVisible();
     await expect(page.getByText("Saved decisions")).toHaveCount(0);
     await expect(page.getByTestId("shortlist-ledger")).toBeVisible();
     await expect(page.getByTestId("shortlist-record")).toHaveCount(3);

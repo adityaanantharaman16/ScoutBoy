@@ -187,8 +187,8 @@ export function AccountSuggestion() {
         <div className="min-w-0">
           {/*
             The one live element. It carries the NEW information only: the
-            existing favourites live region has already announced "added to
-            shortlist. Saved on this device", so repeating it here would say the
+            existing favourites live region has already announced "added to My
+            Favorites. Saved on this device", so repeating it here would say the
             same sentence twice. `role="status"` is polite, so it queues behind
             that announcement rather than interrupting it.
           */}

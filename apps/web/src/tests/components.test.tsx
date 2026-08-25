@@ -76,15 +76,18 @@ describe("MarketValuePanel", () => {
       explanation: {},
     };
     render(<MarketValuePanel market={market} />);
-    expect(screen.getByText("Public market value")).toBeInTheDocument();
-    expect(screen.getByText("Model value range")).toBeInTheDocument();
-    expect(screen.getByText("Expected asking price")).toBeInTheDocument();
+    expect(screen.getByText("Public Market Value")).toBeInTheDocument();
+    expect(screen.getByText("Model Value Range")).toBeInTheDocument();
+    expect(screen.getByText("Expected Asking Range")).toBeInTheDocument();
     expect(screen.getByText("Inflated")).toBeInTheDocument();
   });
 
   it("renders an honest fallback when market data is missing", () => {
     render(<MarketValuePanel market={null} />);
-    expect(screen.getByText(/No market data/i)).toBeInTheDocument();
+    // Unknown, because nothing was observed - never zero, and never a claim that
+    // some resource failed to load.
+    expect(screen.getByTestId("market-panel")).toHaveTextContent("Market information unknown");
+    expect(screen.getByTestId("market-panel")).not.toHaveTextContent("0");
   });
 });
 
@@ -167,11 +170,11 @@ describe("Discover cards", () => {
     expect(screen.getByText("81.2")).toBeInTheDocument();
     // one compound status unit, no colon-prefixed label/value pairs
     const status = screen.getByTestId("card-status");
-    expect(status).toHaveTextContent("High Data Coverage");
-    expect(status).toHaveTextContent("High Confidence");
-    expect(status).toHaveAccessibleName("Evidence coverage: high. RoleFit confidence: high.");
+    expect(status).toHaveTextContent("High Evidence Coverage");
+    expect(status).toHaveTextContent("High RoleFit Confidence");
+    expect(status).toHaveAccessibleName("Evidence Coverage: high. RoleFit Confidence: high.");
     expect(screen.getByTestId("result-row")).not.toHaveTextContent("Evidence:");
-    expect(screen.getByTestId("result-row")).not.toHaveTextContent("RoleFit confidence:");
+    expect(screen.getByTestId("result-row")).not.toHaveTextContent("RoleFit Confidence:");
   });
 
   it("renders profile-only players without fake scores or empty playstyles", () => {
@@ -193,7 +196,8 @@ describe("Discover cards", () => {
       top_playstyles: [],
       age: null,
     });
-    expect(screen.getAllByText("Profile Only").length).toBeGreaterThan(0);
+    expect(screen.getByTestId("row-rolefit")).toHaveTextContent("Unrated");
+    expect(screen.getByTestId("card-status")).toHaveTextContent("Profile Only");
     expect(screen.getByTestId("profile-only-card")).toBeInTheDocument();
     expect(screen.queryByText("0.0")).not.toBeInTheDocument();
     expect(screen.queryByText(/No qualifying playstyles/)).not.toBeInTheDocument();

@@ -21,11 +21,15 @@ export function ShortlistButton({
       type="button"
       className={`btn ${active ? "btn-on" : ""} ${size === "sm" ? "px-2 py-1 text-xs" : ""}`}
       aria-pressed={active}
-      aria-label={`${active ? "Remove" : "Add"} ${player.name} ${active ? "from" : "to"} shortlist`}
+      aria-label={
+        active
+          ? `Favorited: remove ${player.name} from My Favorites`
+          : `Favorite: add ${player.name} to My Favorites`
+      }
       onClick={() => toggleShortlist(player)}
     >
       {!active && <span aria-hidden="true">+</span>}
-      <span>{active ? "Shortlisted" : "Shortlist"}</span>
+      <span>{active ? "Favorited" : "Favorite"}</span>
     </button>
   );
 }
@@ -93,7 +97,7 @@ function HeartIcon({ filled }: { filled: boolean }) {
 }
 
 /**
- * Discovery-rail favourite action: the same device-local shortlist state as
+ * Discovery-rail favourite action: the same device-local My Favorites state as
  * {@link ShortlistButton}, presented as an icon-only region of the rail.
  */
 export function FavoriteHeartButton({ player }: { player: PlayerRef }) {

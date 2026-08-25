@@ -133,7 +133,7 @@ describe("Comparable-player identity and market presentation", () => {
   it("keeps the complete market range on one unbreakable line", () => {
     mount();
     const market = screen.getAllByTestId("similar-market")[0];
-    expect(market).toHaveTextContent("Expected asking");
+    expect(market).toHaveTextContent("Expected Asking");
     const range = market.querySelector(".mono")!;
     expect(range.textContent).toBe("€58.5M – €87.8M");
     // the currency range can never break between its low and high values

@@ -132,7 +132,7 @@ test.describe("Saved Discovery views", () => {
       await page.reload();
       // The surface renders its empty state rather than throwing.
       await expect(page.getByTestId("saved-sections")).toBeVisible();
-      await expect(page.getByText(/No saved views yet/)).toBeVisible();
+      await expect(page.getByText(/No saved Discovery views yet/)).toBeVisible();
     }
   });
 
@@ -187,7 +187,7 @@ test.describe("Saved Discovery views", () => {
     );
     await page.reload();
 
-    await expect(page.getByTestId("saved-view-unavailable")).toContainText("no longer available");
+    await expect(page.getByTestId("saved-view-unavailable")).toContainText("no longer supported");
     await expect(page.getByTestId("saved-view-open")).toHaveAttribute(
       "href",
       "/?club=a&age_max=22",
@@ -362,10 +362,10 @@ test.describe("The Saved Work hub", () => {
     // The legacy bookmark still works, and is not a 404.
     const response = await page.goto("/shortlist");
     expect(response?.status()).toBeLessThan(400);
-    await expect(page.locator("h1")).toHaveText("Saved Players");
+    await expect(page.locator("h1")).toHaveText("My Favorites");
   });
 
-  test("opens one section at a time and defaults to Favorites", async ({ page }) => {
+  test("opens one section at a time and defaults to My Favorites", async ({ page }) => {
     await page.goto("/saved");
     await expect(page.getByTestId("saved-section-favorites")).toHaveAttribute(
       "data-active",

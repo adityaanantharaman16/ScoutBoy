@@ -217,9 +217,9 @@ describe("Tag integrations", () => {
     expect(screen.getByText("None flagged.")).not.toHaveAttribute("data-tag-variant");
   });
 
-  it("renders Best as a positive role-status tag in Peer-Ranked Roles", () => {
+  it("renders Best Role as a positive role-status tag in Peer-Ranked Roles", () => {
     render(<RoleRatingsPanel ratings={[rating()]} />);
-    const best = screen.getByText("Best");
+    const best = screen.getByText("Best Role");
     expect(best).toHaveAttribute("data-tag-variant", "role-status");
     expect(best.className).toContain("display-tag");
     expect(best.className).toContain("text-pitch-dark");

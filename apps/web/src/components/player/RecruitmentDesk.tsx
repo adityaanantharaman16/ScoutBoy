@@ -14,7 +14,7 @@ import {
 import type { AuditBreakdown, PlayerCard, RoleRatingDetail, RoleRatingSummary } from "@/lib/api/types";
 import { auditGroups, auditPenalties, bestRoleKey, findRoleAudit, findRoleSummary } from "@/lib/audit/roleAudit";
 import {
-  confidenceLabel,
+  confidenceText,
   evidenceStatusText,
   formatAge,
   formatScore,
@@ -68,7 +68,7 @@ function IdentityBlock({ card }: { card: PlayerCard }) {
   );
 }
 
-/** Selected-role summary: score, best indicator, confidence, evidence status. */
+/** Selected Role summary: RoleFit, Best Role indicator, RoleFit Confidence, Evidence Coverage. */
 function SelectedRoleSummary({
   card,
   summary,
@@ -86,24 +86,24 @@ function SelectedRoleSummary({
         <span className={`tracking-tight text-4xl font-bold leading-none ${scoreColor(summary?.final_score)}`}>
           {formatScore(summary?.final_score)}
         </span>
-        <span className="text-sm font-semibold text-ink">{summary?.display_name ?? "Unavailable"}</span>
+        <span className="text-sm font-semibold text-ink">{summary?.display_name ?? "Unrated"}</span>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
         {summary?.is_best ? (
-          <DisplayTag variant="role-status">Best-Rated Role</DisplayTag>
+          <DisplayTag variant="role-status">Best Role</DisplayTag>
         ) : (
-          <span className="text-ink-soft">Not this player&apos;s best-rated role</span>
+          <span className="text-ink-soft">Not this player&apos;s Best Role</span>
         )}
         {summary?.rank_in_peer_group ? (
           <span className="text-ink-soft">Rank #{summary.rank_in_peer_group} in peer group</span>
         ) : null}
       </div>
       <div className="mt-3 flex items-center justify-between gap-3 border-t border-line pt-3">
-        <span className="text-sm text-ink-muted">RoleFit confidence</span>
+        <span className="text-sm text-ink-muted">RoleFit Confidence</span>
         <ConfidenceMeter level={summary?.confidence} />
       </div>
       <div className="mt-2 flex items-center justify-between gap-3">
-        <span className="text-sm text-ink-muted">Evidence coverage</span>
+        <span className="text-sm text-ink-muted">Evidence Coverage</span>
         <span className="text-sm font-semibold text-ink">
           {evidenceStatusText(card.evidence_status)}
         </span>
@@ -133,7 +133,7 @@ function EvidenceContextRail({ card }: { card: PlayerCard }) {
 
       <div className="mt-3 space-y-1.5 border-t border-line pt-3 text-sm">
         <Row label="Competition coverage" value={coverage} />
-        <Row label="Minutes" value={ctx?.minutes ?? "-"} mono />
+        <Row label="Minutes Played" value={ctx?.minutes ?? "-"} mono />
         <Row label="Appearances" value={ctx?.appearances ?? "-"} mono />
       </div>
 
@@ -149,12 +149,12 @@ function EvidenceContextRail({ card }: { card: PlayerCard }) {
           {market ? (
             <DisplayTag variant="market" value={market.label}>{marketLabelText(market.label)}</DisplayTag>
           ) : (
-            <span className="text-sm text-ink-soft">No market data</span>
+            <span className="text-sm text-ink-soft">Unknown</span>
           )}
         </div>
         {market && (
           <div className="mt-1 flex items-center justify-between gap-2 text-sm">
-            <span className="text-ink-muted">Asking price</span>
+            <span className="text-ink-muted">Expected Asking</span>
             <span className="font-mono font-semibold text-ink">
               {marketRangeText(market.expected_asking_low_eur, market.expected_asking_high_eur)}
             </span>
@@ -173,10 +173,10 @@ function EvidenceContextRail({ card }: { card: PlayerCard }) {
 
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-line pt-2 text-xs font-semibold text-pitch-dark">
         <a href="#market-full" className="hover:underline">
-          Full market detail ↓
+          Full Market Value ↓
         </a>
         <a href="#context-full" className="hover:underline">
-          Full context &amp; coverage ↓
+          Full Context &amp; Coverage ↓
         </a>
       </div>
     </details>
@@ -259,9 +259,8 @@ export function RecruitmentDesk({
     const next = findRoleSummary(roles, key);
     if (next) {
       setAnnouncement(
-        `Selected role: ${next.display_name}. RoleFit ${formatScore(next.final_score)}, ${confidenceLabel(
-          next.confidence,
-        ).toLowerCase()}.`,
+        `Selected Role: ${next.display_name}. RoleFit ${formatScore(next.final_score)}, ` +
+          `${confidenceText(next.confidence)} RoleFit Confidence.`,
       );
     }
   }
@@ -279,7 +278,7 @@ export function RecruitmentDesk({
       <div className="lg:grid lg:grid-cols-[minmax(300px,340px)_1fr] lg:items-start lg:gap-8">
         <IdentityBlock card={card} />
         <div className="mt-5 lg:mt-0">
-          <div className="label mb-2">Choose a role to analyse</div>
+          <div className="label mb-2">Choose a role to analyze</div>
           <RoleSelector
             ratings={roles}
             selectedKey={selectedKey}

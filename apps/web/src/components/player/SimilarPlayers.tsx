@@ -11,11 +11,12 @@ import { marketRangeText } from "@/lib/market/marketChart";
  * Three stacked logical rows, so narrowing the viewport removes horizontal
  * pressure structurally instead of letting two columns collide:
  *   1. identity — name, then `Club · League`, each on exactly one line;
- *   2. evidence — RoleFit and the expected-asking range as two clearly separate
- *      labelled channels, side by side while there is room and stacked when not;
+ *   2. evidence — Best RoleFit and the Expected Asking range as two clearly
+ *      separate labelled channels, side by side while there is room and stacked
+ *      when not;
  *   3. the reason text and the two-part action bar.
  *
- * RoleFit reuses the shared `ScoreReadout`, so the band colour, the numeric face
+ * Best RoleFit reuses the shared `ScoreReadout`, so the band colour, the numeric face
  * and the one-decimal formatting are Discovery's — only the size is smaller. A
  * missing score therefore renders the shared "-" sentinel and is never shown as
  * zero. The market range is monospace and non-breaking, so it can never split
@@ -41,11 +42,11 @@ function ComparablePlayer({ player }: { player: SimilarPlayer }) {
 
       <div className="mt-2 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
         <div data-testid="similar-rolefit">
-          <div className="label mb-0.5">RoleFit</div>
+          <div className="label mb-0.5">Best RoleFit</div>
           <ScoreReadout score={player.best_role_score} size="sm" />
         </div>
         <div data-testid="similar-market">
-          <div className="label mb-0.5">Expected asking</div>
+          <div className="label mb-0.5">Expected Asking</div>
           <div className="mono whitespace-nowrap text-xs font-semibold text-ink">
             {marketRangeText(player.expected_asking_low_eur, player.expected_asking_high_eur)}
           </div>

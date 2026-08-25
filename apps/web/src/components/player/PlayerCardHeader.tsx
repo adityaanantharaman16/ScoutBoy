@@ -32,24 +32,24 @@ export function PlayerCardHeader({ card }: { card: PlayerCard }) {
         <div className="bg-paper-panel px-4 py-3">
           <dt className="label">Best RoleFit</dt>
           <dd className={`mt-1 tracking-tight text-4xl font-bold leading-none ${scoreColor(best?.final_score)}`}>
-            {best ? formatScore(best.final_score) : "Profile only"}
+            {best ? formatScore(best.final_score) : "Unrated"}
           </dd>
         </div>
         <div className="bg-paper-panel px-4 py-3">
-          <dt className="label">Role</dt>
-          <dd className="mt-1 text-sm font-semibold text-ink">{best?.display_name ?? "Unavailable"}</dd>
+          <dt className="label">Best Role</dt>
+          <dd className="mt-1 text-sm font-semibold text-ink">{best?.display_name ?? "Unrated"}</dd>
         </div>
         <div className="bg-paper-panel px-4 py-3">
-          <dt className="label">Evidence</dt>
+          <dt className="label">Evidence Coverage</dt>
           <dd className="mt-1 text-sm font-semibold text-ink">{evidenceStatusText(card.evidence_status)}</dd>
         </div>
         <div className="bg-paper-panel px-4 py-3">
-          <dt className="label">Confidence</dt>
+          <dt className="label">RoleFit Confidence</dt>
           <dd className="mt-1">
             {card.has_rolefit_analysis ? (
               <ConfidenceBadge confidence={card.confidence} />
             ) : (
-              <DisplayTag variant="evidence" value="profile_only">Profile Only</DisplayTag>
+              <DisplayTag variant="evidence" value="profile_only">Unrated</DisplayTag>
             )}
           </dd>
         </div>

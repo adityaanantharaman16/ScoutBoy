@@ -739,7 +739,7 @@ def find_similar(session: Session, player_id: int, limit: int = 5) -> Optional[S
     )
     quality_comps = [sp(s, r, "Similar profile, comparable quality") for s, r in quality[:limit]]
     cheaper = [
-        sp(s, r, "Similar profile, lower expected asking price")
+        sp(s, r, "Similar profile, lower Expected Asking")
         for s, r in scored
         if r.market and target_ask and (r.market.expected_asking_high_eur or 0) < target_ask
     ][:limit]
@@ -768,13 +768,13 @@ def find_similar(session: Session, player_id: int, limit: int = 5) -> Optional[S
             SimilarGroup(
                 key="cheaper",
                 label="Similar but cheaper",
-                description="Similar style at a lower expected asking price.",
+                description="Similar style at a lower Expected Asking Range.",
                 players=cheaper,
             ),
             SimilarGroup(
                 key="upside",
                 label="Higher upside",
-                description="Similar style with a higher RoleFit score.",
+                description="Similar style with a higher RoleFit.",
                 players=upside,
             ),
         ],

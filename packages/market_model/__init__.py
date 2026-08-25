@@ -64,12 +64,12 @@ def estimate_market(inp: MarketInputs) -> MarketEstimate:
         "confidence": conf_expl,
         "range_widths": {"model": model_w, "asking": round(asking_w, 3)},
         "label_basis": (
-            f"expected asking mid €{round(asking_mid):,} vs model range "
+            f"Expected Asking midpoint €{round(asking_mid):,} vs Model Value Range "
             f"€{round(model_low):,}–€{round(model_high):,}"
         ),
         "manual_review_reasons": reasons,
-        "disclaimer": "Ranges, not exact values. Public value, model value, and asking "
-        "price are distinct concepts.",
+        "disclaimer": "Ranges, not exact values. Public Market Value, Model Value Range "
+        "and Expected Asking Range are three distinct reads.",
     }
 
     return MarketEstimate(

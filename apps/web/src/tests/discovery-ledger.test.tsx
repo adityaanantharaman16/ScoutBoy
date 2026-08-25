@@ -108,11 +108,11 @@ beforeEach(() => window.localStorage.clear());
 // compound coverage + confidence status
 // ---------------------------------------------------------------------------
 describe("Discovery compound coverage/confidence status", () => {
-  it("drops the Evidence: and RoleFit confidence: prefixes", () => {
+  it("drops the Evidence Coverage: and RoleFit Confidence: prefixes", () => {
     renderRow();
     const row = screen.getByTestId("result-row");
     expect(row).not.toHaveTextContent("Evidence:");
-    expect(row).not.toHaveTextContent("RoleFit confidence:");
+    expect(row).not.toHaveTextContent("RoleFit Confidence:");
     expect(screen.queryByTestId("evidence-tag")).not.toBeInTheDocument();
     expect(screen.queryByTestId("confidence-readout")).not.toBeInTheDocument();
   });
@@ -120,10 +120,10 @@ describe("Discovery compound coverage/confidence status", () => {
   it("states coverage and confidence as two equally weighted facts in one unit", () => {
     renderRow();
     const status = screen.getByTestId("card-status");
-    expect(status).toHaveTextContent("High Data Coverage");
-    expect(status).toHaveTextContent("High Confidence");
+    expect(status).toHaveTextContent("High Evidence Coverage");
+    expect(status).toHaveTextContent("High RoleFit Confidence");
     expect(within(status).getByTestId("confidence-meter")).toBeInTheDocument();
-    expect(status).toHaveAccessibleName("Evidence coverage: high. RoleFit confidence: high.");
+    expect(status).toHaveAccessibleName("Evidence Coverage: high. RoleFit Confidence: high.");
     // sharp-edged compound tag, not a pill
     expect(status).toHaveAttribute("data-tag-variant", "evidence");
     expect(status.className).toContain("display-tag-compound");
@@ -134,21 +134,21 @@ describe("Discovery compound coverage/confidence status", () => {
     renderRow({ evidence_status: "high_coverage", confidence: "low" });
     const status = screen.getByTestId("card-status");
     // both facts stay visible; neither is inferred from the other
-    expect(status).toHaveTextContent("High Data Coverage");
-    expect(status).toHaveTextContent("Low Confidence");
+    expect(status).toHaveTextContent("High Evidence Coverage");
+    expect(status).toHaveTextContent("Low RoleFit Confidence");
     expect(within(status).getByTestId("confidence-meter")).toHaveAttribute(
       "data-confidence",
       "low",
     );
-    expect(status).toHaveAccessibleName("Evidence coverage: high. RoleFit confidence: low.");
+    expect(status).toHaveAccessibleName("Evidence Coverage: high. RoleFit Confidence: low.");
   });
 
   it("keeps limited coverage with high confidence readable as two facts", () => {
     renderRow({ evidence_status: "analyzed_limited", confidence: "high" });
     const status = screen.getByTestId("card-status");
-    expect(status).toHaveTextContent("Limited Data Coverage");
-    expect(status).toHaveTextContent("High Confidence");
-    expect(status).toHaveAccessibleName("Evidence coverage: limited. RoleFit confidence: high.");
+    expect(status).toHaveTextContent("Limited Evidence Coverage");
+    expect(status).toHaveTextContent("High RoleFit Confidence");
+    expect(status).toHaveAccessibleName("Evidence Coverage: limited. RoleFit Confidence: high.");
   });
 
   it("keeps the confidence glyph monochrome, never the score palette", () => {
@@ -162,7 +162,7 @@ describe("Discovery compound coverage/confidence status", () => {
   it("shows an unknown confidence as explicitly neutral, not as low", () => {
     renderRow({ confidence: "unknown" });
     const status = screen.getByTestId("card-status");
-    expect(status).toHaveTextContent("Unknown Confidence");
+    expect(status).toHaveTextContent("Unknown RoleFit Confidence");
     expect(within(status).getByTestId("confidence-meter")).toHaveAttribute(
       "data-confidence",
       "unknown",
@@ -172,8 +172,8 @@ describe("Discovery compound coverage/confidence status", () => {
   it("shows an unknown coverage as explicitly neutral", () => {
     renderRow({ evidence_status: "unknown" });
     const status = screen.getByTestId("card-status");
-    expect(status).toHaveTextContent("Unknown Data Coverage");
-    expect(status).toHaveAccessibleName("Evidence coverage: unknown. RoleFit confidence: high.");
+    expect(status).toHaveTextContent("Unknown Evidence Coverage");
+    expect(status).toHaveAccessibleName("Evidence Coverage: unknown. RoleFit Confidence: high.");
   });
 
   it("gives profile-only rows a neutral status with no fabricated confidence", () => {
@@ -183,7 +183,7 @@ describe("Discovery compound coverage/confidence status", () => {
     expect(within(status).queryByTestId("confidence-meter")).not.toBeInTheDocument();
     expect(status).not.toHaveTextContent("Confidence");
     expect(status).toHaveAccessibleName(
-      "Evidence coverage: profile only. RoleFit confidence: not available.",
+      "Evidence Coverage: profile only. RoleFit Confidence: not available.",
     );
     // and no score is invented for the hero
     expect(screen.queryByText("0.0")).not.toBeInTheDocument();
@@ -244,12 +244,12 @@ describe("Discovery row role context", () => {
     // the SELECTED role's figures, not the best role's
     expect(screen.getByTestId("score-readout")).toHaveTextContent("54.8");
     expect(screen.getByTestId("score-caption").textContent).toBe("Touchline Winger");
-    expect(screen.getByTestId("card-status")).toHaveTextContent("Low Confidence");
+    expect(screen.getByTestId("card-status")).toHaveTextContent("Low RoleFit Confidence");
     expect(
       within(screen.getByTestId("card-status")).getByTestId("confidence-meter"),
     ).toHaveAttribute("data-confidence", "low");
     expect(screen.getByTestId("card-status")).toHaveAccessibleName(
-      "Evidence coverage: high. RoleFit confidence: low.",
+      "Evidence Coverage: high. RoleFit Confidence: low.",
     );
   });
 
@@ -258,14 +258,14 @@ describe("Discovery row role context", () => {
     const row = screen.getByTestId("result-row");
     expect(row).not.toHaveTextContent("88.4");
     expect(row).not.toHaveTextContent("Shadow Striker");
-    expect(row).not.toHaveTextContent("High Confidence");
+    expect(row).not.toHaveTextContent("High RoleFit Confidence");
   });
 
   it("displays the best role when no role filter is active", () => {
     renderRow();
     expect(screen.getByTestId("score-readout")).toHaveTextContent("88.4");
     expect(screen.getByTestId("score-caption").textContent).toBe("Shadow Striker");
-    expect(screen.getByTestId("card-status")).toHaveTextContent("High Confidence");
+    expect(screen.getByTestId("card-status")).toHaveTextContent("High RoleFit Confidence");
   });
 
   it("keeps a long selected role name wrapping on word boundaries in the hero track", () => {
@@ -284,7 +284,11 @@ describe("Discovery row role context", () => {
   it("shows no score at all for an unrated row, in either context", () => {
     renderRow(PROFILE_ONLY);
     expect(screen.queryByTestId("score-readout")).not.toBeInTheDocument();
-    expect(screen.getAllByText("Profile Only").length).toBeGreaterThan(0);
+    // Two channels, two words: the RoleFit slot reports RATING STATUS (Unrated),
+    // the status unit beside it reports EVIDENCE COVERAGE (Profile Only).
+    expect(screen.getByTestId("row-rolefit")).toHaveTextContent("Unrated");
+    expect(screen.getByTestId("row-rolefit")).not.toHaveTextContent("Profile Only");
+    expect(screen.getByTestId("card-status")).toHaveTextContent("Profile Only");
     // a missing score is never rendered as a real zero
     expect(screen.getByTestId("result-row")).not.toHaveTextContent("0.0");
   });
@@ -436,7 +440,7 @@ describe("Discovery playstyle line", () => {
     renderRow(PROFILE_ONLY);
     const line = screen.getByTestId("status-line-playstyles");
     const note = within(line).getByTestId("profile-only-card");
-    expect(note).toHaveTextContent("Analysis unavailable");
+    expect(note).toHaveTextContent("Unrated: no playstyles");
     expect(note).not.toHaveAttribute("data-tag-variant");
     expect(note.className).not.toContain("display-tag");
     expect(within(line).queryByTestId("no-playstyles")).not.toBeInTheDocument();

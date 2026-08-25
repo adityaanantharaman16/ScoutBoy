@@ -70,7 +70,7 @@ export default function RoleLeaderboardPage() {
         ) : (
           <>
             {/* Desktop: a genuine ranking table. Rank, score magnitude, and RoleFit
-                confidence are kept as separate columns. Evidence coverage is not
+                RoleFit Confidence are kept as separate columns. Evidence Coverage is not
                 shown here — the leaderboard row contract does not provide it. */}
             <div className="table-shell hidden md:block">
               <table className="data-table" data-testid="leaderboard-table">
@@ -78,10 +78,10 @@ export default function RoleLeaderboardPage() {
                   <tr>
                     <th className="w-10">#</th>
                     <th>Player</th>
-                    <th className="text-right">Score</th>
+                    <th className="text-right">RoleFit Score</th>
                     <th>RoleFit Confidence</th>
                     <th>Playstyles</th>
-                    <th className="text-right">Expected asking</th>
+                    <th className="text-right">Expected Asking</th>
                     {/* A fixed action column: the shared two-part bar is a known
                         width, and pinning it keeps every row's bar identical and
                         stops a long club name from squeezing it. */}
@@ -167,7 +167,7 @@ export default function RoleLeaderboardPage() {
                   <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
                     <ConfidenceReadout level={r.confidence} />
                     <span className="inline-flex flex-wrap items-center gap-1.5 text-[11px] text-ink-muted">
-                      Expected asking:
+                      Expected Asking:
                       <span className="mono text-ink">
                         {marketRangeText(r.expected_asking_low_eur, r.expected_asking_high_eur)}
                       </span>

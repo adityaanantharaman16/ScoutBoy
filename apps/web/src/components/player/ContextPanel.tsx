@@ -58,7 +58,7 @@ export function ContextPanel({ context }: { context: ContextPanelType | null | u
         <Mult label="Sample reliability" value={context.sample_reliability} />
       </div>
       <div className="flex items-center justify-between border-t border-line pt-1.5">
-        <span className="text-sm text-ink-muted">Minutes</span>
+        <span className="text-sm text-ink-muted">Minutes Played</span>
         <span className="font-mono text-sm font-semibold text-ink">{context.minutes ?? "-"}</span>
       </div>
       {context.limitations?.slice(0, 2).map((item) => (

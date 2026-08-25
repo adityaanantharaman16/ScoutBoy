@@ -221,10 +221,10 @@ describe("Role leaderboard actions", () => {
     expect(within(table).getAllByRole("columnheader").map((h) => h.textContent)).toEqual([
       "#",
       "Player",
-      "Score",
+      "RoleFit Score",
       "RoleFit Confidence",
       "Playstyles",
-      "Expected asking",
+      "Expected Asking",
       "Actions",
     ]);
     const firstRow = within(table).getByText("Luca Bianchi").closest("tr")!;

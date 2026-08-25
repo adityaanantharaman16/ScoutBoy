@@ -44,8 +44,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               clubs, or data providers.
             </p>
             <p className="mt-1">
-              Coverage is limited to the available local snapshots. Profile-only and low-confidence
-              states are shown without fabricated RoleFit analysis.
+              Evidence Coverage is limited to the available local snapshots. Unrated and
+              low-confidence records are shown without fabricated RoleFit analysis.
             </p>
           </footer>
         </Providers>

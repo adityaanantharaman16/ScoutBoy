@@ -24,7 +24,7 @@ function parsePlayerId(raw: string | null): number | null {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
-/** A role from the URL, or null for Automatic Role. Unknown keys are dropped. */
+/** A role from the URL, or null for Automatic Role. Unsupported keys are dropped. */
 function parseRole(raw: string | null): string | null {
   return raw != null && ROLE_KEYS.includes(raw) ? raw : null;
 }
@@ -103,7 +103,7 @@ function ComparePageInner() {
       <PageHeader
         eyebrow="Analytical decision surface"
         title="Compare players"
-        lead="Select two players and a role to weigh them side by side. The conclusion, per-side confidence, and any confidence warnings come straight from the ScoutBoy compare API - nothing is recomputed here."
+        lead="Select two players and a role to weigh them side by side. The comparison, per-side RoleFit Confidence, and any confidence warnings come straight from the ScoutBoy compare API - nothing is recomputed here."
       />
 
       {/* An honest unavailable state rather than a silent correction: a link that
@@ -120,7 +120,7 @@ function ComparePageInner() {
               .filter(Boolean)
               .join(", ")}{" "}
             {malformed.role && !malformed.a && !malformed.b
-              ? "is no longer available, so this comparison opened with Automatic Role."
+              ? "is not a supported role, so this comparison opened with Automatic Role."
               : "could not be read from this link. Choose again below."}
           </Notice>
         </div>
@@ -176,7 +176,7 @@ function ComparePageInner() {
               ))}
             </select>
             <span className="text-[11px] text-ink-soft">
-              Chooses the shared rated role where both players have the strongest joint fit.
+              Chooses the shared rated role where both players have the strongest joint RoleFit.
             </span>
           </label>
         </div>

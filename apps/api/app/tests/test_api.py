@@ -400,7 +400,7 @@ def test_compare_explicit_role_keeps_an_unrated_side_honest(client, db_session):
     assert body["role_key"] == "touchline_winger"
     assert body["role_display"]
     assert body["role_comparison"] == {}
-    assert body["why_higher"] == "Not enough data to compare in a shared role."
+    assert body["why_higher"].startswith("At least one player is unrated in this role")
     assert body["player_b"]["role_ratings"] == []
     # non-role evidence is untouched
     assert body["stat_rows"]

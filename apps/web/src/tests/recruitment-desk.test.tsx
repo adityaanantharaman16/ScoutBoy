@@ -165,7 +165,7 @@ describe("RecruitmentDesk", () => {
     expect(bestTab).toHaveAttribute("aria-selected", "true");
     const summaryBlock = screen.getByTestId("selected-role-summary");
     expect(within(summaryBlock).getByText("90.0")).toBeInTheDocument();
-    expect(within(summaryBlock).getByText(/best-rated role/i)).toBeInTheDocument();
+    expect(within(summaryBlock).getByText("Best Role")).toBeInTheDocument();
   });
 
   it("switches role and shows that role's stored rating and matching audit", () => {
@@ -174,7 +174,7 @@ describe("RecruitmentDesk", () => {
     expect(screen.getByTestId("role-tab-inside_forward")).toHaveAttribute("aria-selected", "true");
     const summaryBlock = screen.getByTestId("selected-role-summary");
     expect(within(summaryBlock).getByText("72.3")).toBeInTheDocument();
-    expect(within(summaryBlock).getByText(/Not this player's best-rated role/i)).toBeInTheDocument();
+    expect(within(summaryBlock).getByText(/Not this player's Best Role/i)).toBeInTheDocument();
     // Inside Forward audit groups now present
     expect(screen.getByTestId("evidence-group-defensive_contribution")).toBeInTheDocument();
     // Shadow Striker-only groups gone

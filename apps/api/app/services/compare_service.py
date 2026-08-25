@@ -12,6 +12,10 @@ from .players_service import build_player_card
 
 _CONF_ORDER = {"unknown": 0, "low": 1, "medium": 2, "high": 3}
 
+#: Display words for a stored confidence level, so the warning reads in the
+#: product's own vocabulary rather than echoing a raw enum value.
+_CONF_WORD = {"unknown": "Unknown", "low": "Low", "medium": "Medium", "high": "High"}
+
 NO_SHARED_ROLE_MESSAGE = (
     "No shared rated role is available for these players. "
     "Select a role to inspect the available analysis."
@@ -126,7 +130,8 @@ def compare_players(
         if _CONF_ORDER.get(card.confidence, 0) <= 1:
             warnings.append(
                 f"{label} ({card.identity.canonical_name}) has "
-                f"{card.confidence} confidence - interpret with caution."
+                f"{_CONF_WORD.get(card.confidence, 'Unknown')} RoleFit Confidence "
+                "- interpret with caution."
             )
 
     return CompareResponse(
@@ -150,8 +155,15 @@ def _why_higher(
     # comparison. Only (3) produces a role_comparison payload.
     if automatic and not role_key:
         return (NO_SHARED_ROLE_MESSAGE, {})
-    if not role_key or ra is None or rb is None or season is None:
-        return ("Not enough data to compare in a shared role.", {})
+    if not role_key or ra is None or rb is None:
+        return (
+            "At least one player is unrated in this role, so there is no shared-role "
+            "comparison. The market, evidence context and normalized metrics below are "
+            "unaffected.",
+            {},
+        )
+    if season is None:
+        return ("The season context is unavailable, so no shared-role comparison can be shown.", {})
     name_a, name_b = card_a.identity.canonical_name, card_b.identity.canonical_name
     role_display = C.role_display_map().get(role_key, role_key)
 

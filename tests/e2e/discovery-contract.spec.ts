@@ -200,7 +200,7 @@ test.describe("A realistic minimum-minutes threshold", () => {
     await page.getByTestId("results-ledger").waitFor();
     await openEvidenceCategory(page);
     const help = page.locator("#filter-threshold-help");
-    await expect(help).toContainText("Whole minutes 0-10,000");
+    await expect(help).toContainText("Whole Minutes Played 0-10,000");
     await expect(help).toContainText("whole RoleFit 0-99");
     await expect(page.getByLabel("Minimum Minutes")).toHaveAttribute("max", "10000");
     await expect(page.getByLabel("Minimum RoleFit")).toHaveAttribute("max", "99");

@@ -188,23 +188,27 @@ export function evidenceStatusText(status: string | null | undefined): string {
 }
 
 /**
- * Discovery-row phrasing for evidence coverage. Same source as
+ * Discovery-row phrasing for Evidence Coverage. Same source as
  * {@link evidenceStatusText} (`evidence_status`), worded to stand on its own
- * inside the compound coverage/confidence unit, which carries no "Evidence:"
- * prefix. Says nothing about RoleFit confidence.
+ * inside the compound coverage/confidence unit, which carries no "Evidence
+ * Coverage:" prefix. Says nothing about RoleFit Confidence.
+ *
+ * Milestone 8.5: the "Data Coverage" spelling is retired. Evidence Coverage is
+ * the one canonical name for this channel, so the ledger unit, the dossier, the
+ * comparison and the accessible names all say the same words.
  */
 export function coverageStatusText(status: string | null | undefined): string {
   switch (status) {
     case "high_coverage":
-      return "High Data Coverage";
+      return "High Evidence Coverage";
     case "analyzed_limited":
-      return "Limited Data Coverage";
+      return "Limited Evidence Coverage";
     case "profile_only":
       return "Profile Only";
     case "unknown":
-      return "Unknown Data Coverage";
+      return "Unknown Evidence Coverage";
     default:
-      return status ? evidenceStatusText(status) : "Unknown Data Coverage";
+      return status ? evidenceStatusText(status) : "Unknown Evidence Coverage";
   }
 }
 

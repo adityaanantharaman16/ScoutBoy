@@ -179,7 +179,7 @@ describe("Discovery result rows (honesty states)", () => {
     renderCard(makeSearchCard({ confidence: "low", best_role_score: 84.0 }));
     expect(screen.getByText("84.0")).toBeInTheDocument();
     const status = screen.getByTestId("card-status");
-    expect(status).toHaveTextContent("Low Confidence");
+    expect(status).toHaveTextContent("Low RoleFit Confidence");
     expect(within(status).getByTestId("confidence-meter").getAttribute("data-confidence")).toBe("low");
   });
 
@@ -267,8 +267,10 @@ describe("Compare balance sheet", () => {
     const right = screen.getByTestId("compare-side-right");
     expect(within(left).getByText("74.0")).toBeInTheDocument();
     expect(within(right).getByText("72.0")).toBeInTheDocument();
-    expect(screen.queryByText("Not rated in this role")).not.toBeInTheDocument();
-    expect(screen.getByTestId("compare-role-note")).toHaveTextContent("RoleFit score and confidence");
+    expect(screen.queryByText("Unrated in this role")).not.toBeInTheDocument();
+    expect(screen.getByTestId("compare-role-note")).toHaveTextContent(
+      "RoleFit and RoleFit Confidence",
+    );
   });
 
   it("shows an explicit unavailable state when a side lacks the selected role", () => {
@@ -276,7 +278,7 @@ describe("Compare balance sheet", () => {
       player_b: side("Jack Whitmore", { role_ratings: [summary("inside_forward", "Inside Forward", 60)] }),
     });
     render(<PlayerCompareTable data={data} />);
-    expect(screen.getByTestId("compare-unavailable-right")).toHaveTextContent("Not rated in this role");
+    expect(screen.getByTestId("compare-unavailable-right")).toHaveTextContent("Unrated in this role");
   });
 
   it("shows a neutral no-shared-role state without blaming or scoring either side", () => {
@@ -306,7 +308,7 @@ describe("Compare balance sheet", () => {
       "No shared rated role is available for these players. Select a role to inspect the available analysis.",
     );
     // no role was selected, so neither side is labelled unrated
-    expect(screen.queryByText("Not rated in this role")).not.toBeInTheDocument();
+    expect(screen.queryByText("Unrated in this role")).not.toBeInTheDocument();
     expect(screen.queryByTestId("compare-unavailable-left")).not.toBeInTheDocument();
     expect(screen.queryByTestId("compare-unavailable-right")).not.toBeInTheDocument();
     // and no score or role confidence is fabricated for either side
@@ -327,7 +329,7 @@ describe("Compare balance sheet", () => {
   it("renders confidence warnings as labelled notices, not bare amber text", () => {
     render(<PlayerCompareTable data={makeCompare({ confidence_warnings: ["Shared-role minutes are thin."] })} />);
     const warnings = screen.getByTestId("confidence-warnings");
-    expect(within(warnings).getByText("Confidence warning")).toBeInTheDocument();
+    expect(within(warnings).getByText("RoleFit Confidence warning")).toBeInTheDocument();
     expect(within(warnings).getByText(/Shared-role minutes are thin/)).toBeInTheDocument();
   });
 
@@ -425,7 +427,7 @@ describe("Compare balance sheet", () => {
     });
     render(<PlayerCompareTable data={data} />);
     const left = screen.getByTestId("compare-context-left");
-    expect(left).toHaveTextContent("Minutes 0");
+    expect(left).toHaveTextContent("Minutes Played 0");
     expect(left).toHaveTextContent("0 apps · 0 starts");
   });
 
@@ -461,7 +463,7 @@ describe("Compare page role control", () => {
     expect(screen.queryByRole("option", { name: "Automatic role" })).not.toBeInTheDocument();
     expect(
       screen.getByText(
-        /Chooses the shared rated role where both players have the strongest joint fit\./,
+        /Chooses the shared rated role where both players have the strongest joint RoleFit\./,
       ),
     ).toBeInTheDocument();
     // the superseded asymmetric fallback copy is gone, as are the older
@@ -491,18 +493,19 @@ describe("My Favorites saved players", () => {
     ]);
   };
 
-  it("titles the page Saved Players under the My Favorites eyebrow", () => {
+  it("titles the legacy route My Favorites, the one name for this collection", () => {
     usePlayersByIdsMock.mockReturnValue([]);
     renderShortlist();
-    expect(screen.getByRole("heading", { name: "Saved Players" })).toBeInTheDocument();
-    expect(screen.getByText("My Favorites")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "My Favorites" })).toBeInTheDocument();
+    // The retired third name for the same collection.
+    expect(screen.queryByText("Saved Players")).not.toBeInTheDocument();
     expect(screen.queryByText("Saved decisions")).not.toBeInTheDocument();
   });
 
   it("shows an empty state with a path back to discovery", () => {
     usePlayersByIdsMock.mockReturnValue([]);
     renderShortlist();
-    expect(screen.getByText(/No players saved yet/)).toBeInTheDocument();
+    expect(screen.getByText(/No players in My Favorites yet/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /discovery/i })).toBeInTheDocument();
   });
 
@@ -518,17 +521,17 @@ describe("My Favorites saved players", () => {
     expect(screen.getByTestId("page-meta")).toHaveTextContent("1 resolved player · saved on this device");
   });
 
-  it("uses the ledger status variants, not the old Evidence:/RoleFit confidence: presentation", () => {
+  it("uses the ledger status variants, not the old Evidence:/RoleFit Confidence: presentation", () => {
     resolve();
     renderShortlist();
     const record = screen.getByTestId("shortlist-record");
     expect(record).not.toHaveTextContent("Evidence:");
-    expect(record).not.toHaveTextContent("RoleFit confidence:");
+    expect(record).not.toHaveTextContent("RoleFit Confidence:");
     expect(within(record).queryByTestId("evidence-tag")).not.toBeInTheDocument();
     expect(within(record).queryByTestId("confidence-readout")).not.toBeInTheDocument();
     const status = within(record).getByTestId("card-status");
-    expect(status).toHaveTextContent("High Data Coverage");
-    expect(status).toHaveTextContent("High Confidence");
+    expect(status).toHaveTextContent("High Evidence Coverage");
+    expect(status).toHaveTextContent("High RoleFit Confidence");
     expect(status).toHaveAttribute("data-tag-variant", "evidence");
     expect(status.className).toContain("display-tag-compound");
     // playstyles use the shared dark playstyle tag
@@ -557,9 +560,9 @@ describe("My Favorites saved players", () => {
     });
     renderShortlist();
     const status = within(screen.getByTestId("shortlist-record")).getByTestId("card-status");
-    expect(status).toHaveTextContent("High Data Coverage");
-    expect(status).toHaveTextContent("Low Confidence");
-    expect(status).toHaveAccessibleName("Evidence coverage: high. RoleFit confidence: low.");
+    expect(status).toHaveTextContent("High Evidence Coverage");
+    expect(status).toHaveTextContent("Low RoleFit Confidence");
+    expect(status).toHaveAccessibleName("Evidence Coverage: high. RoleFit Confidence: low.");
   });
 
   it("wraps a long saved role on word boundaries without truncating it", () => {
@@ -581,15 +584,17 @@ describe("My Favorites saved players", () => {
     );
     renderShortlist();
     const record = screen.getByTestId("shortlist-record");
-    // the hero carries the honest Profile Only tag (the coverage unit says it too)
-    expect(within(record).getByTestId("row-rolefit")).toHaveTextContent("Profile Only");
+    // the hero reports RATING STATUS (Unrated); the coverage unit beside it
+    // separately reports EVIDENCE COVERAGE (Profile Only)
+    expect(within(record).getByTestId("row-rolefit")).toHaveTextContent("Unrated");
+    expect(within(record).getByTestId("card-status")).toHaveTextContent("Profile Only");
     expect(within(record).queryByTestId("score-readout")).not.toBeInTheDocument();
     expect(within(record).queryByTestId("confidence-meter")).not.toBeInTheDocument();
     expect(within(record).queryByText("0.0")).not.toBeInTheDocument();
     const market = within(record).getByTestId("market-readout");
     expect(market).toHaveTextContent("Unknown");
     expect(market).not.toHaveTextContent("€0");
-    expect(within(record).getByTestId("profile-only-card")).toHaveTextContent("Analysis unavailable");
+    expect(within(record).getByTestId("profile-only-card")).toHaveTextContent("Unrated: no playstyles");
   });
 
   it("keeps a partial saved market range honest, never €0", () => {
@@ -653,7 +658,9 @@ describe("My Favorites saved players", () => {
       { data: undefined, isLoading: false, isError: true },
     ]);
     renderShortlist();
-    expect(screen.getByRole("alert")).toHaveTextContent(/could not be resolved and may be stale/);
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /could not be resolved\. Those players are unavailable and the reference may be stale/,
+    );
     expect(screen.getByRole("button", { name: /Remove stale id 999/ })).toBeInTheDocument();
   });
 
@@ -662,7 +669,7 @@ describe("My Favorites saved players", () => {
     usePlayersByIdsMock.mockReturnValue([{ data: undefined, isLoading: true, isError: false }]);
     renderShortlist();
     expect(screen.getByTestId("ledger-skeleton")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Saved Players" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "My Favorites" })).toBeInTheDocument();
   });
 });
 
@@ -695,10 +702,10 @@ describe("Shared readout primitives", () => {
         <ConfidenceReadout level="low" />
       </div>,
     );
-    expect(screen.getByTestId("evidence-tag")).toHaveTextContent("Evidence:");
+    expect(screen.getByTestId("evidence-tag")).toHaveTextContent("Evidence Coverage:");
     expect(screen.getByTestId("evidence-tag")).toHaveTextContent("Profile Only");
     const conf = screen.getByTestId("confidence-readout");
-    expect(conf).toHaveTextContent("RoleFit confidence:");
+    expect(conf).toHaveTextContent("RoleFit Confidence:");
     expect(within(conf).getByTestId("confidence-meter").getAttribute("data-confidence")).toBe("low");
   });
 

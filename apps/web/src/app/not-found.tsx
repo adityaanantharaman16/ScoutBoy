@@ -25,10 +25,10 @@ export default function NotFound() {
       </p>
       <div className="mt-5 flex flex-wrap gap-2">
         <Link href="/" className="btn btn-primary no-underline" data-testid="not-found-discover">
-          Back to discover
+          Back To Discovery
         </Link>
         <Link href="/methodology" className="btn no-underline">
-          Read the methodology
+          Read The Methodology
         </Link>
       </div>
     </div>
