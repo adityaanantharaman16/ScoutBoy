@@ -5,7 +5,7 @@
 
 **FUT.gg-style, real-life football player discovery.** ScoutBoy turns messy football data
 into clean, fan-readable scouting cards with role-specific ratings, playstyle badges, and
-transparent market-value ranges — and it can always show *why* a score, badge, or value exists.
+transparent market-value ranges - and it can always show *why* a score, badge, or value exists.
 
 > **Product scope:** Broad player discovery across the available local dataset, with detailed
 > RoleFit analysis only where ScoutBoy has enough modeled evidence. U23 scouting remains a
@@ -25,12 +25,12 @@ transparent market-value ranges — and it can always show *why* a score, badge,
    `/api/players` accepts**, behind progressive disclosure so the default view stays
    short: five always-visible core controls (search, age threshold, position group,
    role, sort) plus an **Advanced Filters** disclosure holding three compact
-   categories — Context (league, club, nationality), Evidence & Fit (minimum minutes,
+   categories - Context (league, club, nationality), Evidence & Fit (minimum minutes,
    minimum/maximum RoleFit, playstyle) and Market (minimum/maximum expected asking). A
    compact active-criteria area names what is narrowing, removes any one criterion, and
    offers a complete reset. Every control is URL-backed. See
    [Discover filters](#discover-filters).
-2. **Player card** — identity, face stats, sub-stats, role-specific **RoleFit ratings**, playstyle
+2. **Player card** - identity, face stats, sub-stats, role-specific **RoleFit ratings**, playstyle
    badges, **market panel** (public value vs model value vs expected asking price), strengths &
    concerns, context, and a **"why this score" audit** accordion.
 3. **Role leaderboards** ranked by final RoleFit with deterministic tie-breaks.
@@ -181,7 +181,7 @@ works).
 
 **Context search is forgiving but deterministic.** Nationality is a substring, so `Eng` finds
 England. League searches the competition's slug, name **and stored country**, so `England`,
-`eng` and `Premier League` all work — as do `Portugal`/`por`, `Italy`/`ita`, `Spain`/`esp`,
+`eng` and `Premier League` all work - as do `Portugal`/`por`, `Italy`/`ita`, `Spain`/`esp`,
 `Germany`/`ger` and `France`/`fra`. Club understands common abbreviations and nicknames from a
 versioned registry (`configs/discovery/search_aliases_v1.yaml`): `psg`, `P.S.G.` and `Paris SG`
 all resolve to Paris Saint-Germain, `spurs` and `thfc` to Tottenham, and an ambiguous
@@ -196,7 +196,7 @@ layer is a cached configuration read that issues **zero** SQL and compiles into 
 
 The asking-price inputs are the one place with two units: `12.5` in the rail is
 `value_max=12500000` in the URL and the request. They are text fields with a decimal keypad, so
-typing `12.5` one key at a time works — a plain number input sanitized the intermediate `12.`
+typing `12.5` one key at a time works - a plain number input sanitized the intermediate `12.`
 away. Blank is no bound, `0` is a real bound, and a negative, non-finite or malformed value is
 held on screen and never sent. Copy says "Expected Asking", never an exact transfer value, and
 **no midpoint of the two bounds is ever computed or shown**.
@@ -205,14 +205,14 @@ held on screen and never sent. Copy says "Expected Asking", never an exact trans
 expected-asking endpoint is excluded by an active asking bound, an unrated player is excluded
 by a RoleFit bound, and an unknown age is excluded by any active age bound.
 
-Both inclusive pairs are kept coherent by one rule — **the edited bound wins and its companion
-follows** — so `min > max` never reaches the API; a hard-loaded inverted pair treats the
+Both inclusive pairs are kept coherent by one rule - **the edited bound wins and its companion
+follows** - so `min > max` never reaches the API; a hard-loaded inverted pair treats the
 minimum as authoritative.
 
 **Analysis Scope remains intentionally absent** (retired in Phase 8.1A). It is not a control,
 not reported in the ledger header, and not offered in the active-criteria list; a
 scope-bearing URL is still honoured and Clear All drops it. **Confidence, evidence state and
-concern filtering remain unsupported** — the search contract has no predicate for them and
+concern filtering remain unsupported** - the search contract has no predicate for them and
 none was invented in the browser.
 
 #### Progressive disclosure and the active-criteria area
@@ -220,7 +220,7 @@ none was invented in the browser.
 The rail is one bordered panel with internal hairlines: header, active criteria, core
 controls, Advanced Filters. Only one advanced category is expanded at a time, closing a
 category never clears its values, and the disclosure state is local rather than URL state
-(a shared link describes a cohort, not an open drawer) — but a hard-loaded URL carrying an
+(a shared link describes a cohort, not an open drawer) - but a hard-loaded URL carrying an
 advanced filter opens the disclosure onto the category it is using.
 
 The active-criteria area is absent when nothing narrows. Collapsed it shows the count, the
@@ -229,7 +229,7 @@ with its own named remove action. Removing one clears only its own parameters an
 page 1; **Clear All** returns the clean root URL (default analyzed scope, default sort, page
 1, page size 12) and drops legacy `scope` / `universe` / `age_band`, without touching
 favourites or the compare queue. The ledger header reports the total, the number of active
-criteria when nonzero, the season and the page — it counts them, it does not list them.
+criteria when nonzero, the season and the page - it counts them, it does not list them.
 
 See [docs/milestone_8_discovery_contract.md](docs/milestone_8_discovery_contract.md) for the
 full Phase 8.2 record.
@@ -238,7 +238,7 @@ full Phase 8.2 record.
 
 With no `role` filter, a result's role context is the player's own stored **best role**. With
 `role=<key>`, the context becomes that role's **stored** rating, and one rating does all four
-jobs — qualifying, bounding, ordering and display:
+jobs - qualifying, bounding, ordering and display:
 
 - only players with a stored rating for that role qualify at all;
 - `rolefit_min` / `rolefit_max` apply to the selected role's score;
@@ -272,7 +272,7 @@ URL-supplied values through the parser for the matching domain.
 
 Accepted: `rolefit_desc` (default), `rolefit_asc`, `age_asc`, `age_desc`, `value_desc`,
 `value_asc`, `name_asc`. An unknown value is a `422`, never a silent fallback. `age_desc` is
-**API-only** — the Sort control has no option for it, so a URL carrying it falls back to the
+**API-only** - the Sort control has no option for it, so a URL carrying it falls back to the
 default rather than leaving the visible control disagreeing with the request.
 
 Every mode ends with explicit `canonical_name` then `player_id` tie-breaks, and no missing value
@@ -294,7 +294,7 @@ above `value_max` is rejected by the API and can never be produced by the rail.
 
 `page` is a 1-based integer; `page_size` is 1-100. Any filter or sort change resets Discovery to
 page 1. A valid request for a page past the end returns the **last available page** and reports
-the page it served, which the browser URL is then synchronized to — an out-of-range page never
+the page it served, which the browser URL is then synchronized to - an out-of-range page never
 masquerades as "no players match these filters". A genuinely empty result is page 1.
 
 ### StatsBomb Open Data normalized import
@@ -403,8 +403,8 @@ The Methodology page and `GET /api/methodology` surface a compact calibration st
 ## Discovery contract correctness (Milestone 8, Phase 8.1A)
 
 A bounded correctness phase over the existing Discovery surface: no redesign, no new controls. It
-makes the contract internally truthful — the role, score and confidence a result displays are the
-same stored role rating that filtered and ordered it — and separates the minutes filter from the
+makes the contract internally truthful - the role, score and confidence a result displays are the
+same stored role rating that filtered and ordered it - and separates the minutes filter from the
 RoleFit scale, makes asking-price ordering missing-safe, validates the sort / position-group / role
 enumerations, and canonicalizes out-of-range pagination. The semantics are documented under
 [Discover filters](#discover-filters); the audited causes are recorded in
@@ -419,7 +419,7 @@ the one stored role rating each row is judged by, applies every predicate, appli
 ordering and tie-breaks, counts the distinct qualifying players and returns only the requested
 page; card enrichment is a single bulk query for that page's ids.
 
-A request costs a constant **four** SQL statements — season, count, page, page playstyles — and two
+A request costs a constant **four** SQL statements - season, count, page, page playstyles - and two
 for an empty result, whether the cohort holds 24 players or 5,000. Equivalence with the previous
 implementation is held by a 511-case differential matrix against a transcription of the old
 in-Python code, and by a control run in which the pre-change and post-change APIs, served from the
@@ -429,7 +429,7 @@ become birth-date boundaries derived in Python so no dialect-specific date arith
 predicate, and the name tie-break is collated to code-point order so SQLite and PostgreSQL agree.
 
 Case-insensitive matching and the name ordering key keep Python's `str.lower()` semantics, which
-neither database's own `lower()` provides — SQLite's is ASCII-only and PostgreSQL's follows the
+neither database's own `lower()` provides - SQLite's is ASCII-only and PostgreSQL's follows the
 database's `LC_CTYPE`. Discovery therefore lowercases explicitly: a deterministic `str.lower()`
 connection function on SQLite, and PostgreSQL 16's ICU root collation on PostgreSQL. Both apply
 Unicode full case mapping, so accented, dotted-`İ`, sharp-`ẞ`, Kelvin-sign and Greek final-sigma
@@ -438,8 +438,8 @@ literal.
 
 One body of parity assertions runs on both databases, and the PostgreSQL run is what caught an
 untyped-NULL defect SQLite had tolerated. Four `(season_id, player_id)` composite indexes were
-added with a migration, justified by recorded query plans. Details, evidence and limitations —
-including the measured, name-irrelevant residual between ICU's Unicode tables and CPython's — are
+added with a migration, justified by recorded query plans. Details, evidence and limitations -
+including the measured, name-irrelevant residual between ICU's Unicode tables and CPython's - are
 in [docs/milestone_8_discovery_contract.md](docs/milestone_8_discovery_contract.md).
 
 ## Advanced Discovery interface (Milestone 8, Phase 8.2)
@@ -452,7 +452,7 @@ and regenerate byte-identically from the final implementation.
 
 The rail used to expose six filter groups. `league` and `playstyle` could only be supplied by
 URL; `club`, `nationality`, `rolefit_max`, `value_min` and `value_max` only by hand-writing an
-API request. All seven now have production controls — and the **default rail is shorter than
+API request. All seven now have production controls - and the **default rail is shorter than
 the one it replaces**, because the two existing specialized thresholds moved behind the same
 disclosure. Five core controls stay visible (search, age threshold, position group, role,
 sort); everything else lives in **Advanced Filters** over three compact categories, one open
@@ -470,10 +470,10 @@ links all reproduce the same request, the same controls and the same ledger. The
 inputs are EUR millions over an absolute-EUR contract and accept sequentially typed decimals;
 `min > max` can never be sent, by one documented rule; the Playstyle options come from the
 Methodology contract rather than a hand-written list. The Context filters search the way a
-scout types — partial nationality, league by country or code, club by abbreviation — through a
+scout types - partial nationality, league by country or code, club by abbreviation - through a
 versioned alias registry rather than fuzzy matching, at no extra SQL cost. No new rounded
 geometry, no nested rail scroller, no animated layout property, and axe is clean with every
-disclosure open — including at 320px and at 200% desktop zoom. See
+disclosure open - including at 320px and at 200% desktop zoom. See
 [docs/milestone_8_discovery_contract.md](docs/milestone_8_discovery_contract.md) for the
 control matrix, the units, the range rule, the alias registry and the recorded evidence.
 
@@ -487,7 +487,7 @@ model, calibration or ranking behaviour changed, and there is no new composite s
 recommendation and no suitability label.
 
 The ledger gained one compact, collapsed-by-default **Why this order** disclosure, between its
-count header and the first result — not in the filter rail, which narrows the cohort rather
+count header and the first result - not in the filter rail, which narrows the cohort rather
 than explaining rank, and not per row. Opened, it states the active sort ("Ordered by RoleFit,
 highest first."), the exact ordered key sequence the database applied with one sentence of rule
 each, which role context each result's RoleFit is read from, how unknown values are placed, the
@@ -510,10 +510,10 @@ against an independent transcription of the written contract.
 Unknown-versus-known placement is stated explicitly per mode, Expected Asking always says it
 uses the lower endpoint (never the high one, never a midpoint), and confidence is described as
 what it is: a tie-break that speaks only after an equal score, and only in the RoleFit modes.
-The role context distinguishes the two things it is easy to conflate — which stored rating every
+The role context distinguishes the two things it is easy to conflate - which stored rating every
 result *displays*, and whether that rating also *ordered* the page. Under Age, Expected Asking
 and Name it says plainly that RoleFit did not order the page and names the sort that did. Every
-sentence is a fixed template over the specification — nothing is generated and no external
+sentence is a fixed template over the specification - nothing is generated and no external
 service is involved.
 
 The request still costs **four SQL statements**, unchanged. The explanation reads no rows and
@@ -717,7 +717,7 @@ GET  /api/admin/coverage               observed coverage and completeness
 ```
 
 `GET /api/players` responds with `DiscoverySearchResponse`: the five pagination fields
-(`items`, `total`, `page`, `page_size`, `total_pages`) exactly as before, plus `ranking` — the
+(`items`, `total`, `page`, `page_size`, `total_pages`) exactly as before, plus `ranking` - the
 active sort's ordered key sequence, the role context, unknown-value placement, the final
 tie-breakers, and an explicit statement that this describes ordering rather than recruitment
 suitability. It is page-level: it names no player and compares no two results. It is derived
@@ -773,7 +773,7 @@ auditing, and a full-stack container smoke. See [CONTRIBUTING.md](CONTRIBUTING.m
   conformance/lifecycle tests. See
   [`docs/data_sources.md`](docs/data_sources.md).
 - **Add a role:** drop a YAML in `configs/roles/` (weights sum ~1.0, metrics from the registry),
-  then `make recompute-ratings`. Auto-loaded, scored, ranked, and exposed — no code change.
+  then `make recompute-ratings`. Auto-loaded, scored, ranked, and exposed - no code change.
 - **Change role weights:** edit the YAML and recompute; the config hash changes so runs stay
   distinguishable. See [`docs/rating_methodology.md`](docs/rating_methodology.md).
 - **Add a metric:** register it in `packages/shared/python/scoutboy_shared/metrics.py`, provide it
@@ -788,14 +788,14 @@ auditing, and a full-stack container smoke. See [CONTRIBUTING.md](CONTRIBUTING.m
 - Cross-team percentile pools are consequently uneven; covered minutes and confidence are
   shown separately from full-season Transfermarkt minutes.
 - Opposition quality is a league-strength proxy; role usage is nominal (no positional-split data).
-- Market values are **ranges** from a transparent rule-based model — never exact figures.
+- Market values are **ranges** from a transparent rule-based model - never exact figures.
 - Discovery search runs its candidate selection, predicates, ordering, counting and pagination in
   the database (Phase 8.1B), so a request costs a constant four statements and reads only the page
   it serves. The leaderboard, comparison and dossier-similarity read models are still computed
   in-process; similarity in particular needs the whole position-group cohort in memory. The volume
   evidence for Discovery is a deterministic 5,000-record SQLite fixture, which is not a production
   capacity claim.
-- The Discovery ranking explanation (Phase 8.3) describes **ordering only** — which stored values
+- The Discovery ranking explanation (Phase 8.3) describes **ordering only** - which stored values
   the database sorted by, in what order, and how it places the ones it does not know. It is not a
   recommendation, a suitability judgement or a rating of any kind, and it says so on screen. It is
   page-level by design: it does not explain why one particular player sits above another, which a
