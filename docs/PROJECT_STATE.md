@@ -1,8 +1,8 @@
 # ScoutBoy — Project State
 
-Last updated: 2026-09-26, by an autonomous coding agent (kanban task
-`t_3d613c3a`, worktree `/opt/data/projects/ScoutBoy-handoff-security`, branch
-`docs/handoff-security-audit`, based on `origin/main` @ `230ff4a`).
+Last updated: 2026-09-26, planning card `t_77b90bc8`, isolated worktree
+`/opt/data/projects/ScoutBoy-wyscout-plan`, branch `docs/wyscout-migration-plan`,
+based on `origin/main` @ `bafa77d42ec3025a8c917484ab5fafa972b70d0d`.
 
 ## Where the product is
 
@@ -21,7 +21,36 @@ Known, load-bearing limitations (do not silently drop these from docs):
   exercised against a live Clerk tenant** — verification is deterministic
   offline tests only.
 
-## This session's work
+## Current planning checkpoint — migration not executed
+
+The owner selected a historical, non-live Wyscout 2017/18 Big Five direction.
+[IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) records the substantive design,
+source research, nine-role metric feasibility, rights/identity/minutes/coverage
+gates, historical market constraints, co-existence/rollback, reviewable slices
+and future verification. **PLANNED, NOT IMPORTED OR SHIPPED.** No provider dataset
+was downloaded/ingested, no application/scoring/UI code was changed, and no
+deployment or GitHub repository metadata change was made on this card.
+
+The plan is provisional: public snapshot rights/acquisition approval, granular
+historical positions, measured usable coverage, supported-role semantics and any
+separate market rights/availability remain gates. Wyscout supplies DOB, but not
+direct pressure or xG evidence in the inspected schema. Initial recommendation is
+validated Wyscout core metrics without market estimates; narrower role scope needs
+owner approval, not silent relaxation of the historical 100-player/five-league gate.
+Implementation is not dispatched by this planning card.
+
+Prior PR #12 is **merged**, not an open draft: GitHub REST `GET
+/repos/adityaanantharaman16/ScoutBoy/pulls/12` returned `merged: true`,
+`merged_at: 2026-09-26T14:01:32Z`, merge commit
+`bafa77d42ec3025a8c917484ab5fafa972b70d0d`; `git ls-remote origin
+refs/heads/main` independently returned the same SHA on 2026-09-26.
+
+Planning verification/publication evidence is recorded on card `t_77b90bc8` and
+the draft plan PR. The historical checks below belong to the previous maintenance
+session, not this docs-only planning run. No application test success is claimed
+for new migration behavior that does not exist yet.
+
+## Previous session's work — PR #12 (historical record)
 
 Two independent pieces of work, one branch, intended as one PR:
 
@@ -74,7 +103,7 @@ against it — see the verification table below — this bump has no known
 Clerk compatibility risk. Re-check the declared range before any *future*
 Next major bump (17.x), since none of today's clauses would match it.
 
-## Verification performed this session
+## Previous maintenance session verification (not rerun by planner)
 
 **Environment constraint:** this sandbox has no `pnpm`/`corepack` binary on
 the host, and both `npm install -g <pkg>` and `pip install ...` are blocked
@@ -141,7 +170,7 @@ Checks **not run** this session, with the reason:
   was JS-dependency-only per the assigned card; SECURITY.md's existing
   temporary-exception list for the Python audit is untouched.
 
-## Git / publication state
+## Previous maintenance publication history (superseded by merged status above)
 
 - Branch `docs/handoff-security-audit`, based on `origin/main` @ `230ff4a`.
 - Local commit(s) made in this worktree; branch preserved, not merged, not
@@ -157,20 +186,15 @@ Checks **not run** this session, with the reason:
   commit). Draft PR opened:
   https://github.com/adityaanantharaman16/ScoutBoy/pull/12 (state `open`,
   `draft: true`, `head_sha` independently re-read from the GitHub API and
-  confirmed to match). Not merged, no force-push used.
+  confirmed to match at that time). Subsequently merged on 2026-09-26 at
+  14:01:32 UTC, verified above; the earlier open-draft state is historical.
 
 ## Next action
 
-1. This PR is a draft; get independent reviewer sign-off on the dependency
-   version bumps (Clerk's peer range for `next` is a caret range that already
-   covers `16.3.6` — see the audit remediation detail above — this session's
-   own green typecheck/lint/vitest/build is corroborating evidence, but a
-   second reviewer should still confirm) and mark it ready for review /
-   merge once satisfied.
-2. Before merge, run the checks still marked "not run" above if a
-   Playwright-capable / live-Postgres runner is available: `make e2e`, the
-   Postgres integration smoke (`SCOUTBOY_POSTGRES_SMOKE=1 pytest
-   apps/api/app/tests/test_postgres_smoke.py` against a real `DATABASE_URL`).
-3. After merge, this doc's "Next action" section should be updated to
-   whatever Milestone 9 scoping (if any) or next maintenance item the
-   product owner picks — this task explicitly did not scope Milestone 9.
+1. Independently review the draft historical migration plan on card `t_77b90bc8`;
+   review is not approval to merge, acquire data or implement.
+2. Owner/supervisor resolves the plan's explicit gates and authorizes P0
+   rights + read-only sample feasibility before assigning implementation slices.
+   Keep the existing StatsBomb pilot truthful and active until acceptance.
+3. A separate documentation task may align public-facing copy with the planned
+   direction without describing it as shipped. Milestone 9 remains unscoped.
