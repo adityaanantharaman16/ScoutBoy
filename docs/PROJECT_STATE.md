@@ -150,9 +150,11 @@ Checks **not run** this session, with the reason:
   authenticated `GET /user` and `GET /repos/adityaanantharaman16/ScoutBoy`
   confirmed push permission, and `git push --dry-run` succeeded.
 - **Pushed and PR opened.** `git push origin
-  HEAD:refs/heads/docs/handoff-security-audit` succeeded; remote SHA
-  `444df6f7f6cf015601ebadad121dc68ff5cdd89c` (verified via `git ls-remote`
-  and matches local `git rev-parse HEAD` exactly). Draft PR opened:
+  HEAD:refs/heads/docs/handoff-security-audit` succeeded. Use `git rev-parse
+  HEAD`, `git ls-remote origin refs/heads/docs/handoff-security-audit`, and
+  the PR's `head.sha` as the current source of truth rather than embedding a
+  commit hash in this file (updating the file necessarily creates a newer
+  commit). Draft PR opened:
   https://github.com/adityaanantharaman16/ScoutBoy/pull/12 (state `open`,
   `draft: true`, `head_sha` independently re-read from the GitHub API and
   confirmed to match). Not merged, no force-push used.

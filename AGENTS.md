@@ -124,15 +124,32 @@ pip-audit . --strict --ignore-vuln PYSEC-2026-161 --ignore-vuln PYSEC-2026-248 \
 make docker-smoke            # full-stack container build + health probe (needs Docker)
 ```
 
-CI (`.github/workflows/ci.yml`: `python-quality`, `frontend-quality`,
-`api-contract`, `postgres-integration`, `end-to-end`, `container-smoke`;
-`.github/workflows/security.yml`: `secret-scan` via Gitleaks, `python-audit`
-via the exact `pip-audit` command above, `javascript-audit` via the exact
-`pnpm audit` command above) runs every one of these as its own job, each with
-a `--frozen-lockfile`/fresh-venv install rather than the developer's existing
-environment. Treat CI green as the actual bar; a local run that skips a step
-(e.g. no Docker on the host) must say so explicitly rather than imply full
-coverage.
+CI groups the gates rather than mirroring the local command list one command
+per job. `.github/workflows/ci.yml` has six jobs:
+
+- `python-quality` (Python 3.9 and 3.11) creates a fresh venv, then runs Ruff,
+  Black, and pytest with the coverage floor;
+- `frontend-quality` uses `pnpm install --frozen-lockfile`, then groups lint,
+  typecheck, Vitest, and the production build;
+- `api-contract` creates a fresh venv, uses a frozen pnpm install, runs
+  `make check-api-contract`, and checks only the tracked contract artifacts
+  for a diff;
+- `postgres-integration` creates a fresh venv and exercises migrations,
+  deterministic ingestion/recompute, and the PostgreSQL API smoke test;
+- `end-to-end` creates a fresh venv, uses a frozen pnpm install, installs
+  Chromium, and runs `make e2e`; and
+- `container-smoke` validates Compose and runs `make docker-smoke` without a
+  Python or pnpm dependency-install step.
+
+`.github/workflows/security.yml` has three jobs: `secret-scan` runs Gitleaks
+without installing project dependencies; `python-audit` installs `pip-audit`
+and runs the exact Python audit command above; and `javascript-audit` uses a
+frozen pnpm install before the exact production audit command above. Only the
+jobs that install pnpm dependencies use `--frozen-lockfile`, and only the CI
+jobs that install the Python application create a fresh venv. `git diff
+--check` remains a local/pre-PR hygiene check; neither workflow runs it.
+Treat CI green as the actual bar, while still stating explicitly when a local
+run skipped a gate (for example, because Docker was unavailable).
 
 ## Rules for an agent working here
 
