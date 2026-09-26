@@ -7,16 +7,17 @@ past the adapter.
 
 | Source | Used for | Status | Adapter |
 | --- | --- | --- | --- |
-| **Sample fixtures** (synthetic) | Identity, appearances, per-90 metrics, market inputs | **Active** (`--source sample`) | `sample_adapter.py` |
-| **dcaribou/transfermarkt-datasets** | Canonical players, clubs, competitions, appearances, valuations | **Active** (`--source transfermarkt --input-path <csv_dir>`) | `transfermarkt_adapter.py` |
-| **Performance metrics CSV** (`player_season_metrics_v1`) | Real/curated performance metrics from FBref/StatsBomb/Wyscout/etc. | **Active** (`--source performance_csv --input-path <csv>`) | `csv_adapter.py` |
-| **StatsBomb Open Data pilot** | Real event-derived player metrics for the 2023/24 pilot | **Active** (`--source statsbomb_pilot`) | `statsbomb_pilot.py` |
-| **StatsBomb Open Data normalized import** | Provider-agnostic competitions, seasons, teams, players, matches, lineups, events, coverage, confidence, and event-derived metrics | **Active** (`--source statsbomb_open_data`) | `statsbomb_open_data.py` |
+| **Sample fixtures** (synthetic) | Identity, appearances, per-90 metrics, market inputs | **Active demo/development data** (`--source sample`) | `sample_adapter.py` |
+| **dcaribou/transfermarkt-datasets** | Canonical players, clubs, competitions, appearances, valuations | **Active as-built adapter/pilot input** (`--source transfermarkt --input-path <csv_dir>`); not approval to use it for the planned historical market surface | `transfermarkt_adapter.py` |
+| **Performance metrics CSV** (`player_season_metrics_v1`) | Real/curated performance metrics from FBref/StatsBomb/Wyscout/etc. | **Active generic adapter** (`--source performance_csv --input-path <csv>`); no Wyscout 2017/18 CSV is bundled or approved | `csv_adapter.py` |
+| **StatsBomb Open Data pilot** | Real event-derived player metrics for the 2023/24 pilot | **Active as-built pilot** (`--source statsbomb_pilot`) | `statsbomb_pilot.py` |
+| **StatsBomb Open Data normalized import** | Provider-agnostic competitions, seasons, teams, players, matches, lineups, events, coverage, confidence, and event-derived metrics | **Active shipped adapter** (`--source statsbomb_open_data`); retained as a historical/pilot capability | `statsbomb_open_data.py` |
+| **Public Wyscout 2017/18 Big Five snapshot** | Owner-approved historical, non-live target | **Planned only** — not acquired, ingested, verified, deployed, or represented by an adapter/CLI command; see [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) | — |
 | **Mock commercial provider** | Licensed-provider boundary proof with canonical fixture records | **Fixture/demo only** (`--source mock_commercial_provider`) | `mock_commercial_provider.py` |
 | **Generated scale fixture** | Deterministic 5,000+ player-season batching and benchmark | **Fixture/demo only** (`--source generated_fixture`) | `generated_fixture.py` |
 | **Football-Data.co.uk** | Team-strength / stakes **context** proxies | Helper tested | `football_data_adapter.py` |
 | FBref / Understat / TM public pages | Manual validation & methodology reference | Not scraped | — |
-| Paid providers (Opta, Wyscout, SkillCorner, StatsBomb commercial) | Later only | Architecture ready | — |
+| Paid providers (Opta, commercial Wyscout, SkillCorner, StatsBomb commercial) | Later only | Architecture ready; not the public Wyscout target | — |
 
 The real-data-v0 path (Milestone 2) is documented in
 [`milestone_2_real_data_v0.md`](milestone_2_real_data_v0.md); the metrics contract in
@@ -27,6 +28,11 @@ Discover scope behavior is documented in [`discover_scope_change.md`](discover_s
 
 - **No live scraping in the MVP.** Adapters exist so real data can be added later behind
   explicit approval. If pre-scraped data is used, label its source and store the snapshot.
+- **Planned Wyscout is not a source capability.** The intended public Wyscout 2017/18
+  direction is historical/non-live and remains gated on a pinned release, rights/attribution,
+  schema/identity/minutes, measured role coverage, source-specific metric semantics, any market
+  rights, capacity, review, and owner cutover. Do not call it an active adapter, a complete
+  five-league dataset, current scouting, or an implemented replacement for the pilot.
 - **Directory coverage is not analytical coverage.** `scope=all_records` may expose defenders,
   goalkeepers, unrated players, and limited-coverage records. `scope=analyzed` means at least
   one RoleFit rating exists for the season. `scope=high_coverage_u23` is the unchanged strict
@@ -57,7 +63,7 @@ Discover scope behavior is documented in [`discover_scope_change.md`](discover_s
 python3 db/seeds/generate_sample.py
 ```
 
-## Milestone 3 pilot
+## Milestone 3 as-built pilot (historical record)
 
 - Transfermarkt via dcaribou/Kaggle supplies identity, DOB, clubs, full-season minutes, and
   public valuation history selected as of 2024-06-30.
@@ -69,7 +75,7 @@ python3 db/seeds/generate_sample.py
   Ambiguous/unmatched records are quarantined and reported; they are never auto-merged.
 - Raw snapshots are gitignored. Their manifests in `data/manifests/` are committed.
 
-## StatsBomb Open Data normalized import
+## Existing StatsBomb Open Data normalized import
 
 StatsBomb does not provide free academic/sandbox/trial API access. The open GitHub dataset is
 useful for validating ScoutBoy's event processing, role profiles, confidence handling, and UI
@@ -131,6 +137,12 @@ client exists today. `mock_commercial_provider` is local-fixture-only, makes no 
 and is always marked demo data. Its optional credential-required mode documents the environment
 shape `SCOUTBOY_MOCK_COMMERCIAL_TOKEN`; tests use a dummy value, never a vendor token. See the
 [provider onboarding runbook](runbooks/provider-onboarding.md).
+
+The separate historical Wyscout target is described by the reviewed
+[`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md). It deliberately has no adapter registration,
+manifest, dataset payload, or command in the repository yet. If a future authorized slice adds
+one, it must preserve the existing StatsBomb pilot records and attribution rather than relabeling
+or overwriting them.
 
 ## Adding a new source (checklist)
 

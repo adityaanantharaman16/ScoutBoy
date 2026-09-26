@@ -26,6 +26,14 @@ surface at all, private routes 503). No live Clerk tenant has been exercised
 against this codebase; account behavior is verified only by deterministic
 offline tests.
 
+The owner-approved **target**, not a shipped dataset, is a historical, non-live
+Wyscout 2017/18 Big Five snapshot. Its reviewed design is in
+`docs/IMPLEMENTATION_PLAN.md`; it is **not yet acquired, ingested, verified,
+deployed, or available through an existing Make command**. Keep four states
+distinct in documentation: synthetic fixtures/demos; the as-built 34-match
+StatsBomb pilot; this planned Wyscout target; and any future source-license,
+coverage, identity, metric, market, capacity, and owner-cutover gates.
+
 ## Fresh-machine setup
 
 Prerequisites: Python 3.9 or 3.11 (3.11 recommended), Node 20 with Corepack
@@ -94,6 +102,7 @@ in `docs/agent_notes.md` and the ADRs under `docs/adr/`.
 | Operational failure playbooks | `docs/runbooks/*.md` |
 | Current state, what's verified, next action | `docs/PROJECT_STATE.md` |
 | How to resume/hand off an agent session | `docs/IMPLEMENTATION_HANDOFF.md` |
+| Planned historical Wyscout direction and gates | `docs/IMPLEMENTATION_PLAN.md` |
 
 ## Exact verification commands
 
@@ -177,3 +186,6 @@ run skipped a gate (for example, because Docker was unavailable).
    not boilerplate to trim.
 6. See `docs/PROJECT_STATE.md` for the session log and the next action before
    starting new work.
+7. Do not turn the planned Wyscout target into an implementation claim: no
+   data acquisition/import, source-license assumption, coverage claim, current
+   scouting claim, or Wyscout command without a separately authorized slice.

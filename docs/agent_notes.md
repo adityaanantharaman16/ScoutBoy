@@ -161,9 +161,9 @@ proven by `test_real_data_pipeline.py` (ingest → recompute → API). Sample E2
 Deferred to M3: aggregating raw per-match dcaribou appearances (games join), context
 calibration, stronger identity resolution.
 
-## Milestone 3 — shipped real vertical slice
+## Milestone 3 — shipped real vertical slice (historical/as-built record)
 
-The approved data choice is Transfermarkt/dcaribou plus StatsBomb Open Data. The immutable
+For this shipped milestone, the approved data choice was Transfermarkt/dcaribou plus StatsBomb Open Data. The immutable
 Bundesliga 2023/24 StatsBomb snapshot contains 34 Bayer Leverkusen matches, so the product must
 label it a **Leverkusen-centered vertical-slice pilot**, never full Bundesliga coverage.
 
@@ -172,8 +172,13 @@ StatsBomb event metrics; conservative identity bridge with reviewed overrides an
 covered-minute confidence and cohort gates; explicit role-position eligibility; role-eligible
 percentiles; season-derived team strength tiers; cohort report; executable acceptance target.
 
-The verified cohort is Wirtz, Boniface, and Hlozek. The next milestone is broader licensed/open
-performance coverage and rating calibration, not more UI surface area.
+The verified cohort is Wirtz, Boniface, and Hlozek. This remains an as-built milestone record;
+it is not a claim that the current product has broader coverage.
+
+The later owner-approved product direction is a **planned**, historical, non-live Wyscout 2017/18
+Big Five snapshot. See `docs/IMPLEMENTATION_PLAN.md`: no Wyscout dataset has been acquired,
+ingested, verified, or deployed, and its rights, coverage, metric, identity, market, capacity,
+and cutover gates remain open. Do not rewrite this historical pilot record as Wyscout evidence.
 
 ## Milestone 6 — RoleFit Calibration & Model Evaluation (implementation plan)
 
