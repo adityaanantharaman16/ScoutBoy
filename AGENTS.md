@@ -99,8 +99,8 @@ in `docs/agent_notes.md` and the ADRs under `docs/adr/`.
 
 Backend:
 ```bash
-make lint          # ruff check . && black --check .
-make test          # pytest (backend) + vitest (frontend)
+make lint          # ruff check . && black --check . && pnpm --filter @scoutboy/web lint (lint-py + lint-web)
+make test          # pytest (backend) + vitest (frontend, test-py + test-web)
 ```
 
 Frontend-specific:
@@ -111,19 +111,26 @@ pnpm --filter @scoutboy/web test run
 pnpm --filter @scoutboy/web build       # production build
 ```
 
-Contract, e2e, security:
+Contract, e2e, security (local sample commands — see below for the exact CI
+job gates, which differ in flags/scope from these):
 ```bash
-make check-api-contract     # regenerate OpenAPI + TS schema; fails if either was stale
+make check-api-contract     # regenerate OpenAPI + TS schema; fails when tracked outputs were stale
 make e2e                    # isolated DB + ports, production build + Playwright
 git diff --check            # whitespace/conflict-marker hygiene
-pnpm audit --prod --audit-level high    # production JS dependency audit (CI gate)
-pip-audit . --strict --ignore-vuln ...  # see SECURITY.md for the exact exception list
+pnpm audit --prod --audit-level high    # production JS dependency audit
+pip-audit . --strict --ignore-vuln PYSEC-2026-161 --ignore-vuln PYSEC-2026-248 \
+  --ignore-vuln PYSEC-2026-249 --ignore-vuln PYSEC-2026-2280 --ignore-vuln PYSEC-2026-2281 \
+  --ignore-vuln PYSEC-2026-2132 --ignore-vuln PYSEC-2026-2270   # see SECURITY.md for the exception list
 make docker-smoke            # full-stack container build + health probe (needs Docker)
 ```
 
-CI (`.github/workflows/ci.yml`, `.github/workflows/security.yml`) runs all of
-the above plus a genuine PostgreSQL integration smoke and Gitleaks secret
-scanning. Treat CI green as the actual bar; a local run that skips a step
+CI (`.github/workflows/ci.yml`: `python-quality`, `frontend-quality`,
+`api-contract`, `postgres-integration`, `end-to-end`, `container-smoke`;
+`.github/workflows/security.yml`: `secret-scan` via Gitleaks, `python-audit`
+via the exact `pip-audit` command above, `javascript-audit` via the exact
+`pnpm audit` command above) runs every one of these as its own job, each with
+a `--frozen-lockfile`/fresh-venv install rather than the developer's existing
+environment. Treat CI green as the actual bar; a local run that skips a step
 (e.g. no Docker on the host) must say so explicitly rather than imply full
 coverage.
 

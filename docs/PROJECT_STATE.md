@@ -60,14 +60,19 @@ advisories** (`{"info":0,"low":0,"moderate":0,"high":0,"critical":0}`).
 
 Compatibility checked before picking versions: Next 16.3.6 and
 `eslint-config-next` 16.3.6 are both published release versions (not
-canary/preview) on the npm registry; `@clerk/nextjs@7.7.6`'s declared peer
-range (`^15.2.8 || ... || ^16.0.10 || ^16.1.0-0`) does not explicitly list
-16.3.x, but Next 16.3.x is a minor/patch line within the same major the repo
-was already on (16.2.11), no Next 16 breaking-change migration was needed for
-this repo's usage, and the full frontend gate (typecheck, lint, vitest,
-production build) passed clean against it — see the verification table below.
-If Clerk publishes an explicit compatibility note narrowing the range further,
-re-check before any *future* Next major bump; this one is a same-major patch.
+canary/preview) on the npm registry. `@clerk/nextjs@7.7.6`'s declared peer
+range for `next` is `^15.2.8 || ^15.3.8 || ^15.4.10 || ^15.5.9 || ^15.6.0-0 ||
+^16.0.10 || ^16.1.0-0` (confirmed directly in `pnpm-lock.yaml`'s resolved
+metadata for `@clerk/nextjs@7.7.6`). The `^16.0.10` clause is a caret range,
+so by semver it covers every `16.x.y` with `x.y >= 0.10` up to (but not
+including) `17.0.0` — that **does** include `16.3.6`; it is not a version the
+range fails to enumerate. `pnpm-lock.yaml` resolves
+`@clerk/nextjs@7.7.6(next@16.3.6...)` with no peer-dependency warning during
+`pnpm install`, which corroborates the range match. Combined with the full
+frontend gate (typecheck, lint, vitest, production build) passing clean
+against it — see the verification table below — this bump has no known
+Clerk compatibility risk. Re-check the declared range before any *future*
+Next major bump (17.x), since none of today's clauses would match it.
 
 ## Verification performed this session
 
@@ -95,6 +100,30 @@ via `mcp__terminal`.
 | Python format check | `black --check .` | same container | **exit 0**, "169 files would be left unchanged" |
 | Backend tests + coverage | `pytest --cov=... --cov-fail-under=90` | same container | **exit 0**, 826 passed, 14 skipped, 91.96% coverage (floor 90%) |
 | API contract freshness | `python scripts/check_api_contract.py` | same container | **exit 0**, "API contract artifacts are current." (no regen diff) |
+| Whitespace/conflict-marker hygiene | `git diff origin/main...HEAD --check` | host `mcp__terminal`, this worktree | **exit 0**, no output |
+| Full-stack container build + health | `docker compose -p scoutboy-smoke-manual -f docker-compose.full.yml up -d --build --wait --wait-timeout 180` | host Docker daemon (confirmed reachable via `docker info`; `docker compose` CLI plugin manually linked into this profile's `~/.docker/cli-plugins/` from another profile's install, since it was missing here) | **exit 0**, db/api/web all reported `Healthy` by Compose's own wait |
+
+`scripts/docker_smoke.sh` itself (the exact `make docker-smoke` target) was
+**not** used verbatim for the final health-endpoint probe: it curls
+`localhost:$PORT` from the same shell that ran `docker compose up`, but in
+this sandboxed environment that shell is in a different network namespace
+than the Docker daemon's host, so the published ports (confirmed present via
+`docker ps`: `18000->8000`, `13000->3000`, `55432->5432`) are not reachable
+from here even though every container is `Healthy` — host `curl` to
+`localhost:18000/healthz` returned exit 7 ("could not connect"), not an
+app-side failure. To get real evidence instead of accepting that
+inconclusive result, each service's *own* health check command was re-run
+directly inside its own container (`docker exec ... python -c
+"urllib.request.urlopen('http://localhost:8000/healthz')"` for the API,
+equivalent `node -e` for the web container) — these are the identical
+commands Compose's healthcheck already uses, just invoked manually for
+independent evidence: **API `/healthz` → 200, API `/readyz` → 200, web `/`
+→ 200.** The stack was then torn down cleanly (`docker compose ... down
+--volumes --remove-orphans`, exit 0, all containers/network/volume removed).
+This is strong evidence the full-stack image/compose config builds and boots
+correctly; it is not identical to a green `make docker-smoke` from a runner
+with host-network parity with the Docker daemon (e.g. actual CI), which
+should still be treated as the authoritative full-stack gate.
 
 Checks **not run** this session, with the reason:
 - `make e2e` (Playwright, production build + isolated fixture DB) — not run.
@@ -102,18 +131,12 @@ Checks **not run** this session, with the reason:
   green; the full browser E2E flow needs a longer-lived container/network
   setup than the per-command throwaway image used here. Should be run before
   merge if a runner with more time/Playwright browser install is available.
-- `make docker-smoke` (full-stack Compose build + health probe) — Docker
-  daemon confirmed reachable (`docker info` succeeds), and a plain
-  `docker build` of `docker/api.Dockerfile` was proven to succeed as part of
-  reproducing the environment, but the full Compose smoke (Postgres + API +
-  web containers, health-checked) was not run in this session. No blocker
-  found, just not exercised — do it before merge if time allows.
-- `git diff --check` — not run as a standalone command this session (the
-  diff is small — manifest + lockfile + three new docs — and was inspected by
-  hand); run it explicitly before merge.
 - PostgreSQL integration smoke (`apps/api/app/tests/test_postgres_smoke.py`
-  with `SCOUTBOY_POSTGRES_SMOKE=1`) — not run; needs a live Postgres service,
-  which CI provides and this session did not stand up.
+  with `SCOUTBOY_POSTGRES_SMOKE=1`) — not run; needs a live Postgres service
+  wired to `DATABASE_URL` the way CI's `postgres-integration` job does, which
+  this session did not stand up (the full-stack Postgres brought up for the
+  container smoke above is a different, containerized path, not this pytest
+  target run against it).
 - `pip-audit` (Python dependency audit) — out of scope for this task, which
   was JS-dependency-only per the assigned card; SECURITY.md's existing
   temporary-exception list for the Python audit is untouched.
@@ -123,28 +146,27 @@ Checks **not run** this session, with the reason:
 - Branch `docs/handoff-security-audit`, based on `origin/main` @ `230ff4a`.
 - Local commit(s) made in this worktree; branch preserved, not merged, not
   force-pushed.
-- **Push to `origin` has not succeeded.** `git push --dry-run origin
-  HEAD:refs/heads/docs/handoff-security-audit` failed with exit 128:
-  `fatal: could not read Username for 'https://github.com': terminal prompts
-  disabled`. No GitHub write credential is configured in this environment.
-  This is a genuine external blocker, not a paraphrase of one — do not treat a
-  local commit as evidence of a pushed branch or open PR, and do not claim a
-  PR URL that does not exist.
-- No PR has been opened. Opening one requires GitHub write auth to become
-  available in this environment (or the user pushing this branch manually).
+- GitHub write auth became available mid-session (owner-provided PAT). An
+  authenticated `GET /user` and `GET /repos/adityaanantharaman16/ScoutBoy`
+  confirmed push permission, and `git push --dry-run` succeeded. As of this
+  writing the branch has not yet been pushed (doc corrections below were
+  applied first, per the reviewer request); the remaining steps in this
+  session are to commit these corrections, push, and open one PR — check the
+  task's kanban comment thread for the actual PR URL and remote SHA once
+  that happens, since this file is a point-in-time snapshot and may lag it.
 
 ## Next action
 
-1. Obtain GitHub write auth for this environment (or have the branch pushed
-   manually), then push `docs/handoff-security-audit` and open a single PR
-   against `main` covering both the docs and the audit fix.
-2. Before merge, run the checks marked "not run" above if a longer-lived
-   Docker/Playwright-capable runner is available: `make e2e`, `make
-   docker-smoke`, `git diff --check`, the Postgres integration smoke.
-3. Get independent review (not self-review) on the dependency version bumps,
-   given Clerk's peer range does not explicitly enumerate Next 16.3.x — this
-   session's own verification (typecheck/lint/vitest/build all green) is
-   strong evidence but a second reviewer should confirm before merge.
-4. After merge, this doc's "Next action" section should be updated to
+1. If the PR referenced in the kanban comment thread has not yet merged,
+   get independent reviewer sign-off on the dependency version bumps (Clerk's
+   peer range for `next` is a caret range that already covers `16.3.6` — see
+   the audit remediation detail above — this session's own green
+   typecheck/lint/vitest/build is corroborating evidence, but a second
+   reviewer should still confirm) and on the corrected docs.
+2. Before merge, run the checks still marked "not run" above if a
+   Playwright-capable / live-Postgres runner is available: `make e2e`, the
+   Postgres integration smoke (`SCOUTBOY_POSTGRES_SMOKE=1 pytest
+   apps/api/app/tests/test_postgres_smoke.py` against a real `DATABASE_URL`).
+3. After merge, this doc's "Next action" section should be updated to
    whatever Milestone 9 scoping (if any) or next maintenance item the
    product owner picks — this task explicitly did not scope Milestone 9.

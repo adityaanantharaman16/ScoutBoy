@@ -13,11 +13,33 @@ cold, without any conversational memory of how it got here. Read this after
 3. Check `git log --oneline -10` and `git status` against what
    `docs/PROJECT_STATE.md` claims — the doc is a snapshot, the repo is ground
    truth. If they disagree, trust the repo and update the doc.
-4. Check whether the branch has since been pushed and a PR opened (this
-   session could not do either — see below). If it has, this handoff's job is
-   done except for addressing review feedback.
+4. Check whether the branch has since been pushed and a PR opened — see the
+   "Git / publication state" section of `docs/PROJECT_STATE.md` and this
+   file's session log below for the exact status as of the last update. If
+   it has, this handoff's job is done except for addressing review feedback.
 
 ## Session log
+
+Add new entries above "Earlier history", newest first, using this template
+(copy it verbatim for the next session rather than freehanding the shape):
+
+```
+### YYYY-MM-DD — <one-line summary> (kanban task `t_...`)
+
+Task: `t_...`. Goal: <what this session set out to do>.
+
+**What was done:**
+- <bullet per concrete change, referencing exact files/commands>
+
+**Environment friction worth recording for the next session:** <any
+sandbox/tooling gotcha and its resolution, or "none".>
+
+**Blocker(s):** <exact command + exit code + error text, or "none — proceed
+to next action.">
+
+**Next action:** <the single next concrete step, or "none — task complete,
+merged/closed.">
+```
 
 ### 2026-09-26 — docs + JS dependency audit remediation (this session)
 
@@ -34,12 +56,21 @@ failing on locked production dependencies (`next`, `sharp`, `browserslist`,
   versions; regenerated `pnpm-lock.yaml`. Full detail and version-compat
   reasoning in `docs/PROJECT_STATE.md`.
 - Verified clean: JS audit (0 advisories), frontend typecheck/lint/vitest/
-  production build, Python ruff/black/pytest (91.96% coverage), and API
-  contract freshness — all exit 0. Exact commands and runner in
-  `docs/PROJECT_STATE.md`'s verification table.
-- Wrote this doc trio.
+  production build, Python ruff/black/pytest (91.96% coverage), API
+  contract freshness, `git diff origin/main...HEAD --check`, and a full-stack
+  container build + health check (db/api/web reported `Healthy`; health
+  endpoints independently probed inside their own containers since this
+  sandbox's shell can't reach the Docker host's published localhost ports) —
+  all exit 0. Exact commands and runner in `docs/PROJECT_STATE.md`'s
+  verification table.
+- Wrote this doc trio, then corrected them against a same-card supervisor
+  read-only audit: fixed a Clerk peer-range misstatement (the `^16.0.10`
+  range does cover `16.3.6`, it doesn't fail to enumerate it), corrected
+  `make lint`/`make test`'s command description (they include the frontend
+  ESLint/Vitest targets, not just Python), and separated the exact CI job
+  gates from the local sample commands.
 - Committed to `docs/handoff-security-audit` (based on `origin/main` @
-  `230ff4a`). Did **not** push — see blocker below.
+  `230ff4a`).
 
 **Environment friction worth recording for the next session:** this sandbox
 had no `pnpm`/`corepack` binary, and host-level `npm install -g` / `pip
@@ -54,22 +85,33 @@ documented pattern in `AGENTS.md` going forward. One gotcha hit and fixed:
 a Dockerfile that does `COPY . .` *after* `pnpm install --no-frozen-lockfile`
 will have the freshly-regenerated lockfile clobbered by the stale one from
 the copy — put the install step after `COPY . .`, or copy only the manifests
-in first and never copy the full tree over them afterward.
+in first and never copy the full tree over them afterward. A second gotcha:
+this profile's Docker CLI had no `compose` plugin installed (`docker compose`
+failed with "not a docker command"); it was resolved by copying the plugin
+binary from another already-configured profile's `~/.docker/cli-plugins/`
+rather than reinstalling Docker. A third: `docker compose up --wait` reports
+containers `Healthy` correctly, but the shell running this session is not on
+the same network path as the Docker daemon's host, so `curl localhost:$PORT`
+from here fails even when the app is fine — the real check was done via
+`docker exec` running each service's own healthcheck command directly.
 
-**Blocker:** `git push --dry-run origin HEAD:refs/heads/docs/handoff-security-audit`
-→ exit 128, `fatal: could not read Username for 'https://github.com':
-terminal prompts disabled`. No GitHub write credential configured in this
-environment. The branch and commit are preserved in the worktree; nothing
-was pushed, no PR exists. **Do not report a PR as open without an actual PR
-URL** — this session does not have one.
+**GitHub write auth:** unavailable at the start of this session (`git push
+--dry-run` → exit 128, "could not read Username", no `gh` CLI/token/credential
+helper configured), then made available mid-session via an owner-provided
+PAT (env-var based, read only by a small helper script, never exposed to
+this session). `git push --dry-run` then succeeded. See
+`docs/PROJECT_STATE.md`'s "Git / publication state" for the current push/PR
+status as of that file's last update — check it (or the kanban comment
+thread) rather than assuming either this file or that one is current, since
+both are point-in-time snapshots and the actual push/PR happens after this
+handoff doc is written.
 
-**Next action:** get GitHub write auth into this environment (or have a
-human push the branch), open one PR to `main`, run the checks listed as "not
-run" in `docs/PROJECT_STATE.md` if a longer-lived runner is available (full
-Playwright `make e2e`, `make docker-smoke`, Postgres integration smoke), get
-independent review given the Next.js version bump sits slightly outside
-Clerk's explicitly-enumerated peer range (though same-major and fully green
-in this session's own verification), then merge.
+**Next action:** push `docs/handoff-security-audit` (or confirm it's already
+pushed) and open/verify one PR to `main` covering both the docs and the
+audit fix; get independent review of the dependency version bumps (see
+compatibility note above); run `make e2e` and the Postgres integration smoke
+before merge if a Playwright/live-Postgres-capable runner is available
+(these are the only checks this session could not exercise); then merge.
 
 ### Earlier history
 
