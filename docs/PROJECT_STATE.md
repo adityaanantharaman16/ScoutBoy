@@ -148,21 +148,23 @@ Checks **not run** this session, with the reason:
   force-pushed.
 - GitHub write auth became available mid-session (owner-provided PAT). An
   authenticated `GET /user` and `GET /repos/adityaanantharaman16/ScoutBoy`
-  confirmed push permission, and `git push --dry-run` succeeded. As of this
-  writing the branch has not yet been pushed (doc corrections below were
-  applied first, per the reviewer request); the remaining steps in this
-  session are to commit these corrections, push, and open one PR — check the
-  task's kanban comment thread for the actual PR URL and remote SHA once
-  that happens, since this file is a point-in-time snapshot and may lag it.
+  confirmed push permission, and `git push --dry-run` succeeded.
+- **Pushed and PR opened.** `git push origin
+  HEAD:refs/heads/docs/handoff-security-audit` succeeded; remote SHA
+  `444df6f7f6cf015601ebadad121dc68ff5cdd89c` (verified via `git ls-remote`
+  and matches local `git rev-parse HEAD` exactly). Draft PR opened:
+  https://github.com/adityaanantharaman16/ScoutBoy/pull/12 (state `open`,
+  `draft: true`, `head_sha` independently re-read from the GitHub API and
+  confirmed to match). Not merged, no force-push used.
 
 ## Next action
 
-1. If the PR referenced in the kanban comment thread has not yet merged,
-   get independent reviewer sign-off on the dependency version bumps (Clerk's
-   peer range for `next` is a caret range that already covers `16.3.6` — see
-   the audit remediation detail above — this session's own green
-   typecheck/lint/vitest/build is corroborating evidence, but a second
-   reviewer should still confirm) and on the corrected docs.
+1. This PR is a draft; get independent reviewer sign-off on the dependency
+   version bumps (Clerk's peer range for `next` is a caret range that already
+   covers `16.3.6` — see the audit remediation detail above — this session's
+   own green typecheck/lint/vitest/build is corroborating evidence, but a
+   second reviewer should still confirm) and mark it ready for review /
+   merge once satisfied.
 2. Before merge, run the checks still marked "not run" above if a
    Playwright-capable / live-Postgres runner is available: `make e2e`, the
    Postgres integration smoke (`SCOUTBOY_POSTGRES_SMOKE=1 pytest
