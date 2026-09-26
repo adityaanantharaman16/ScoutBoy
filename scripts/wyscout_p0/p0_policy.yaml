@@ -1,0 +1,148 @@
+# P0 research policy for the Wyscout 2017/18 feasibility experiment (card t_44597dd8).
+#
+# This is NOT a product configuration. It is not loaded by the API, pipeline, or rating
+# engine. It records every threshold/state the P0 analysis script uses, so the report is
+# reproducible and a reviewer can see which choices are hypotheses. P1 must freeze its own
+# reviewed provider config (docs/IMPLEMENTATION_PLAN.md section 5.1); nothing here is
+# pre-approved for that config.
+version: wyscout_p0_policy_v1
+
+season_label: "2017/2018"
+age_reference_date: "2018-06-30"   # whole-year age <= max_age on this date (plan section 3)
+max_age: 23
+min_minutes: 450                   # >= 450 season AND >= 450 event-covered minutes
+required_coverage_gate: 0.70       # G2: fraction of a role's required metrics present
+min_usable_peers_per_metric: 8     # plan 5.4 proposed floor (reported, not enforced)
+g2_target_unique_players: 100
+
+# Domestic allowlist: Wyscout competition wyId -> league archive stem and S1 (paper) counts.
+# S1 counts are publication claims to reconcile against, never substituted for measurements.
+domestic_competitions:
+  364: { stem: England, league: English first division, s1_matches: 380, s1_events: 643150 }
+  795: { stem: Spain,   league: Spanish first division, s1_matches: 380, s1_events: 628659 }
+  524: { stem: Italy,   league: Italian first division, s1_matches: 380, s1_events: 647372 }
+  426: { stem: Germany, league: German first division,  s1_matches: 306, s1_events: 519407 }
+  412: { stem: France,  league: French first division,  s1_matches: 380, s1_events: 632807 }
+
+# Minutes: P0 "regulation clock" hypothesis. Starters on at 0; substitution/red-card minutes
+# from the match roster; every interval clipped to [0, regulation_minutes] before summing.
+# Stoppage-time entries (minute > 90) therefore count as an appearance with 0 minutes.
+minutes:
+  regulation_minutes: 90
+  first_half_minutes: 45
+  max_substitutions_per_team: 3
+  # an attributed event more than this many minutes outside the player's reconstructed
+  # on-pitch interval makes that player-match interval "uncertain" (excluded from covered).
+  interval_event_tolerance_minutes: 2.0
+
+# Coarse provider role (players.json role.code2) -> ScoutBoy position group. This is
+# acceptable for directory filtering only; it never implies a granular ST/CF/CM/DM role.
+coarse_role_to_group: { FW: ATT, MD: MID, DF: DEF, GK: GK }
+
+# Geometry: Wyscout positions are 0-100 percentages in the acting team's attacking
+# direction. The P0 hypothesis rescales to the StatsBomb 120 x 80 frame so the existing
+# StatsBomb v1 definitions (docs/metric_definitions_statsbomb_v1.md) can be reused
+# unchanged. Whether that is semantically compatible is a P1 decision.
+geometry:
+  x_scale: 1.2
+  y_scale: 0.8
+  goal_x: 120.0
+  goal_y: 40.0
+  final_third_x: 80.0
+  opp_half_x: 60.0
+  progressive_pass_gain: 10.0
+  box_min_x: 102.0
+  box_min_y: 18.0
+  box_max_y: 62.0
+  long_pass_min_length: 35.0   # hypothesis (StatsBomb frame units); not a reviewed value
+
+# Wyscout event/sub-event IDs used by the P0 counters (from eventid2name.csv v1).
+events:
+  pass_event_id: 8
+  restart_pass_sub_event_ids: [30, 31, 32, 34, 36]   # corner, free kick, FK cross, goal kick, throw-in
+  shot_event_id: 10
+  free_kick_shot_sub_event_id: 33
+  penalty_sub_event_id: 35
+  duel_event_id: 1
+  air_duel_sub_event_id: 10
+  ground_attacking_duel_sub_event_id: 11
+  ground_defending_duel_sub_event_id: 12
+  ground_loose_ball_duel_sub_event_id: 13
+  cross_sub_event_ids: [80, 32]
+  foul_event_id: 2
+  # Foul, Hand foul, Late card foul, Violent Foul. Excludes out-of-game foul, protest,
+  # simulation and time-lost foul (hypothesis; not reviewed against StatsBomb semantics).
+  foul_sub_event_ids: [20, 21, 22, 27]
+  # Save attempts (event 9) carry the goal tag 101 for a goal CONCEDED; they are excluded
+  # from team goal reconciliation. Every other goal-tagged event (shots, penalties,
+  # free-kick shots and direct corners, which also occur) credits the acting team.
+  save_attempt_event_id: 9
+
+# A match counts toward event-covered minutes only if published team scores equal the
+# goals derived from its events (goal-tagged non-save-attempt events plus own goals
+# credited to the opponent) and both teams have events.
+require_goal_reconciliation: true
+
+# Wyscout tag IDs used (from tags2name.csv v1).
+tags:
+  goal: 101
+  own_goal: 102
+  assist: 301
+  key_pass: 302
+  take_on: [503, 504]
+  interception: 1401
+  sliding_tackle: 1601
+  missed_ball: 1302
+  red_card: 1701
+  second_yellow: 1703
+  through: 901
+  won: 703
+  lost: 701
+  neutral: 702
+  accurate: 1801
+  not_accurate: 1802
+
+# P0 evidence state for every metric referenced by the nine existing role configs.
+#   observed_candidate  - direct event/tag computation exists in the public schema; semantic
+#                         equivalence to the StatsBomb definition is NOT yet validated.
+#   derived_candidate   - geometric computation over validated-looking coordinates; method
+#                         and thresholds are P0 hypotheses, NOT yet validated.
+#   experimental        - a proxy exists but is known to differ in meaning; excluded.
+#   unavailable         - no source observation in the public schema; null, never zero.
+# No metric is "observed"/"derived_validated" yet: that promotion is P1 review work.
+metric_states:
+  passes_per90: observed_candidate
+  pass_completion_pct: observed_candidate
+  key_passes_per90: observed_candidate
+  through_balls_per90: observed_candidate
+  crosses_per90: observed_candidate
+  shots_per90: observed_candidate
+  successful_take_ons_per90: observed_candidate
+  take_on_success_pct: observed_candidate
+  interceptions_per90: observed_candidate
+  ground_duels_won_pct: observed_candidate
+  aerial_duels_won_pct: observed_candidate
+  fouls_per90: observed_candidate
+  progressive_passes_per90: derived_candidate
+  passes_into_final_third_per90: derived_candidate
+  long_passes_completed_per90: derived_candidate
+  tackles_per90: experimental            # no tackle event; defensive duels != tackles
+  defensive_actions_per90: experimental  # depends on tackles; component overlap unresolved
+  dispossessed_per90: experimental       # lost attacking duel != dispossession
+  miscontrols_per90: experimental        # "missed ball" tag meaning unresolved
+  touches_in_box_per90: experimental     # on-ball event proxy, not physical touches
+  progressive_carries_per90: unavailable
+  carries_into_final_third_per90: unavailable
+  carries_into_penalty_area_per90: unavailable
+  non_penalty_xg_per90: unavailable
+  goals_minus_xg_per90: unavailable
+  xa_per90: unavailable
+  shot_creating_actions_per90: unavailable
+  pressures_per90: unavailable
+  counterpressures_per90: unavailable
+  passes_under_pressure_per90: unavailable
+  availability_index: unavailable
+
+# States that the diagnostic upper bound treats as "present". Strict G2 requires validated
+# states, which do not exist until P1; the report shows both.
+upper_bound_present_states: [observed_candidate, derived_candidate]

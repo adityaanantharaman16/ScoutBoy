@@ -1,0 +1,1979 @@
+{
+ "deterministic_fingerprint_sha256": "c0faaa46a9d8a9fcb99ebd013a23a792a9b43d2dcfb6c734513042cdcae379df",
+ "event_semantics_probes": {
+  "accurate_passes_placeholder_end": 317,
+  "attacking_duels": 265456,
+  "attacking_duels_with_take_on_tag": 50191,
+  "duel_events": 832055,
+  "duel_outcome_tags_0": 1020,
+  "duel_outcome_tags_1": 831035,
+  "duel_timestamps": 720760,
+  "duel_timestamps_both_teams": 105361,
+  "mean_goal_kick_start_x_0_100": 54.52,
+  "mean_shot_start_x_0_100": 84.83,
+  "open_play_passes": 1565356,
+  "shots": 40461,
+  "shots_with_placeholder_end": 40461
+ },
+ "g2": {
+  "age_distribution_counts_at_reference": {
+   "16": 3,
+   "17": 11,
+   "18": 36,
+   "19": 72,
+   "20": 125,
+   "21": 168,
+   "22": 186,
+   "23": 179,
+   "24": 200,
+   "25": 191,
+   "26": 203,
+   "27": 213,
+   "28": 203,
+   "29": 175,
+   "30": 134,
+   "31": 140,
+   "32": 103,
+   "33": 75,
+   "34": 63,
+   "35": 38,
+   "36": 18,
+   "37": 19,
+   "38": 6,
+   "39": 5,
+   "40": 3,
+   "41": 1
+  },
+  "diagnostic_upper_bound_not_a_g2_count": {
+   "definition": "Unique U23 coarse ATT/MID players with >=450 season and covered minutes whose coarse group matches a role's position_group, where every required metric of that role is in an upper-bound candidate state AND non-null for the player. Ignores granular position eligibility and treats unvalidated candidate mappings as present. Not a G2 pass.",
+   "per_league_membership_per_role": {
+    "England": {
+     "deep_lying_playmaker": 32,
+     "tempo_controller": 32
+    },
+    "France": {
+     "deep_lying_playmaker": 46,
+     "tempo_controller": 46
+    },
+    "Germany": {
+     "deep_lying_playmaker": 44,
+     "tempo_controller": 44
+    },
+    "Italy": {
+     "deep_lying_playmaker": 30,
+     "tempo_controller": 30
+    },
+    "Spain": {
+     "deep_lying_playmaker": 34,
+     "tempo_controller": 34
+    }
+   },
+   "per_role": {
+    "deep_lying_playmaker": 183,
+    "tempo_controller": 183
+   },
+   "unique_players_any_role": 183
+  },
+  "minutes_eligible_u23_by_coarse_group": {
+   "ATT": 105,
+   "MID": 183
+  },
+  "minutes_policy_sensitivity": {
+   "additional_minutes_if_stoppage_credited_literally": 146584.3,
+   "total_regulation_clipped_minutes": 3606825.0
+  },
+  "per_league_membership_funnel": {
+   "(never_appeared)": {
+    "age_le_23_at_2018_06_30": 0,
+    "appeared": 0,
+    "coarse_att_or_mid": 0,
+    "covered_minutes_ge_450": 0,
+    "dob_known": 0,
+    "identity_resolved": 0,
+    "rostered": 441,
+    "season_minutes_ge_450": 0
+   },
+   "England": {
+    "age_le_23_at_2018_06_30": 116,
+    "appeared": 515,
+    "coarse_att_or_mid": 83,
+    "covered_minutes_ge_450": 46,
+    "dob_known": 515,
+    "identity_resolved": 515,
+    "rostered": 515,
+    "season_minutes_ge_450": 46
+   },
+   "France": {
+    "age_le_23_at_2018_06_30": 190,
+    "appeared": 542,
+    "coarse_att_or_mid": 130,
+    "covered_minutes_ge_450": 76,
+    "dob_known": 542,
+    "identity_resolved": 542,
+    "rostered": 542,
+    "season_minutes_ge_450": 76
+   },
+   "Germany": {
+    "age_le_23_at_2018_06_30": 173,
+    "appeared": 472,
+    "coarse_att_or_mid": 107,
+    "covered_minutes_ge_450": 64,
+    "dob_known": 472,
+    "identity_resolved": 472,
+    "rostered": 472,
+    "season_minutes_ge_450": 64
+   },
+   "Italy": {
+    "age_le_23_at_2018_06_30": 155,
+    "appeared": 534,
+    "coarse_att_or_mid": 99,
+    "covered_minutes_ge_450": 54,
+    "dob_known": 534,
+    "identity_resolved": 534,
+    "rostered": 534,
+    "season_minutes_ge_450": 54
+   },
+   "Spain": {
+    "age_le_23_at_2018_06_30": 159,
+    "appeared": 557,
+    "coarse_att_or_mid": 105,
+    "covered_minutes_ge_450": 56,
+    "dob_known": 557,
+    "identity_resolved": 557,
+    "rostered": 557,
+    "season_minutes_ge_450": 56
+   }
+  },
+  "strict_g2_target": 100,
+  "strict_g2_unique_qualifying_u23": 0,
+  "transfers": {
+   "players_in_more_than_one_domestic_league": 50,
+   "players_with_more_than_one_domestic_club": 124
+  },
+  "unique_player_funnel": {
+   "age_le_23_at_2018_06_30": 780,
+   "appeared": 2570,
+   "coarse_att_or_mid": 514,
+   "covered_minutes_ge_450": 288,
+   "dob_known": 2570,
+   "identity_resolved": 2570,
+   "rostered": 3011,
+   "season_minutes_ge_450": 288
+  },
+  "unique_player_funnel_strict_tail": {
+   "eligible_role_with_ge_70pct_validated_required_metrics": 0,
+   "granular_historical_position_known": 0
+  }
+ },
+ "identity": {
+  "coarse_roles": {
+   "DF": 1200,
+   "FW": 720,
+   "GK": 426,
+   "MD": 1257
+  },
+  "competitions": [
+   {
+    "format": "Domestic league",
+    "name": "Italian first division",
+    "wyId": 524
+   },
+   {
+    "format": "Domestic league",
+    "name": "English first division",
+    "wyId": 364
+   },
+   {
+    "format": "Domestic league",
+    "name": "Spanish first division",
+    "wyId": 795
+   },
+   {
+    "format": "Domestic league",
+    "name": "French first division",
+    "wyId": 412
+   },
+   {
+    "format": "Domestic league",
+    "name": "German first division",
+    "wyId": 426
+   },
+   {
+    "format": "International cup",
+    "name": "European Championship",
+    "wyId": 102
+   },
+   {
+    "format": "International cup",
+    "name": "World Cup",
+    "wyId": 28
+   }
+  ],
+  "name_dob_collisions_distinct_wyids": 0,
+  "names_with_literal_unicode_escape_text": 1152,
+  "players_json_duplicate_wyids": 0,
+  "players_json_records": 3603,
+  "position_fields_available": [
+   "role"
+  ],
+  "roster_player_ids_missing_from_players_json": 15,
+  "roster_player_ids_missing_from_players_json_that_appeared": 0,
+  "teams_json_records": 142
+ },
+ "inputs": {
+  "files": [
+   {
+    "doi": "10.6084/m9.figshare.7770599.v1",
+    "file_id": 14464685,
+    "md5": "7c20e8647e7eda58d7838a0c7b1ec6ab",
+    "name": "events.zip",
+    "role": "events",
+    "sha256": "877e015b716ffdeea18f04418e3f24fed307ed03c37ff305cabe1f47c4822a45",
+    "size": 77323413
+   },
+   {
+    "doi": "10.6084/m9.figshare.7770422.v1",
+    "file_id": 14464622,
+    "md5": "51d80beb17480919f69a53a0152c2d71",
+    "name": "matches.zip",
+    "role": "matches",
+    "sha256": "c8f92bb7533e5c127e043cee764c991b5c25b4f5e70a65be931baae0b1765ce9",
+    "size": 645097
+   },
+   {
+    "doi": "10.6084/m9.figshare.7765196.v3",
+    "file_id": 15073721,
+    "md5": "f28ddf6326281efeda6488b2169f5609",
+    "name": "players.json",
+    "role": "players",
+    "sha256": "877a111cb1005b73df5645e9338bd74fb4b496bace2fbc545a72abb3b73efa2e",
+    "size": 1737347
+   },
+   {
+    "doi": "10.6084/m9.figshare.7765310.v3",
+    "file_id": 15073697,
+    "md5": "1381ff9449f21105090729cf0e086b5b",
+    "name": "teams.json",
+    "role": "teams",
+    "sha256": "9f7a4a3b3d92c0be33f40613ad6e6eb4316c3b9771ec74c61a22c9b8ece23a4d",
+    "size": 27404
+   },
+   {
+    "doi": "10.6084/m9.figshare.7765316.v4",
+    "file_id": 15073685,
+    "md5": "3dc210a4805dda5337b0ff9f7eaa407a",
+    "name": "competitions.json",
+    "role": "competitions",
+    "sha256": "39a738d2bc97638502e1ead01d661b54c623d6d6b37f77de3846f9a94db7a3a1",
+    "size": 1209
+   },
+   {
+    "doi": "10.6084/m9.figshare.11743836.v1",
+    "file_id": 21385245,
+    "md5": "46daf16100ece0c743eedc9adcfea162",
+    "name": "eventid2name.csv",
+    "role": "event_dictionary",
+    "sha256": "ce7bafb341b36ab4c6093bf1c09c967e9cea10d4223724a1fc679086e5d16842",
+    "size": 1001
+   },
+   {
+    "doi": "10.6084/m9.figshare.11743818.v1",
+    "file_id": 21385239,
+    "md5": "e7acb14918d00e40c80a898b1da8fc39",
+    "name": "tags2name.csv",
+    "role": "tag_dictionary",
+    "sha256": "e0bc1bd8ff6ea5339586fdfc3e8e9b285a4a18f1ae2f5868ccc9ec9cecc8a922",
+    "size": 1754
+   }
+  ],
+  "leagues_requested": "all_domestic",
+  "policy_sha256": "23684833b32758e5fc0138ac3d06c3bed978248a8ad46547aec8f7975ef70997",
+  "policy_version": "wyscout_p0_policy_v1"
+ },
+ "integrity": {
+  "duplicate_event_ids_across_domestic_union": 0,
+  "duplicate_match_ids_across_domestic_files": 0,
+  "event_files": {
+   "events_England.json": 188888614,
+   "events_European_Championship.json": 22954338,
+   "events_France.json": 186374196,
+   "events_Germany.json": 152916631,
+   "events_Italy.json": 190544685,
+   "events_Spain.json": 184164406,
+   "events_World_Cup.json": 29981214
+  },
+  "event_id_ranges_interleave_across_leagues": true,
+  "match_files": {
+   "matches_England.json": 1694720,
+   "matches_European_Championship.json": 312151,
+   "matches_France.json": 1707222,
+   "matches_Germany.json": 1377328,
+   "matches_Italy.json": 2019196,
+   "matches_Spain.json": 1705380,
+   "matches_World_Cup.json": 395677
+  },
+  "player_id_0_events_by_type": {
+   "Duel/Air duel": 12320,
+   "Duel/Ground attacking duel": 23047,
+   "Duel/Ground defending duel": 29468,
+   "Duel/Ground loose ball duel": 18365,
+   "Foul/Foul": 335,
+   "Foul/Hand foul": 7,
+   "Foul/Out of game foul": 1,
+   "Free Kick/Corner": 131,
+   "Free Kick/Free Kick": 9495,
+   "Free Kick/Free kick cross": 11,
+   "Free Kick/Goal kick": 193,
+   "Free Kick/Throw in": 2272,
+   "Interruption/Ball out of the field": 129154,
+   "Interruption/Whistle": 913,
+   "Offside/": 28,
+   "Others on the ball/Clearance": 5,
+   "Others on the ball/Touch": 255,
+   "Pass/Cross": 3,
+   "Pass/Head pass": 1,
+   "Pass/High pass": 1,
+   "Pass/Launch": 7,
+   "Pass/Simple pass": 18,
+   "Pass/Smart pass": 1,
+   "Save attempt/Reflexes": 2,
+   "Save attempt/Save attempt": 2,
+   "Shot/Shot": 3
+  },
+  "roster_owngoals_field_value_counts": {
+   "0": 61711,
+   "1": 123,
+   "2": 7053
+  },
+  "unknown_event_subevent_pairs": {
+   "6/": 7821
+  },
+  "unknown_tag_ids": {}
+ },
+ "leagues": {
+  "England": {
+   "competition_ids_in_file": [
+    364
+   ],
+   "competition_wyId": 364,
+   "date_range_utc": [
+    "2017-08-11 18:45:00",
+    "2018-05-13 14:00:00"
+   ],
+   "duplicate_event_ids": 0,
+   "duration_counts": {
+    "Regular": 380
+   },
+   "event_records": 643150,
+   "event_red_card_tags": 41,
+   "event_reference_counts": {
+    "events_attributed_to_rostered_player": 595119,
+    "events_player_id_0": 48031,
+    "events_with_fewer_than_2_positions": 118
+   },
+   "events_file": "events_England.json",
+   "events_file_uncompressed_bytes": 188888614,
+   "fixture_pairs_duplicated": 0,
+   "fixture_pairs_expected_double_round_robin": 380,
+   "fixture_pairs_observed_unique": 380,
+   "has_formation_team_counts": {
+    "1": 760
+   },
+   "league": "English first division",
+   "match_ids_event_goals_not_equal_score": [
+    2499781
+   ],
+   "match_ids_with_team_structure_issues": [],
+   "match_records": 380,
+   "matches_accepted_for_coverage": 379,
+   "matches_event_goals_not_equal_score": 1,
+   "matches_roster_goal_field_not_equal_score": 29,
+   "matches_with_events_for_one_team_only": 0,
+   "matches_with_no_events": 0,
+   "period_last_event_minutes_min_max": [
+    44.9,
+    57.9
+   ],
+   "player_interval_issues": {},
+   "player_match_funnel": {
+    "appearances": 10443,
+    "appearances_event_clock_conflict": 6,
+    "covered_appearances": 10409,
+    "covered_minutes": 748793.0,
+    "minutes_in_unaccepted_matches": 1980.0,
+    "minutes_lost_event_clock_conflict": 475.0,
+    "reconstructed_minutes": 751248.0,
+    "rostered_player_matches": 13668,
+    "unused_bench_with_attributed_events": 7
+   },
+   "roster_dismissals": 39,
+   "s1_expected_events": 643150,
+   "s1_expected_matches": 380,
+   "season_ids_in_file": [
+    181150
+   ],
+   "status_counts": {
+    "Played": 380
+   },
+   "team_structure_issues": {},
+   "teams": 20,
+   "teams_missing_from_teams_json": 0
+  },
+  "France": {
+   "competition_ids_in_file": [
+    412
+   ],
+   "competition_wyId": 412,
+   "date_range_utc": [
+    "2017-08-04 18:45:00",
+    "2018-05-19 19:00:00"
+   ],
+   "duplicate_event_ids": 0,
+   "duration_counts": {
+    "Regular": 380
+   },
+   "event_records": 632807,
+   "event_red_card_tags": 86,
+   "event_reference_counts": {
+    "events_attributed_to_rostered_player": 585512,
+    "events_player_id_0": 47295,
+    "events_with_fewer_than_2_positions": 138
+   },
+   "events_file": "events_France.json",
+   "events_file_uncompressed_bytes": 186374196,
+   "fixture_pairs_duplicated": 0,
+   "fixture_pairs_expected_double_round_robin": 380,
+   "fixture_pairs_observed_unique": 380,
+   "has_formation_team_counts": {
+    "1": 760
+   },
+   "league": "French first division",
+   "match_ids_event_goals_not_equal_score": [],
+   "match_ids_with_team_structure_issues": [],
+   "match_records": 380,
+   "matches_accepted_for_coverage": 380,
+   "matches_event_goals_not_equal_score": 0,
+   "matches_roster_goal_field_not_equal_score": 33,
+   "matches_with_events_for_one_team_only": 0,
+   "matches_with_no_events": 0,
+   "period_last_event_minutes_min_max": [
+    44.7,
+    55.6
+   ],
+   "player_interval_issues": {},
+   "player_match_funnel": {
+    "appearances": 10515,
+    "appearances_event_clock_conflict": 8,
+    "covered_appearances": 10507,
+    "covered_minutes": 749583.0,
+    "minutes_lost_event_clock_conflict": 473.0,
+    "reconstructed_minutes": 750056.0,
+    "rostered_player_matches": 13664,
+    "unused_bench_with_attributed_events": 6
+   },
+   "roster_dismissals": 87,
+   "s1_expected_events": 632807,
+   "s1_expected_matches": 380,
+   "season_ids_in_file": [
+    181189
+   ],
+   "status_counts": {
+    "Played": 380
+   },
+   "team_structure_issues": {},
+   "teams": 20,
+   "teams_missing_from_teams_json": 0
+  },
+  "Germany": {
+   "competition_ids_in_file": [
+    426
+   ],
+   "competition_wyId": 426,
+   "date_range_utc": [
+    "2017-08-18 18:30:00",
+    "2018-05-12 13:30:00"
+   ],
+   "duplicate_event_ids": 0,
+   "duration_counts": {
+    "Regular": 306
+   },
+   "event_records": 519407,
+   "event_red_card_tags": 43,
+   "event_reference_counts": {
+    "coordinate_out_of_range": 2,
+    "events_attributed_to_rostered_player": 482163,
+    "events_player_id_0": 37244,
+    "events_with_fewer_than_2_positions": 97
+   },
+   "events_file": "events_Germany.json",
+   "events_file_uncompressed_bytes": 152916631,
+   "fixture_pairs_duplicated": 0,
+   "fixture_pairs_expected_double_round_robin": 306,
+   "fixture_pairs_observed_unique": 306,
+   "has_formation_team_counts": {
+    "1": 612
+   },
+   "league": "German first division",
+   "match_ids_event_goals_not_equal_score": [],
+   "match_ids_with_team_structure_issues": [],
+   "match_records": 306,
+   "matches_accepted_for_coverage": 306,
+   "matches_event_goals_not_equal_score": 0,
+   "matches_roster_goal_field_not_equal_score": 22,
+   "matches_with_events_for_one_team_only": 0,
+   "matches_with_no_events": 0,
+   "period_last_event_minutes_min_max": [
+    42.9,
+    59.0
+   ],
+   "player_interval_issues": {},
+   "player_match_funnel": {
+    "appearances": 8501,
+    "appearances_event_clock_conflict": 2,
+    "covered_appearances": 8499,
+    "covered_minutes": 604415.0,
+    "minutes_lost_event_clock_conflict": 165.0,
+    "reconstructed_minutes": 604580.0,
+    "rostered_player_matches": 11002,
+    "unused_bench_with_attributed_events": 8
+   },
+   "roster_dismissals": 43,
+   "s1_expected_events": 519407,
+   "s1_expected_matches": 306,
+   "season_ids_in_file": [
+    181137
+   ],
+   "status_counts": {
+    "Played": 306
+   },
+   "team_structure_issues": {},
+   "teams": 18,
+   "teams_missing_from_teams_json": 0
+  },
+  "Italy": {
+   "competition_ids_in_file": [
+    524
+   ],
+   "competition_wyId": 524,
+   "date_range_utc": [
+    "2017-08-19 16:00:00",
+    "2018-05-20 18:45:00"
+   ],
+   "duplicate_event_ids": 0,
+   "duration_counts": {
+    "Regular": 380
+   },
+   "event_records": 647372,
+   "event_red_card_tags": 91,
+   "event_reference_counts": {
+    "coordinate_out_of_range": 1,
+    "events_attributed_to_rostered_player": 600585,
+    "events_player_id_0": 46787,
+    "events_with_fewer_than_2_positions": 141
+   },
+   "events_file": "events_Italy.json",
+   "events_file_uncompressed_bytes": 190544685,
+   "fixture_pairs_duplicated": 0,
+   "fixture_pairs_expected_double_round_robin": 380,
+   "fixture_pairs_observed_unique": 380,
+   "has_formation_team_counts": {
+    "1": 760
+   },
+   "league": "Italian first division",
+   "match_ids_event_goals_not_equal_score": [],
+   "match_ids_with_team_structure_issues": [
+    2575959,
+    2575965,
+    2576016
+   ],
+   "match_records": 380,
+   "matches_accepted_for_coverage": 380,
+   "matches_event_goals_not_equal_score": 0,
+   "matches_roster_goal_field_not_equal_score": 35,
+   "matches_with_events_for_one_team_only": 0,
+   "matches_with_no_events": 0,
+   "period_last_event_minutes_min_max": [
+    44.6,
+    56.1
+   ],
+   "player_interval_issues": {
+    "invalid_substitution": 8,
+    "team_structure_invalid": 34
+   },
+   "player_match_funnel": {
+    "appearances": 10573,
+    "appearances_event_clock_conflict": 5,
+    "appearances_interval_invalid": 34,
+    "covered_appearances": 10534,
+    "covered_minutes": 746667.0,
+    "minutes_lost_event_clock_conflict": 349.0,
+    "reconstructed_minutes": 749986.0,
+    "rostered_player_matches": 16880,
+    "unused_bench_with_attributed_events": 21
+   },
+   "roster_dismissals": 91,
+   "s1_expected_events": 647372,
+   "s1_expected_matches": 380,
+   "season_ids_in_file": [
+    181248
+   ],
+   "status_counts": {
+    "Played": 380
+   },
+   "team_structure_issues": {
+    "substitution_player_not_in_roster": 8
+   },
+   "teams": 20,
+   "teams_missing_from_teams_json": 0
+  },
+  "Spain": {
+   "competition_ids_in_file": [
+    795
+   ],
+   "competition_wyId": 795,
+   "date_range_utc": [
+    "2017-08-18 18:15:00",
+    "2018-05-20 18:45:00"
+   ],
+   "duplicate_event_ids": 0,
+   "duration_counts": {
+    "Regular": 380
+   },
+   "event_records": 628659,
+   "event_red_card_tags": 71,
+   "event_reference_counts": {
+    "events_attributed_to_rostered_player": 581978,
+    "events_player_id_0": 46681,
+    "events_with_fewer_than_2_positions": 215
+   },
+   "events_file": "events_Spain.json",
+   "events_file_uncompressed_bytes": 184164406,
+   "fixture_pairs_duplicated": 0,
+   "fixture_pairs_expected_double_round_robin": 380,
+   "fixture_pairs_observed_unique": 380,
+   "has_formation_team_counts": {
+    "1": 760
+   },
+   "league": "Spanish first division",
+   "match_ids_event_goals_not_equal_score": [],
+   "match_ids_with_team_structure_issues": [],
+   "match_records": 380,
+   "matches_accepted_for_coverage": 380,
+   "matches_event_goals_not_equal_score": 0,
+   "matches_roster_goal_field_not_equal_score": 27,
+   "matches_with_events_for_one_team_only": 0,
+   "matches_with_no_events": 0,
+   "period_last_event_minutes_min_max": [
+    44.0,
+    53.6
+   ],
+   "player_interval_issues": {},
+   "player_match_funnel": {
+    "appearances": 10555,
+    "appearances_event_clock_conflict": 7,
+    "covered_appearances": 10548,
+    "covered_minutes": 750526.0,
+    "minutes_lost_event_clock_conflict": 429.0,
+    "reconstructed_minutes": 750955.0,
+    "rostered_player_matches": 13673,
+    "unused_bench_with_attributed_events": 7
+   },
+   "roster_dismissals": 71,
+   "s1_expected_events": 628659,
+   "s1_expected_matches": 380,
+   "season_ids_in_file": [
+    181144
+   ],
+   "status_counts": {
+    "Played": 380
+   },
+   "team_structure_issues": {},
+   "teams": 20,
+   "teams_missing_from_teams_json": 0
+  }
+ },
+ "metric_states": {
+  "aerial_duels_won_pct": "observed_candidate",
+  "availability_index": "unavailable",
+  "carries_into_final_third_per90": "unavailable",
+  "carries_into_penalty_area_per90": "unavailable",
+  "counterpressures_per90": "unavailable",
+  "crosses_per90": "observed_candidate",
+  "defensive_actions_per90": "experimental",
+  "dispossessed_per90": "experimental",
+  "fouls_per90": "observed_candidate",
+  "goals_minus_xg_per90": "unavailable",
+  "ground_duels_won_pct": "observed_candidate",
+  "interceptions_per90": "observed_candidate",
+  "key_passes_per90": "observed_candidate",
+  "long_passes_completed_per90": "derived_candidate",
+  "miscontrols_per90": "experimental",
+  "non_penalty_xg_per90": "unavailable",
+  "pass_completion_pct": "observed_candidate",
+  "passes_into_final_third_per90": "derived_candidate",
+  "passes_per90": "observed_candidate",
+  "passes_under_pressure_per90": "unavailable",
+  "pressures_per90": "unavailable",
+  "progressive_carries_per90": "unavailable",
+  "progressive_passes_per90": "derived_candidate",
+  "shot_creating_actions_per90": "unavailable",
+  "shots_per90": "observed_candidate",
+  "successful_take_ons_per90": "observed_candidate",
+  "tackles_per90": "experimental",
+  "take_on_success_pct": "observed_candidate",
+  "through_balls_per90": "observed_candidate",
+  "touches_in_box_per90": "experimental",
+  "xa_per90": "unavailable"
+ },
+ "peer_counts_covered_ge_450_all_ages_by_coarse_group": {
+  "ATT": {
+   "aerial_duels_won_pct": 401,
+   "crosses_per90": 401,
+   "dispossessed_per90": 401,
+   "fouls_per90": 401,
+   "ground_duels_won_pct": 401,
+   "interceptions_per90": 401,
+   "key_passes_per90": 401,
+   "long_passes_completed_per90": 401,
+   "miscontrols_per90": 401,
+   "pass_completion_pct": 401,
+   "passes_into_final_third_per90": 401,
+   "passes_per90": 401,
+   "progressive_passes_per90": 401,
+   "shots_per90": 401,
+   "successful_take_ons_per90": 401,
+   "tackles_per90": 401,
+   "take_on_success_pct": 400,
+   "through_balls_per90": 401,
+   "touches_in_box_per90": 401
+  },
+  "DEF": {
+   "aerial_duels_won_pct": 703,
+   "crosses_per90": 703,
+   "dispossessed_per90": 703,
+   "fouls_per90": 703,
+   "ground_duels_won_pct": 703,
+   "interceptions_per90": 703,
+   "key_passes_per90": 703,
+   "long_passes_completed_per90": 703,
+   "miscontrols_per90": 703,
+   "pass_completion_pct": 703,
+   "passes_into_final_third_per90": 703,
+   "passes_per90": 703,
+   "progressive_passes_per90": 703,
+   "shots_per90": 703,
+   "successful_take_ons_per90": 703,
+   "tackles_per90": 703,
+   "take_on_success_pct": 672,
+   "through_balls_per90": 703,
+   "touches_in_box_per90": 703
+  },
+  "GK": {
+   "aerial_duels_won_pct": 134,
+   "crosses_per90": 135,
+   "dispossessed_per90": 135,
+   "fouls_per90": 135,
+   "ground_duels_won_pct": 131,
+   "interceptions_per90": 135,
+   "key_passes_per90": 135,
+   "long_passes_completed_per90": 135,
+   "miscontrols_per90": 135,
+   "pass_completion_pct": 135,
+   "passes_into_final_third_per90": 135,
+   "passes_per90": 135,
+   "progressive_passes_per90": 135,
+   "shots_per90": 135,
+   "successful_take_ons_per90": 135,
+   "tackles_per90": 135,
+   "take_on_success_pct": 25,
+   "through_balls_per90": 135,
+   "touches_in_box_per90": 135
+  },
+  "MID": {
+   "aerial_duels_won_pct": 705,
+   "crosses_per90": 705,
+   "dispossessed_per90": 705,
+   "fouls_per90": 705,
+   "ground_duels_won_pct": 705,
+   "interceptions_per90": 705,
+   "key_passes_per90": 705,
+   "long_passes_completed_per90": 705,
+   "miscontrols_per90": 705,
+   "pass_completion_pct": 705,
+   "passes_into_final_third_per90": 705,
+   "passes_per90": 705,
+   "progressive_passes_per90": 705,
+   "shots_per90": 705,
+   "successful_take_ons_per90": 705,
+   "tackles_per90": 705,
+   "take_on_success_pct": 700,
+   "through_balls_per90": 705,
+   "touches_in_box_per90": 705
+  }
+ },
+ "resources_non_deterministic": {
+  "peak_rss_mb": 247.8,
+  "phases": [
+   {
+    "peak_rss_mb": 164.8,
+    "phase": "league:England",
+    "wall_seconds": 7.02
+   },
+   {
+    "peak_rss_mb": 173.6,
+    "phase": "league:France",
+    "wall_seconds": 7.2
+   },
+   {
+    "peak_rss_mb": 173.6,
+    "phase": "league:Germany",
+    "wall_seconds": 5.67
+   },
+   {
+    "peak_rss_mb": 203.1,
+    "phase": "league:Italy",
+    "wall_seconds": 7.0
+   },
+   {
+    "peak_rss_mb": 208.8,
+    "phase": "league:Spain",
+    "wall_seconds": 6.98
+   }
+  ],
+  "raw_dir_bytes": 79747150,
+  "total_wall_seconds": 34.41
+ },
+ "roles": {
+  "advanced_8": {
+   "eligible_positions": [
+    "CM",
+    "AM",
+    "CAM"
+   ],
+   "granular_position_available": false,
+   "position_group": "MID",
+   "required_metrics": [
+    "progressive_carries_per90",
+    "passes_into_final_third_per90",
+    "xa_per90"
+   ],
+   "strict_required_fraction": 0.0,
+   "strict_weighted_support": 0.0,
+   "upper_bound_clears_70pct": false,
+   "upper_bound_groups_without_support": [
+    "progressive_receiving",
+    "counterpressing",
+    "box_entries",
+    "availability"
+   ],
+   "upper_bound_required_fraction": 0.3333,
+   "upper_bound_required_missing": {
+    "progressive_carries_per90": "unavailable",
+    "xa_per90": "unavailable"
+   },
+   "upper_bound_weighted_support": 0.31
+  },
+  "ball_winning_midfielder": {
+   "eligible_positions": [
+    "DM",
+    "CM"
+   ],
+   "granular_position_available": false,
+   "position_group": "MID",
+   "required_metrics": [
+    "tackles_per90",
+    "interceptions_per90",
+    "ground_duels_won_pct"
+   ],
+   "strict_required_fraction": 0.0,
+   "strict_weighted_support": 0.0,
+   "upper_bound_clears_70pct": false,
+   "upper_bound_groups_without_support": [
+    "pressing",
+    "defensive_coverage",
+    "availability"
+   ],
+   "upper_bound_required_fraction": 0.6667,
+   "upper_bound_required_missing": {
+    "tackles_per90": "experimental"
+   },
+   "upper_bound_weighted_support": 0.375
+  },
+  "complete_forward": {
+   "eligible_positions": [
+    "CF",
+    "ST"
+   ],
+   "granular_position_available": false,
+   "position_group": "ATT",
+   "required_metrics": [
+    "non_penalty_xg_per90",
+    "touches_in_box_per90",
+    "progressive_passes_per90"
+   ],
+   "strict_required_fraction": 0.0,
+   "strict_weighted_support": 0.0,
+   "upper_bound_clears_70pct": false,
+   "upper_bound_groups_without_support": [
+    "shot_threat",
+    "creation",
+    "box_presence",
+    "pressing",
+    "finishing_confidence"
+   ],
+   "upper_bound_required_fraction": 0.3333,
+   "upper_bound_required_missing": {
+    "non_penalty_xg_per90": "unavailable",
+    "touches_in_box_per90": "experimental"
+   },
+   "upper_bound_weighted_support": 0.225
+  },
+  "deep_lying_playmaker": {
+   "eligible_positions": [
+    "DM",
+    "CM"
+   ],
+   "granular_position_available": false,
+   "position_group": "MID",
+   "required_metrics": [
+    "progressive_passes_per90",
+    "passes_into_final_third_per90",
+    "pass_completion_pct"
+   ],
+   "strict_required_fraction": 0.0,
+   "strict_weighted_support": 0.0,
+   "upper_bound_clears_70pct": true,
+   "upper_bound_groups_without_support": [
+    "press_resistance",
+    "availability"
+   ],
+   "upper_bound_required_fraction": 1.0,
+   "upper_bound_required_missing": {},
+   "upper_bound_weighted_support": 0.64
+  },
+  "inside_forward": {
+   "eligible_positions": [
+    "LW",
+    "RW",
+    "CF"
+   ],
+   "granular_position_available": false,
+   "position_group": "ATT",
+   "required_metrics": [
+    "non_penalty_xg_per90",
+    "shots_per90",
+    "touches_in_box_per90"
+   ],
+   "strict_required_fraction": 0.0,
+   "strict_weighted_support": 0.0,
+   "upper_bound_clears_70pct": false,
+   "upper_bound_groups_without_support": [
+    "central_entries",
+    "shot_creation",
+    "box_presence",
+    "finishing_confidence",
+    "possession_security",
+    "defensive_contribution"
+   ],
+   "upper_bound_required_fraction": 0.3333,
+   "upper_bound_required_missing": {
+    "non_penalty_xg_per90": "unavailable",
+    "touches_in_box_per90": "experimental"
+   },
+   "upper_bound_weighted_support": 0.1
+  },
+  "pressing_forward": {
+   "eligible_positions": [
+    "CF",
+    "ST",
+    "LW",
+    "RW"
+   ],
+   "granular_position_available": false,
+   "position_group": "ATT",
+   "required_metrics": [
+    "pressures_per90",
+    "non_penalty_xg_per90",
+    "touches_in_box_per90"
+   ],
+   "strict_required_fraction": 0.0,
+   "strict_weighted_support": 0.0,
+   "upper_bound_clears_70pct": false,
+   "upper_bound_groups_without_support": [
+    "pressing_volume",
+    "shot_threat",
+    "transition_carrying",
+    "possession_security"
+   ],
+   "upper_bound_required_fraction": 0.0,
+   "upper_bound_required_missing": {
+    "non_penalty_xg_per90": "unavailable",
+    "pressures_per90": "unavailable",
+    "touches_in_box_per90": "experimental"
+   },
+   "upper_bound_weighted_support": 0.25
+  },
+  "shadow_striker": {
+   "eligible_positions": [
+    "CF",
+    "AM",
+    "CAM",
+    "ST"
+   ],
+   "granular_position_available": false,
+   "position_group": "ATT",
+   "required_metrics": [
+    "touches_in_box_per90",
+    "non_penalty_xg_per90",
+    "shots_per90"
+   ],
+   "strict_required_fraction": 0.0,
+   "strict_weighted_support": 0.0,
+   "upper_bound_clears_70pct": false,
+   "upper_bound_groups_without_support": [
+    "box_presence",
+    "shot_threat",
+    "arrival_carrying",
+    "shot_creation",
+    "finishing_confidence",
+    "possession_security"
+   ],
+   "upper_bound_required_fraction": 0.3333,
+   "upper_bound_required_missing": {
+    "non_penalty_xg_per90": "unavailable",
+    "touches_in_box_per90": "experimental"
+   },
+   "upper_bound_weighted_support": 0.15
+  },
+  "tempo_controller": {
+   "eligible_positions": [
+    "CM",
+    "DM"
+   ],
+   "granular_position_available": false,
+   "position_group": "MID",
+   "required_metrics": [
+    "passes_per90",
+    "pass_completion_pct",
+    "progressive_passes_per90"
+   ],
+   "strict_required_fraction": 0.0,
+   "strict_weighted_support": 0.0,
+   "upper_bound_clears_70pct": true,
+   "upper_bound_groups_without_support": [
+    "press_resistance",
+    "possession_security",
+    "defensive_coverage",
+    "availability"
+   ],
+   "upper_bound_required_fraction": 1.0,
+   "upper_bound_required_missing": {},
+   "upper_bound_weighted_support": 0.6
+  },
+  "touchline_winger": {
+   "eligible_positions": [
+    "LW",
+    "RW"
+   ],
+   "granular_position_available": false,
+   "position_group": "ATT",
+   "required_metrics": [
+    "successful_take_ons_per90",
+    "progressive_carries_per90",
+    "carries_into_final_third_per90"
+   ],
+   "strict_required_fraction": 0.0,
+   "strict_weighted_support": 0.0,
+   "upper_bound_clears_70pct": false,
+   "upper_bound_groups_without_support": [
+    "progressive_carrying",
+    "final_third_entries",
+    "possession_security",
+    "defensive_work"
+   ],
+   "upper_bound_required_fraction": 0.3333,
+   "upper_bound_required_missing": {
+    "carries_into_final_third_per90": "unavailable",
+    "progressive_carries_per90": "unavailable"
+   },
+   "upper_bound_weighted_support": 0.5
+  }
+ },
+ "sample": {
+  "edge_case_match_counts": {
+   "dismissal": 297,
+   "event_clock_conflict": 26,
+   "event_goals_not_equal_score": 1,
+   "halftime_substitution": 546,
+   "own_goal_event": 146,
+   "roster_id_missing_from_players_json": 22,
+   "stoppage_time_substitution": 179,
+   "substitution": 1826,
+   "unattributed_player_0": 1826,
+   "unused_bench": 1826
+  },
+  "edge_cases": {
+   "dismissal": 2499721,
+   "event_clock_conflict": 2516750,
+   "event_goals_not_equal_score": 2499781,
+   "halftime_substitution": 2500693,
+   "own_goal_event": 2499722,
+   "roster_id_missing_from_players_json": 2500832,
+   "stoppage_time_substitution": 2516843,
+   "substitution": 2500691,
+   "unattributed_player_0": 2500691,
+   "unused_bench": 2500691
+  },
+  "matches": {
+   "2499719": {
+    "dateutc": "2017-08-11 18:45:00",
+    "events": 1768,
+    "goals": {
+     "1609": {
+      "event_goals": 4,
+      "roster_goals_field": 4,
+      "score": 4
+     },
+     "1631": {
+      "event_goals": 3,
+      "roster_goals_field": 3,
+      "score": 3
+     }
+    },
+    "ht_subs": 0,
+    "label": "Arsenal - Leicester City, 4 - 3",
+    "league": "England",
+    "reds": 0,
+    "stoppage_subs": 0,
+    "subs": 6,
+    "team_issues": {},
+    "team_totals": {
+     "1609": {
+      "covered_minutes": 990.0,
+      "passes": 649,
+      "passes_completed": 544,
+      "shots_np": 27
+     },
+     "1631": {
+      "covered_minutes": 990.0,
+      "passes": 292,
+      "passes_completed": 210,
+      "shots_np": 7
+     }
+    },
+    "unused_bench": 8
+   },
+   "2499721": {
+    "dateutc": "2017-08-12 14:00:00",
+    "events": 1565,
+    "goals": {
+     "1610": {
+      "event_goals": 2,
+      "roster_goals_field": 2,
+      "score": 2
+     },
+     "1646": {
+      "event_goals": 3,
+      "roster_goals_field": 3,
+      "score": 3
+     }
+    },
+    "ht_subs": 0,
+    "label": "Chelsea - Burnley, 2 - 3",
+    "league": "England",
+    "reds": 2,
+    "stoppage_subs": 0,
+    "subs": 5,
+    "team_issues": {},
+    "team_totals": {
+     "1610": {
+      "covered_minutes": 905.0,
+      "passes": 551,
+      "passes_completed": 482,
+      "shots_np": 16
+     },
+     "1646": {
+      "covered_minutes": 990.0,
+      "passes": 334,
+      "passes_completed": 267,
+      "shots_np": 10
+     }
+    },
+    "unused_bench": 9
+   },
+   "2499722": {
+    "dateutc": "2017-08-12 14:00:00",
+    "events": 1513,
+    "goals": {
+     "1628": {
+      "event_goals": 0,
+      "roster_goals_field": 0,
+      "score": 0
+     },
+     "1673": {
+      "event_goals": 3,
+      "roster_goals_field": 2,
+      "score": 3
+     }
+    },
+    "ht_subs": 1,
+    "label": "Crystal Palace - Huddersfield Town, 0 - 3",
+    "league": "England",
+    "reds": 0,
+    "stoppage_subs": 0,
+    "subs": 5,
+    "team_issues": {},
+    "team_totals": {
+     "1628": {
+      "covered_minutes": 990.0,
+      "passes": 420,
+      "passes_completed": 327,
+      "shots_np": 14
+     },
+     "1673": {
+      "covered_minutes": 990.0,
+      "passes": 326,
+      "passes_completed": 231,
+      "shots_np": 8
+     }
+    },
+    "unused_bench": 9
+   },
+   "2499781": {
+    "dateutc": "2017-09-30 16:30:00",
+    "events": 1810,
+    "goals": {
+     "1610": {
+      "event_goals": 0,
+      "roster_goals_field": 0,
+      "score": 0
+     },
+     "1625": {
+      "event_goals": 0,
+      "roster_goals_field": 1,
+      "score": 1
+     }
+    },
+    "ht_subs": 0,
+    "label": "Chelsea - Manchester City, 0 - 1",
+    "league": "England",
+    "reds": 0,
+    "stoppage_subs": 0,
+    "subs": 6,
+    "team_issues": {},
+    "unused_bench": 8
+   },
+   "2499903": {
+    "dateutc": "2017-12-23 19:45:00",
+    "events": 1595,
+    "goals": {
+     "1611": {
+      "event_goals": 2,
+      "roster_goals_field": 2,
+      "score": 2
+     },
+     "1631": {
+      "event_goals": 2,
+      "roster_goals_field": 2,
+      "score": 2
+     }
+    },
+    "ht_subs": 0,
+    "label": "Leicester City - Manchester United, 2 - 2",
+    "league": "England",
+    "reds": 1,
+    "stoppage_subs": 0,
+    "subs": 6,
+    "team_issues": {},
+    "team_totals": {
+     "1611": {
+      "covered_minutes": 990.0,
+      "passes": 476,
+      "passes_completed": 391,
+      "shots_np": 18
+     },
+     "1631": {
+      "covered_minutes": 973.0,
+      "passes": 465,
+      "passes_completed": 376,
+      "shots_np": 8
+     }
+    },
+    "unused_bench": 8
+   },
+   "2500098": {
+    "dateutc": "2018-05-13 14:00:00",
+    "events": 1460,
+    "goals": {
+     "1623": {
+      "event_goals": 1,
+      "roster_goals_field": 1,
+      "score": 1
+     },
+     "1633": {
+      "event_goals": 3,
+      "roster_goals_field": 3,
+      "score": 3
+     }
+    },
+    "ht_subs": 1,
+    "label": "West Ham United - Everton, 3 - 1",
+    "league": "England",
+    "reds": 0,
+    "stoppage_subs": 0,
+    "subs": 6,
+    "team_issues": {},
+    "team_totals": {
+     "1623": {
+      "covered_minutes": 990.0,
+      "passes": 376,
+      "passes_completed": 310,
+      "shots_np": 13
+     },
+     "1633": {
+      "covered_minutes": 990.0,
+      "passes": 481,
+      "passes_completed": 406,
+      "shots_np": 16
+     }
+    },
+    "unused_bench": 8
+   },
+   "2500691": {
+    "dateutc": "2017-08-04 18:45:00",
+    "events": 1439,
+    "goals": {
+     "3780": {
+      "event_goals": 2,
+      "roster_goals_field": 2,
+      "score": 2
+     },
+     "19830": {
+      "event_goals": 3,
+      "roster_goals_field": 3,
+      "score": 3
+     }
+    },
+    "ht_subs": 0,
+    "label": "Monaco - Toulouse, 3 - 2",
+    "league": "France",
+    "reds": 0,
+    "stoppage_subs": 0,
+    "subs": 6,
+    "team_issues": {},
+    "team_totals": {
+     "19830": {
+      "covered_minutes": 990.0,
+      "passes": 522,
+      "passes_completed": 437,
+      "shots_np": 15
+     },
+     "3780": {
+      "covered_minutes": 990.0,
+      "passes": 216,
+      "passes_completed": 140,
+      "shots_np": 5
+     }
+    },
+    "unused_bench": 8
+   },
+   "2500693": {
+    "dateutc": "2017-08-05 15:15:00",
+    "events": 1811,
+    "goals": {
+     "3767": {
+      "event_goals": 2,
+      "roster_goals_field": 2,
+      "score": 2
+     },
+     "3789": {
+      "event_goals": 0,
+      "roster_goals_field": 0,
+      "score": 0
+     }
+    },
+    "ht_subs": 1,
+    "label": "PSG - Amiens SC, 2 - 0",
+    "league": "France",
+    "reds": 0,
+    "stoppage_subs": 0,
+    "subs": 6,
+    "team_issues": {},
+    "team_totals": {
+     "3767": {
+      "covered_minutes": 990.0,
+      "passes": 764,
+      "passes_completed": 680,
+      "shots_np": 16
+     },
+     "3789": {
+      "covered_minutes": 990.0,
+      "passes": 361,
+      "passes_completed": 275,
+      "shots_np": 6
+     }
+    },
+    "unused_bench": 8
+   },
+   "2500832": {
+    "dateutc": "2017-11-29 18:00:00",
+    "events": 1858,
+    "goals": {
+     "3770": {
+      "event_goals": 1,
+      "roster_goals_field": 1,
+      "score": 1
+     },
+     "19830": {
+      "event_goals": 0,
+      "roster_goals_field": 0,
+      "score": 0
+     }
+    },
+    "ht_subs": 0,
+    "label": "Nantes - Monaco, 1 - 0",
+    "league": "France",
+    "reds": 0,
+    "stoppage_subs": 1,
+    "subs": 6,
+    "team_issues": {},
+    "team_totals": {
+     "19830": {
+      "covered_minutes": 990.0,
+      "passes": 491,
+      "passes_completed": 389,
+      "shots_np": 9
+     },
+     "3770": {
+      "covered_minutes": 990.0,
+      "passes": 538,
+      "passes_completed": 424,
+      "shots_np": 15
+     }
+    },
+    "unused_bench": 8
+   },
+   "2500875": {
+    "dateutc": "2017-12-20 19:50:00",
+    "events": 1738,
+    "goals": {
+     "3766": {
+      "event_goals": 2,
+      "roster_goals_field": 2,
+      "score": 2
+     },
+     "3780": {
+      "event_goals": 1,
+      "roster_goals_field": 1,
+      "score": 1
+     }
+    },
+    "ht_subs": 0,
+    "label": "Toulouse - Olympique Lyonnais, 1 - 2",
+    "league": "France",
+    "reds": 0,
+    "stoppage_subs": 0,
+    "subs": 6,
+    "team_issues": {},
+    "team_totals": {
+     "3766": {
+      "covered_minutes": 990.0,
+      "passes": 483,
+      "passes_completed": 403,
+      "shots_np": 13
+     },
+     "3780": {
+      "covered_minutes": 990.0,
+      "passes": 448,
+      "passes_completed": 350,
+      "shots_np": 15
+     }
+    },
+    "unused_bench": 8
+   },
+   "2501065": {
+    "dateutc": "2018-05-19 19:00:00",
+    "events": 1723,
+    "goals": {
+     "3795": {
+      "event_goals": 0,
+      "roster_goals_field": 0,
+      "score": 0
+     },
+     "19830": {
+      "event_goals": 3,
+      "roster_goals_field": 3,
+      "score": 3
+     }
+    },
+    "ht_subs": 0,
+    "label": "Troyes - Monaco, 0 - 3",
+    "league": "France",
+    "reds": 0,
+    "stoppage_subs": 1,
+    "subs": 6,
+    "team_issues": {},
+    "team_totals": {
+     "19830": {
+      "covered_minutes": 990.0,
+      "passes": 568,
+      "passes_completed": 475,
+      "shots_np": 21
+     },
+     "3795": {
+      "covered_minutes": 990.0,
+      "passes": 419,
+      "passes_completed": 334,
+      "shots_np": 13
+     }
+    },
+    "unused_bench": 8
+   },
+   "2516739": {
+    "dateutc": "2017-08-18 18:30:00",
+    "events": 1607,
+    "goals": {
+     "2444": {
+      "event_goals": 3,
+      "roster_goals_field": 3,
+      "score": 3
+     },
+     "2446": {
+      "event_goals": 1,
+      "roster_goals_field": 1,
+      "score": 1
+     }
+    },
+    "ht_subs": 2,
+    "label": "Bayern M\\u00fcnchen - Bayer Leverkusen, 3 - 1",
+    "league": "Germany",
+    "reds": 0,
+    "stoppage_subs": 0,
+    "subs": 6,
+    "team_issues": {},
+    "team_totals": {
+     "2444": {
+      "covered_minutes": 990.0,
+      "passes": 531,
+      "passes_completed": 442,
+      "shots_np": 12
+     },
+     "2446": {
+      "covered_minutes": 990.0,
+      "passes": 493,
+      "passes_completed": 427,
+      "shots_np": 20
+     }
+    },
+    "unused_bench": 8
+   },
+   "2516750": {
+    "dateutc": "2017-08-25 18:30:00",
+    "events": 1562,
+    "goals": {
+     "2450": {
+      "event_goals": 3,
+      "roster_goals_field": 3,
+      "score": 3
+     },
+     "2463": {
+      "event_goals": 1,
+      "roster_goals_field": 1,
+      "score": 1
+     }
+    },
+    "ht_subs": 1,
+    "label": "K\\u00f6ln - Hamburger SV, 1 - 3",
+    "league": "Germany",
+    "reds": 1,
+    "stoppage_subs": 0,
+    "subs": 6,
+    "team_issues": {},
+    "team_totals": {
+     "2450": {
+      "covered_minutes": 869.0,
+      "passes": 218,
+      "passes_completed": 140,
+      "shots_np": 7
+     },
+     "2463": {
+      "covered_minutes": 990.0,
+      "passes": 591,
+      "passes_completed": 496,
+      "shots_np": 18
+     }
+    },
+    "unused_bench": 8
+   },
+   "2516843": {
+    "dateutc": "2017-11-18 14:30:00",
+    "events": 1597,
+    "goals": {
+     "2446": {
+      "event_goals": 2,
+      "roster_goals_field": 2,
+      "score": 2
+     },
+     "2975": {
+      "event_goals": 2,
+      "roster_goals_field": 2,
+      "score": 2
+     }
+    },
+    "ht_subs": 1,
+    "label": "Bayer Leverkusen - RB Leipzig, 2 - 2",
+    "league": "Germany",
+    "reds": 1,
+    "stoppage_subs": 1,
+    "subs": 6,
+    "team_issues": {},
+    "team_totals": {
+     "2446": {
+      "covered_minutes": 952.0,
+      "passes": 461,
+      "passes_completed": 363,
+      "shots_np": 12
+     },
+     "2975": {
+      "covered_minutes": 990.0,
+      "passes": 429,
+      "passes_completed": 342,
+      "shots_np": 10
+     }
+    },
+    "unused_bench": 8
+   },
+   "2516884": {
+    "dateutc": "2017-12-17 17:00:00",
+    "events": 1695,
+    "goals": {
+     "2457": {
+      "event_goals": 3,
+      "roster_goals_field": 3,
+      "score": 3
+     },
+     "2975": {
+      "event_goals": 2,
+      "roster_goals_field": 2,
+      "score": 2
+     }
+    },
+    "ht_subs": 2,
+    "label": "RB Leipzig - Hertha BSC, 2 - 3",
+    "league": "Germany",
+    "reds": 1,
+    "stoppage_subs": 0,
+    "subs": 6,
+    "team_issues": {},
+    "team_totals": {
+     "2457": {
+      "covered_minutes": 907.0,
+      "passes": 235,
+      "passes_completed": 151,
+      "shots_np": 7
+     },
+     "2975": {
+      "covered_minutes": 990.0,
+      "passes": 692,
+      "passes_completed": 579,
+      "shots_np": 20
+     }
+    },
+    "unused_bench": 8
+   },
+   "2517044": {
+    "dateutc": "2018-05-12 13:30:00",
+    "events": 1546,
+    "goals": {
+     "2451": {
+      "event_goals": 4,
+      "roster_goals_field": 4,
+      "score": 4
+     },
+     "2463": {
+      "event_goals": 1,
+      "roster_goals_field": 1,
+      "score": 1
+     }
+    },
+    "ht_subs": 0,
+    "label": "Wolfsburg - K\\u00f6ln, 4 - 1",
+    "league": "Germany",
+    "reds": 0,
+    "stoppage_subs": 0,
+    "subs": 6,
+    "team_issues": {},
+    "team_totals": {
+     "2451": {
+      "covered_minutes": 990.0,
+      "passes": 366,
+      "passes_completed": 296,
+      "shots_np": 18
+     },
+     "2463": {
+      "covered_minutes": 990.0,
+      "passes": 530,
+      "passes_completed": 449,
+      "shots_np": 7
+     }
+    },
+    "unused_bench": 8
+   },
+   "2565557": {
+    "dateutc": "2017-08-18 18:15:00",
+    "events": 1485,
+    "goals": {
+     "696": {
+      "event_goals": 0,
+      "roster_goals_field": 0,
+      "score": 0
+     },
+     "712": {
+      "event_goals": 1,
+      "roster_goals_field": 1,
+      "score": 1
+     }
+    },
+    "ht_subs": 0,
+    "label": "Legan\\u00e9s - Deportivo Alav\\u00e9s, 1 - 0",
+    "league": "Spain",
+    "reds": 0,
+    "stoppage_subs": 0,
+    "subs": 6,
+    "team_issues": {},
+    "team_totals": {
+     "696": {
+      "covered_minutes": 990.0,
+      "passes": 358,
+      "passes_completed": 267,
+      "shots_np": 7
+     },
+     "712": {
+      "covered_minutes": 990.0,
+      "passes": 389,
+      "passes_completed": 294,
+      "shots_np": 13
+     }
+    },
+    "unused_bench": 8
+   },
+   "2565739": {
+    "dateutc": "2018-01-19 20:00:00",
+    "events": 1534,
+    "goals": {
+     "678": {
+      "event_goals": 2,
+      "roster_goals_field": 2,
+      "score": 2
+     },
+     "698": {
+      "event_goals": 2,
+      "roster_goals_field": 2,
+      "score": 2
+     }
+    },
+    "ht_subs": 1,
+    "label": "Getafe - Athletic Club, 2 - 2",
+    "league": "Spain",
+    "reds": 0,
+    "stoppage_subs": 0,
+    "subs": 6,
+    "team_issues": {},
+    "team_totals": {
+     "678": {
+      "covered_minutes": 990.0,
+      "passes": 397,
+      "passes_completed": 313,
+      "shots_np": 6
+     },
+     "698": {
+      "covered_minutes": 990.0,
+      "passes": 406,
+      "passes_completed": 319,
+      "shots_np": 13
+     }
+    },
+    "unused_bench": 8
+   },
+   "2565922": {
+    "dateutc": "2018-05-20 18:45:00",
+    "events": 1753,
+    "goals": {
+     "676": {
+      "event_goals": 1,
+      "roster_goals_field": 1,
+      "score": 1
+     },
+     "687": {
+      "event_goals": 0,
+      "roster_goals_field": 0,
+      "score": 0
+     }
+    },
+    "ht_subs": 0,
+    "label": "Barcelona - Real Sociedad, 1 - 0",
+    "league": "Spain",
+    "reds": 0,
+    "stoppage_subs": 0,
+    "subs": 6,
+    "team_issues": {},
+    "team_totals": {
+     "676": {
+      "covered_minutes": 990.0,
+      "passes": 629,
+      "passes_completed": 560,
+      "shots_np": 11
+     },
+     "687": {
+      "covered_minutes": 990.0,
+      "passes": 396,
+      "passes_completed": 329,
+      "shots_np": 13
+     }
+    },
+    "unused_bench": 8
+   },
+   "2575964": {
+    "dateutc": "2017-08-19 16:00:00",
+    "events": 1709,
+    "goals": {
+     "3159": {
+      "event_goals": 3,
+      "roster_goals_field": 3,
+      "score": 3
+     },
+     "3173": {
+      "event_goals": 0,
+      "roster_goals_field": 0,
+      "score": 0
+     }
+    },
+    "ht_subs": 0,
+    "label": "Juventus - Cagliari, 3 - 0",
+    "league": "Italy",
+    "reds": 0,
+    "stoppage_subs": 0,
+    "subs": 6,
+    "team_issues": {},
+    "team_totals": {
+     "3159": {
+      "covered_minutes": 990.0,
+      "passes": 721,
+      "passes_completed": 641,
+      "shots_np": 17
+     },
+     "3173": {
+      "covered_minutes": 990.0,
+      "passes": 432,
+      "passes_completed": 352,
+      "shots_np": 4
+     }
+    },
+    "unused_bench": 16
+   },
+   "2576153": {
+    "dateutc": "2018-01-05 19:45:00",
+    "events": 1716,
+    "goals": {
+     "3161": {
+      "event_goals": 1,
+      "roster_goals_field": 1,
+      "score": 1
+     },
+     "3176": {
+      "event_goals": 1,
+      "roster_goals_field": 1,
+      "score": 1
+     }
+    },
+    "ht_subs": 0,
+    "label": "Fiorentina - Internazionale, 1 - 1",
+    "league": "Italy",
+    "reds": 0,
+    "stoppage_subs": 0,
+    "subs": 6,
+    "team_issues": {},
+    "team_totals": {
+     "3161": {
+      "covered_minutes": 990.0,
+      "passes": 486,
+      "passes_completed": 396,
+      "shots_np": 12
+     },
+     "3176": {
+      "covered_minutes": 990.0,
+      "passes": 520,
+      "passes_completed": 446,
+      "shots_np": 22
+     }
+    },
+    "unused_bench": 15
+   },
+   "2576336": {
+    "dateutc": "2018-05-20 18:45:00",
+    "events": 1678,
+    "goals": {
+     "3158": {
+      "event_goals": 1,
+      "roster_goals_field": 0,
+      "score": 1
+     },
+     "3315": {
+      "event_goals": 0,
+      "roster_goals_field": 0,
+      "score": 0
+     }
+    },
+    "ht_subs": 0,
+    "label": "Sassuolo - Roma, 0 - 1",
+    "league": "Italy",
+    "reds": 0,
+    "stoppage_subs": 0,
+    "subs": 6,
+    "team_issues": {},
+    "team_totals": {
+     "3158": {
+      "covered_minutes": 913.0,
+      "passes": 504,
+      "passes_completed": 425,
+      "shots_np": 12
+     },
+     "3315": {
+      "covered_minutes": 990.0,
+      "passes": 393,
+      "passes_completed": 302,
+      "shots_np": 14
+     }
+    },
+    "unused_bench": 17
+   }
+  },
+  "pinned": {
+   "England": {
+    "earliest": 2499719,
+    "latest": 2500098,
+    "middle": 2499903
+   },
+   "France": {
+    "earliest": 2500691,
+    "latest": 2501065,
+    "middle": 2500875
+   },
+   "Germany": {
+    "earliest": 2516739,
+    "latest": 2517044,
+    "middle": 2516884
+   },
+   "Italy": {
+    "earliest": 2575964,
+    "latest": 2576336,
+    "middle": 2576153
+   },
+   "Spain": {
+    "earliest": 2565557,
+    "latest": 2565922,
+    "middle": 2565739
+   }
+  }
+ }
+}

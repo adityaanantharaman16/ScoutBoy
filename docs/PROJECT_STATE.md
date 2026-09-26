@@ -1,11 +1,10 @@
 # ScoutBoy — Project State
 
-Last updated: 2026-09-26, scope-documentation card `t_264a985e`, isolated worktree
-`/opt/data/projects/ScoutBoy-wyscout-docs`, branch `docs/wyscout-scope`. This branch
-contains the independently reviewed planning commit
-`12b7d81ce2fc902bf728339d97bd5c79d3dea93e` from
-`docs/wyscout-migration-plan`, based on `origin/main` @
-`bafa77d42ec3025a8c917484ab5fafa972b70d0d`; the plan PR is not merged.
+Last updated: 2026-09-26, Wyscout P0 feasibility card `t_44597dd8`, isolated
+worktree `/opt/data/projects/ScoutBoy-wyscout-p0`, branch
+`research/wyscout-p0-feasibility`, based on `origin/main` @
+`0b9d188f34c1a9dbfc11bd342aadf84837516d05`. P0 research evidence only, pending
+independent review; not merged.
 
 ## Where the product is
 
@@ -25,10 +24,76 @@ Known, load-bearing limitations (do not silently drop these from docs):
   offline tests only.
 - The owner-approved future direction is a **historical, non-live Wyscout
   2017/18 Big Five snapshot**, not a live scouting service. It remains separate
-  from both the as-built pilot and synthetic demos: **not yet acquired,
-  ingested, verified, deployed, or available through a command**.
+  from both the as-built pilot and synthetic demos: **not ingested, verified for
+  product use, deployed, or available through a Make/product command**. Its
+  public files were acquired only privately and read-only for the P0 experiment
+  below.
 
-## Current planning and documentation checkpoint — migration not executed
+## Current checkpoint — Wyscout P0 feasibility measured (no migration)
+
+GitHub status re-read on 2026-09-26: the plan PR #13 and the scope-documentation
+PR #14 are both **merged** into `main`. The public GitHub REST API returned
+`merged: true` for both, with `merged_at` 2026-09-26T19:34:26Z (#13) and
+19:34:25Z (#14). `git ls-remote origin refs/heads/main` returned
+`0b9d188f34c1a9dbfc11bd342aadf84837516d05`. Wording further down that calls
+those PRs "open/draft and unmerged" is a superseded historical snapshot.
+[IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) remains the historical design
+record. Merging it did not authorize implementation.
+
+P0 (card `t_44597dd8`) executed the plan's rights and read-only feasibility
+experiment. Full results:
+[WYSCOUT_FEASIBILITY_REPORT.md](WYSCOUT_FEASIBILITY_REPORT.md), with an
+aggregate machine-readable report at `data/reports/wyscout_p0_feasibility.json`.
+
+Headline measurements:
+- **Coverage.** All five domestic leagues reconcile exactly with the S1 paper
+  counts: 1,826 matches and 3,071,395 events. Fixture lists are complete, and
+  there are no duplicate match or event IDs.
+- **Identity and minutes.** Every one of the 2,570 players who appeared has a
+  DOB. Minutes reconcile to 11 × 90 less dismissals per team-match, except in 3
+  Italian matches with broken substitution records.
+- **Positions (the blocker).** The only position field is a coarse, *current*
+  GK/DF/MD/FW label. Match lineups have no positions. Under the plan's G1 rule
+  (no blanket MD→CM or FW→ST mapping), **zero** players pass the strict G2 test,
+  against a target of 100.
+- **Metrics.** Only Deep-Lying Playmaker and Tempo Controller have all three
+  required metrics as unvalidated candidates. Ball-Winning Midfielder is at 2/3,
+  which is below the 70% gate. The other six roles need xG, carries or
+  pressures, which the source lacks.
+- **Diagnostic upper bound.** 183 unique U23 coarse midfielders would qualify if
+  the owner relaxed the position rule for those two roles and the metrics later
+  validated. This is not a G2 pass.
+- **Rights.** All pinned Figshare articles are labelled CC BY 4.0. Public display
+  still needs an owner and personal-data decision.
+
+**Verdict:** NO-GO for the full-scope plan as written; CONDITIONAL on an owner
+choice among the options in the report's §9 (stop, reduced two-role portfolio,
+position-inference research, or another source). Do not start P1 as written.
+
+This branch adds research tooling and evidence only:
+- `scripts/wyscout_p0/`: the pinned fetcher/verifier, the streaming analysis,
+  the research policy YAML, an independent count verifier and golden tests.
+  Its tests are added to pytest `testpaths`.
+- The feasibility report and the aggregate JSON report.
+
+It adds no adapter, DB write, rating change, API/UI change, Make target or
+deployment. Raw archives and per-player detail stay in gitignored
+`data/raw/wyscout/`. The report's §4 has the exact commands to reconstruct them
+from the pinned public DOIs.
+
+Verification run on this card (host venv Python 3.13.5 unless stated):
+- `pytest scripts/wyscout_p0/tests`: 28 passed. The same tests in Docker
+  `python:3.9-slim` (Python 3.9.25) also gave 28 passed.
+- Full `pytest`: 854 passed, 14 skipped, exit 0.
+- `ruff check .` and `black --check .`: both exit 0.
+- `verify_counts.py`: all checks match, exit 0.
+- Two full analysis runs produced an identical deterministic fingerprint.
+
+Frontend, E2E, contract and container checks were not run: no frontend or API
+files changed. Exact-head CI evidence belongs on the PR and the card, not in
+this file.
+
+## Previous planning and documentation checkpoint (historical snapshot, superseded above)
 
 The owner selected a historical, non-live Wyscout 2017/18 Big Five direction.
 [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) records the substantive design,
@@ -219,12 +284,12 @@ Checks **not run** this session, with the reason:
 
 ## Next action
 
-1. Obtain independent review and exact-head CI for draft scope-documentation PR
-   #14 after its final branch head is pushed. The reviewed plan PR #13 remains
-   separate, open/draft, and unmerged. Neither review is approval to merge,
-   acquire data, or implement.
-2. Owner/supervisor resolves the plan's explicit gates and authorizes P0
-   rights + read-only sample feasibility before assigning implementation slices.
-   Keep the existing StatsBomb pilot truthful and active until acceptance.
-3. Do not start the migration until a later, explicitly authorized implementation
-   slice. Milestone 9 remains unscoped.
+1. Independent review of the P0 branch and PR on card `t_44597dd8` (same-card
+   reviewer). Do not merge without the owner's authorization.
+2. After review, the owner reads `docs/WYSCOUT_FEASIBILITY_REPORT.md` §9 and
+   chooses an option: stop, a reduced two-role portfolio (which needs a planner
+   revision of the G1/G2 position rule), position-inference/PX research, or a
+   different source. The public-display rights and personal-data decision stays
+   separate.
+3. Do not dispatch P1–P6 until the owner decides. Keep the StatsBomb pilot truthful
+   and active. Milestone 9 remains unscoped.

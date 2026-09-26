@@ -28,8 +28,11 @@ offline tests.
 
 The owner-approved **target**, not a shipped dataset, is a historical, non-live
 Wyscout 2017/18 Big Five snapshot. Its reviewed design is in
-`docs/IMPLEMENTATION_PLAN.md`; it is **not yet acquired, ingested, verified,
-deployed, or available through an existing Make command**. Keep four states
+`docs/IMPLEMENTATION_PLAN.md`; it is **not ingested, verified for product use,
+deployed, or available through an existing Make command**. Its public files were
+downloaded only privately and read-only for the P0 feasibility experiment
+(`docs/WYSCOUT_FEASIBILITY_REPORT.md`, research scripts under
+`scripts/wyscout_p0/`, raw data gitignored). Keep four states
 distinct in documentation: synthetic fixtures/demos; the as-built 34-match
 StatsBomb pilot; this planned Wyscout target; and any future source-license,
 coverage, identity, metric, market, capacity, and owner-cutover gates.

@@ -58,6 +58,7 @@ testpaths = [
   "packages/market_model/tests",
   "packages/data_pipeline/tests",
   "apps/api/app/tests",
+  "scripts/wyscout_p0/tests",
 ]
 addopts = "-q"
 filterwarnings = ["ignore::DeprecationWarning"]
