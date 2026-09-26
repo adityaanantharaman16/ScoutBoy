@@ -18,6 +18,9 @@ local and gitignored.
 Outputs remain traceable and provider integrations are replaceable. Adapter code carries the
 mapping cost, and incomplete evidence must be represented explicitly in coverage and confidence.
 The current StatsBomb slice cannot be described as full Bundesliga coverage.
+The separately approved historical, non-live Wyscout 2017/18 direction remains planned only;
+its source-specific provenance, rights, coverage, and semantic gates are recorded in
+[`../IMPLEMENTATION_PLAN.md`](../IMPLEMENTATION_PLAN.md), not implied by this ADR.
 
 ## Alternatives considered
 

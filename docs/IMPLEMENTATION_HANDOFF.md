@@ -41,6 +41,42 @@ to next action.">
 merged/closed.">
 ```
 
+### 2026-09-26 — align scope docs to the planned historical Wyscout direction (kanban task `t_264a985e`)
+
+Task: `t_264a985e`. Goal: make maintained current/forward-looking documentation
+distinguish the shipped synthetic demos and 34-match Leverkusen-centered
+StatsBomb 2023/24 pilot from the owner-approved historical, non-live Wyscout
+2017/18 Big Five target, without data migration or product changes.
+
+**What was done:**
+- Fast-forwarded this isolated documentation branch to the independently reviewed
+  migration-plan commit `12b7d81ce2fc902bf728339d97bd5c79d3dea93e` only after
+  confirming the clean branch was its ancestor and `origin/docs/wyscout-migration-plan`
+  resolved to that exact SHA.
+- Updated `README.md`, `AGENTS.md`, `docs/PROJECT_STATE.md`,
+  `docs/IMPLEMENTATION_HANDOFF.md`, `docs/data_sources.md`, and the maintained
+  `docs/agent_notes.md` / ADR provenance context. Current commands retain their
+  shipped meanings; none is described as a Wyscout command. Historical milestone
+  reports, StatsBomb metric definitions/manifests, and benchmark evidence remain
+  records of the as-built pilot rather than being rewritten as Wyscout evidence.
+- Preserved the optional/no-live-Clerk-tenant limitation. The planned target is
+  stated as not acquired, ingested, verified, deployed, licensed for this product,
+  or live; rights, coverage, identity/minutes, metric, market, capacity, review,
+  and owner-cutover gates remain explicit in `docs/IMPLEMENTATION_PLAN.md`.
+
+**Environment friction worth recording for the next session:** no dedicated
+Markdown/link checker was found in the Makefile. Use a bounded local-link and
+consistency check plus `git diff --check`; application suites are not evidence of
+future Wyscout behavior and are not required for this documentation-only change.
+
+**Blocker(s):** none for documentation. Draft plan PR #13 is independently
+reviewed but remains open/unmerged; that is intentional and not authority to
+acquire data or implement the migration.
+
+**Next action:** complete documentation verification, publish a separate draft
+scope-docs PR for independent review, then wait for owner authorization before
+any later P0 rights/read-only feasibility work.
+
 ### 2026-09-26 — docs + JS dependency audit remediation (this session)
 
 Task: `t_3d613c3a` on the kanban board. Goal: one PR combining (a) agent

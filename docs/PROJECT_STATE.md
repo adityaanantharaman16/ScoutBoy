@@ -1,8 +1,11 @@
 # ScoutBoy — Project State
 
-Last updated: 2026-09-26, planning card `t_77b90bc8`, isolated worktree
-`/opt/data/projects/ScoutBoy-wyscout-plan`, branch `docs/wyscout-migration-plan`,
-based on `origin/main` @ `bafa77d42ec3025a8c917484ab5fafa972b70d0d`.
+Last updated: 2026-09-26, scope-documentation card `t_264a985e`, isolated worktree
+`/opt/data/projects/ScoutBoy-wyscout-docs`, branch `docs/wyscout-scope`. This branch
+contains the independently reviewed planning commit
+`12b7d81ce2fc902bf728339d97bd5c79d3dea93e` from
+`docs/wyscout-migration-plan`, based on `origin/main` @
+`bafa77d42ec3025a8c917484ab5fafa972b70d0d`; the plan PR is not merged.
 
 ## Where the product is
 
@@ -20,8 +23,12 @@ Known, load-bearing limitations (do not silently drop these from docs):
   (optional for a visitor, optional for a deployment) and have **never been
   exercised against a live Clerk tenant** — verification is deterministic
   offline tests only.
+- The owner-approved future direction is a **historical, non-live Wyscout
+  2017/18 Big Five snapshot**, not a live scouting service. It remains separate
+  from both the as-built pilot and synthetic demos: **not yet acquired,
+  ingested, verified, deployed, or available through a command**.
 
-## Current planning checkpoint — migration not executed
+## Current planning and documentation checkpoint — migration not executed
 
 The owner selected a historical, non-live Wyscout 2017/18 Big Five direction.
 [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) records the substantive design,
@@ -38,6 +45,16 @@ direct pressure or xG evidence in the inspected schema. Initial recommendation i
 validated Wyscout core metrics without market estimates; narrower role scope needs
 owner approval, not silent relaxation of the historical 100-player/five-league gate.
 Implementation is not dispatched by this planning card.
+
+The plan was independently reviewed at
+`12b7d81ce2fc902bf728339d97bd5c79d3dea93e`; draft PR #13 is open and unmerged.
+Its exact-head required checks passed at review, but that plan review neither
+authorizes implementation nor makes a Wyscout release real. This separate
+documentation card aligns current and forward-looking copy while preserving the
+StatsBomb pilot, synthetic demos, milestone evidence, metric definitions,
+manifests, and historical ADR records as as-built evidence. It does not add an
+adapter, source payload, Wyscout command, source-license clearance, coverage
+claim, model change, or deployment.
 
 Prior PR #12 is **merged**, not an open draft: GitHub REST `GET
 /repos/adityaanantharaman16/ScoutBoy/pulls/12` returned `merged: true`,
@@ -191,10 +208,11 @@ Checks **not run** this session, with the reason:
 
 ## Next action
 
-1. Independently review the draft historical migration plan on card `t_77b90bc8`;
-   review is not approval to merge, acquire data or implement.
+1. Independently review the scope-documentation change on card `t_264a985e`;
+   the reviewed plan PR #13 remains separate, open/draft, and unmerged. Neither
+   review is approval to merge, acquire data, or implement.
 2. Owner/supervisor resolves the plan's explicit gates and authorizes P0
    rights + read-only sample feasibility before assigning implementation slices.
    Keep the existing StatsBomb pilot truthful and active until acceptance.
-3. A separate documentation task may align public-facing copy with the planned
-   direction without describing it as shipped. Milestone 9 remains unscoped.
+3. Do not start the migration until a later, explicitly authorized implementation
+   slice. Milestone 9 remains unscoped.

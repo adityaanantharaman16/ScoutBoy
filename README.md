@@ -12,7 +12,10 @@ transparent market-value ranges - and it can always show *why* a score, badge, o
 > prominent segment, and the strict U23 attacker/midfielder cohort is available as
 > **High-coverage U23 analysis**. The current real-data pilot is a **Bayer Leverkusen-centered
 > Bundesliga 2023/24 vertical slice** (34 StatsBomb matches), not full-league or live coverage.
-> Missing data is shown as profile-only / low-confidence, never zero.
+> The approved future target is a **historical, non-live Wyscout 2017/18 Big Five snapshot**;
+> it is planned under [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md), **not yet
+> ingested, verified, deployed, or available through a ScoutBoy command**. Missing data is shown
+> as profile-only / low-confidence, never zero.
 
 > Independent project. Not affiliated with FUT.gg, EA SPORTS FC, clubs, or data providers.
 > Synthetic fixtures remain available for deterministic development and E2E tests.
@@ -74,6 +77,9 @@ See [`docs/agent_notes.md`](docs/agent_notes.md) for decisions and intentional o
 
 Prereqs: Python 3.9 or 3.11 and Node 20 with `corepack` (for pnpm). No Docker required.
 
+These commands bootstrap the shipped synthetic/sample application. They do **not** acquire or
+ingest the planned Wyscout dataset.
+
 ```bash
 corepack enable pnpm          # once, if pnpm isn't available
 make install                  # venv + backend deps, and pnpm frontend deps
@@ -88,7 +94,7 @@ parameters rather than as a control (see [Discover scopes](#discover-scopes)).
 Search → narrow with the rail → open a card → expand "why these scores" → view a leaderboard →
 compare two players → read the methodology page.
 
-### Real data v0 (Milestone 2)
+### Shipped real-data v0 (Milestone 2)
 
 Two-source ingestion joined by stable source ids: a Transfermarkt-style dataset for
 identity/market + a strict performance-metrics CSV. With the shipped sample fixtures:
@@ -112,10 +118,11 @@ make recompute-ratings
 See [docs/milestone_2_real_data_v0.md](docs/milestone_2_real_data_v0.md) and the metrics
 contract [docs/data_contracts/player_season_metrics_v1.md](docs/data_contracts/player_season_metrics_v1.md).
 
-### Real pilot (Milestone 3)
+### As-built real pilot (Milestone 3)
 
 Place the pinned raw snapshots at `data/raw/transfermarkt/` and `data/raw/statsbomb/`.
 Their committed manifests record source versions, licenses, checksums, and row counts.
+This is the existing StatsBomb/Transfermarkt pilot path, not a Wyscout migration command.
 
 ```bash
 make seed-pilot
@@ -297,9 +304,11 @@ page 1. A valid request for a page past the end returns the **last available pag
 the page it served, which the browser URL is then synchronized to - an out-of-range page never
 masquerades as "no players match these filters". A genuinely empty result is page 1.
 
-### StatsBomb Open Data normalized import
+### Existing StatsBomb Open Data normalized import
 
-The provider-agnostic importer reads a local StatsBomb Open Data snapshot without network access:
+The shipped provider-agnostic importer reads a local StatsBomb Open Data snapshot without network
+access. It remains supported for the as-built pilot and is not evidence that the planned Wyscout
+target has been imported.
 
 ```bash
 make db-migrate
@@ -783,8 +792,15 @@ auditing, and a full-stack container smoke. See [CONTRIBUTING.md](CONTRIBUTING.m
 
 ## Known limitations
 
+- The approved target is a **historical, non-live Wyscout 2017/18 Big Five snapshot**, but it is
+  **not yet ingested, verified, deployed, or licensed for this product**. Rights/acquisition,
+  historical identity/positions/minutes, per-role coverage, metric semantics, market-data rights,
+  capacity, and owner cutover approval remain explicit gates in
+  [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md). It is not live scouting, and no
+  Wyscout command is shipped.
 - The real pilot is only 34 StatsBomb matches centered on Bayer Leverkusen. It must not be
-  described as complete Bundesliga or European coverage.
+  described as complete Bundesliga or European coverage. It is the as-built historical pilot,
+  retained with its own StatsBomb attribution while the separate Wyscout target remains planned.
 - Cross-team percentile pools are consequently uneven; covered minutes and confidence are
   shown separately from full-season Transfermarkt minutes.
 - Opposition quality is a league-strength proxy; role usage is nominal (no positional-split data).
