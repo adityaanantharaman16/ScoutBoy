@@ -148,12 +148,12 @@ thread) rather than assuming either this file or that one is current, since
 both are point-in-time snapshots and the actual push/PR happens after this
 handoff doc is written.
 
-**Next action:** push `docs/handoff-security-audit` (or confirm it's already
-pushed) and open/verify one PR to `main` covering both the docs and the
-audit fix; get independent review of the dependency version bumps (see
-compatibility note above); run `make e2e` and the Postgres integration smoke
-before merge if a Playwright/live-Postgres-capable runner is available
-(these are the only checks this session could not exercise); then merge.
+**Historical next action (superseded):** PR #12 was subsequently verified
+**merged** at `bafa77d42ec3025a8c917484ab5fafa972b70d0d` on 2026-09-26; do
+not push, reopen, or merge it again. The current next action is the newer
+scope-documentation entry above: an authorized owner/supervisor opens a draft
+PR for `docs/wyscout-scope`, then obtains its own independent review and
+exact-head CI before any owner decision on the separately planned migration.
 
 ### Earlier history
 
