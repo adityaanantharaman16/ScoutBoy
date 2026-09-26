@@ -63,25 +63,30 @@ StatsBomb 2023/24 pilot from the owner-approved historical, non-live Wyscout
   stated as not acquired, ingested, verified, deployed, licensed for this product,
   or live; rights, coverage, identity/minutes, metric, market, capacity, review,
   and owner-cutover gates remain explicit in `docs/IMPLEMENTATION_PLAN.md`.
-- Pushed `docs/wyscout-scope` and read the remote head back against local HEAD.
-  Draft-PR creation is blocked only by this worker's lack of a saved GitHub browser
-  login; it will not request, print, or reuse a password/token from another profile.
+- Pushed `docs/wyscout-scope`; supervisor used existing owner-authorized GitHub API
+  access to open draft scope-documentation PR #14 to `main`. Public API read-back
+  confirmed it is open, draft, and unmerged, and that its initial head matched
+  `d99e5918bc9abc3e93efdca28f7dc1ddc99be515`. PR #13 remains the separate,
+  reviewed-but-unmerged plan PR. Follow-up commits belong on PR #14; re-read its
+  `head.sha` and `git ls-remote` before making exact-head claims.
 
 **Environment friction worth recording for the next session:** no dedicated
-Markdown/link checker was found in the Makefile. Use a bounded local-link and
-consistency check plus `git diff --check`; application suites are not evidence of
-future Wyscout behavior and are not required for this documentation-only change.
+Markdown/link checker was found in the Makefile. A bounded local-link and
+consistency check plus `git diff --check` is appropriate; application suites are
+not evidence of future Wyscout behavior and are not required for this
+documentation-only change.
 
-**Blocker(s):** `browser_vault_list` on `https://github.com/login` returned no
-saved logins, so this worker cannot create the required draft PR despite a
-successfully pushed branch. Draft plan PR #13 is independently reviewed but
-remains open/unmerged; that is intentional and not authority to acquire data or
-implement the migration.
+**Blocker(s):** none for publication: the supervisor opened draft PR #14 with
+existing owner-authorized API access after this worker's browser-login limitation.
+The browser limitation is historical environment friction, not a reason to claim
+that PR #14 is absent. Draft plan PR #13 is independently reviewed but remains
+open/unmerged; that is intentional and not authority to acquire data or implement
+the migration.
 
-**Next action:** an authorized owner/supervisor opens a separate draft scope-docs
-PR from `docs/wyscout-scope` to `main`, verifies its remote head and exact-head
-checks, and requests independent review. Then wait for owner authorization before
-any later P0 rights/read-only feasibility work.
+**Next action:** push any required follow-up documentation commit to the existing
+draft scope-docs PR #14, verify its remote head and exact-head checks, and request
+independent review. Then wait for owner authorization before any later P0
+rights/read-only feasibility work.
 
 ### 2026-09-26 — docs + JS dependency audit remediation (this session)
 
@@ -151,9 +156,9 @@ handoff doc is written.
 **Historical next action (superseded):** PR #12 was subsequently verified
 **merged** at `bafa77d42ec3025a8c917484ab5fafa972b70d0d` on 2026-09-26; do
 not push, reopen, or merge it again. The current next action is the newer
-scope-documentation entry above: an authorized owner/supervisor opens a draft
-PR for `docs/wyscout-scope`, then obtains its own independent review and
-exact-head CI before any owner decision on the separately planned migration.
+scope-documentation entry above: draft PR #14 for `docs/wyscout-scope` is open,
+then must receive its own independent review and exact-head CI before any owner
+decision on the separately planned migration.
 
 ### Earlier history
 
