@@ -56,6 +56,13 @@ manifests, and historical ADR records as as-built evidence. It does not add an
 adapter, source payload, Wyscout command, source-license clearance, coverage
 claim, model change, or deployment.
 
+The scope-documentation branch `docs/wyscout-scope` was pushed and its remote
+head was read back against the local head. Draft-PR creation is currently blocked
+in this worker: GitHub's browser login has no saved credential, and this task will
+not request, expose, or reuse a password/token from another profile. The branch
+is ready for an authorized owner/supervisor to open a draft PR to `main`; until
+then, no scope-docs PR or its exact-head CI/review is claimed.
+
 Prior PR #12 is **merged**, not an open draft: GitHub REST `GET
 /repos/adityaanantharaman16/ScoutBoy/pulls/12` returned `merged: true`,
 `merged_at: 2026-09-26T14:01:32Z`, merge commit
@@ -208,9 +215,11 @@ Checks **not run** this session, with the reason:
 
 ## Next action
 
-1. Independently review the scope-documentation change on card `t_264a985e`;
-   the reviewed plan PR #13 remains separate, open/draft, and unmerged. Neither
-   review is approval to merge, acquire data, or implement.
+1. An authorized owner/supervisor must open a **draft** PR from
+   `docs/wyscout-scope` to `main`, then obtain independent review and exact-head
+   CI for the scope-documentation change. The reviewed plan PR #13 remains
+   separate, open/draft, and unmerged. Neither review is approval to merge,
+   acquire data, or implement.
 2. Owner/supervisor resolves the plan's explicit gates and authorizes P0
    rights + read-only sample feasibility before assigning implementation slices.
    Keep the existing StatsBomb pilot truthful and active until acceptance.

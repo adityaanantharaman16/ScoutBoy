@@ -63,18 +63,24 @@ StatsBomb 2023/24 pilot from the owner-approved historical, non-live Wyscout
   stated as not acquired, ingested, verified, deployed, licensed for this product,
   or live; rights, coverage, identity/minutes, metric, market, capacity, review,
   and owner-cutover gates remain explicit in `docs/IMPLEMENTATION_PLAN.md`.
+- Pushed `docs/wyscout-scope` and read the remote head back against local HEAD.
+  Draft-PR creation is blocked only by this worker's lack of a saved GitHub browser
+  login; it will not request, print, or reuse a password/token from another profile.
 
 **Environment friction worth recording for the next session:** no dedicated
 Markdown/link checker was found in the Makefile. Use a bounded local-link and
 consistency check plus `git diff --check`; application suites are not evidence of
 future Wyscout behavior and are not required for this documentation-only change.
 
-**Blocker(s):** none for documentation. Draft plan PR #13 is independently
-reviewed but remains open/unmerged; that is intentional and not authority to
-acquire data or implement the migration.
+**Blocker(s):** `browser_vault_list` on `https://github.com/login` returned no
+saved logins, so this worker cannot create the required draft PR despite a
+successfully pushed branch. Draft plan PR #13 is independently reviewed but
+remains open/unmerged; that is intentional and not authority to acquire data or
+implement the migration.
 
-**Next action:** complete documentation verification, publish a separate draft
-scope-docs PR for independent review, then wait for owner authorization before
+**Next action:** an authorized owner/supervisor opens a separate draft scope-docs
+PR from `docs/wyscout-scope` to `main`, verifies its remote head and exact-head
+checks, and requests independent review. Then wait for owner authorization before
 any later P0 rights/read-only feasibility work.
 
 ### 2026-09-26 — docs + JS dependency audit remediation (this session)
